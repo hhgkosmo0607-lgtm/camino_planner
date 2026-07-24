@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+/*
+ * 디자인 토큰 — CLAUDE.md "디자인 토큰" 절 그대로.
+ * 카미노 공식 표지(사아코베오)의 코발트 + 노란 화살표에서 가져왔다.
+ * 임의로 색을 추가/변경하지 않는다. 특히 --flecha(노란 화살표)는
+ * 길 안내·현재 위치·활성 상태에만 쓴다 (장식 금지).
+ */
+:root {
+  --ink: #12253f;
+  --ink-2: #1d3b5e;
+  --granite: #e7e8e2;
+  --stone: #c6c8be;
+  --flecha: #f0b429;
+  --vino: #7a2e39;
+  --moss: #3f5d4a;
+  --text: #1b2430;
+  --muted: #6b7280;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-granite: var(--granite);
+  --color-stone: var(--stone);
+  --color-flecha: var(--flecha);
+  --color-vino: var(--vino);
+  --color-moss: var(--moss);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+
+  --font-display: var(--font-gowun-batang), serif;
+  --font-body: var(--font-ibm-plex-sans-kr), sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), monospace;
+}
+
+body {
+  background: var(--granite);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 17px; /* 규칙 9: 본문 최소 17px */
+  line-height: 1.65;
+}
+
+/* 규칙 9: 키보드 포커스 링 제거 금지 */
+:focus-visible {
+  outline: 2px solid var(--flecha);
+  outline-offset: 2px;
+}
+
+/* 규칙 9: 인쇄 지원 필수 — 비디지털층에 닿는 유일한 경로 */
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+}

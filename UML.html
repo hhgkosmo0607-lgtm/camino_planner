@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>카미노 — 데이터 모델 UML</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --ink:#12253F; --ink-2:#1D3B5E; --granite:#E7E8E2; --paper:#FBFBF9;
+  --stone:#C6C8BE; --flecha:#F0B429; --vino:#7A2E39; --moss:#3F5D4A;
+  --text:#1B2430; --muted:#6B7280; --sidebar:260px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0; background:var(--granite); color:var(--text);
+  font-family:'IBM Plex Sans KR',system-ui,sans-serif; line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums;}
+
+header.mojon{
+  background:var(--ink); color:#fff; padding:22px 24px 20px; position:sticky; top:0; z-index:10;
+  box-shadow:0 2px 10px rgba(0,0,0,.15);
+}
+.mojon-top{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+.mojon-top svg{flex:none;}
+.brand{font-family:'Gowun Batang',serif; font-size:17px; letter-spacing:.02em;}
+.brand span{color:var(--flecha);}
+.sub{font-size:12.5px; color:rgba(255,255,255,.65); margin-left:36px;}
+
+nav.toc{
+  position:fixed; top:82px; left:0; width:var(--sidebar); bottom:0; overflow-y:auto;
+  padding:18px 14px 40px; border-right:1px solid var(--stone);
+}
+nav.toc a{
+  display:block; padding:7px 10px; border-radius:5px; color:var(--text); text-decoration:none;
+  font-size:13.5px; border-left:2px solid transparent;
+}
+nav.toc a:hover{background:#fff; border-left-color:var(--flecha);}
+nav.toc .eyebrow{font-size:10px; letter-spacing:.2em; color:var(--muted); text-transform:uppercase; margin:14px 10px 4px;}
+
+main{margin-left:var(--sidebar); padding:32px 40px 100px; max-width:980px;}
+h1.title{font-family:'Gowun Batang',serif; font-size:24px; margin:0 0 6px;}
+.notice{
+  background:#FDF6E3; border:1px solid #E9D9A8; border-radius:8px; padding:14px 16px;
+  font-size:13.5px; line-height:1.7; color:#6B5518; margin:18px 0 30px;
+}
+.notice b{color:#4A3A0E;}
+.notice code{background:rgba(0,0,0,.06); padding:1px 5px; border-radius:3px;}
+
+section{margin-bottom:52px; scroll-margin-top:96px;}
+h2{
+  font-family:'Gowun Batang',serif; font-size:19px; margin:0 0 4px; padding-bottom:8px;
+  border-bottom:2px solid var(--stone); display:flex; align-items:baseline; gap:10px;
+}
+h2 .num{font-family:'IBM Plex Mono',monospace; color:var(--flecha); background:var(--ink); border-radius:4px; padding:1px 8px; font-size:13px;}
+.desc{font-size:13.5px; color:var(--muted); margin:8px 0 16px;}
+.desc code{background:#fff; border:1px solid var(--stone); padding:1px 5px; border-radius:3px; font-family:'IBM Plex Mono',monospace; font-size:12px;}
+
+.diagram-card{
+  background:#fff; border:1px solid var(--stone); border-radius:10px; padding:18px;
+  overflow-x:auto;
+}
+.diagram-card .mermaid{display:flex; justify-content:center;}
+
+footer{margin-left:var(--sidebar); padding:20px 40px 60px; font-size:12px; color:var(--muted);}
+
+@media (max-width: 860px){
+  :root{--sidebar:0px;}
+  nav.toc{display:none;}
+  main, footer{margin-left:0; padding:24px 18px 80px;}
+}
+
+::-webkit-scrollbar{width:9px; height:9px;}
+::-webkit-scrollbar-thumb{background:var(--stone); border-radius:5px;}
+</style>
+</head>
+<body>
+
+<header class="mojon">
+  <div class="mojon-top">
+    <svg width="22" height="22" viewBox="0 0 64 64" aria-hidden="true">
+      <g stroke="#F0B429" stroke-width="5" stroke-linecap="round">
+        <line x1="32" y1="52" x2="6" y2="30"/><line x1="32" y1="52" x2="14" y2="14"/>
+        <line x1="32" y1="52" x2="32" y2="6"/><line x1="32" y1="52" x2="50" y2="14"/>
+        <line x1="32" y1="52" x2="58" y2="30"/>
+      </g>
+    </svg>
+    <div class="brand">카미노 <span>·</span> 데이터 모델 UML</div>
+  </div>
+  <div class="sub">src/schema.ts 기준 · 2026-07</div>
+</header>
+
+<nav class="toc">
+  <div class="eyebrow">클래스 다이어그램</div>
+  <a href="#d0">0 · 관계 개요</a>
+  <a href="#d1">1 · 마을·경로·갈림길</a>
+  <a href="#d2">2 · 숙소</a>
+  <a href="#d3">3 · 이동수단·접근성</a>
+  <a href="#d4">4 · 접근 교통</a>
+  <a href="#d5">5 · 일정 계획 (F-01)</a>
+  <a href="#d6">6 · 완주·보상</a>
+  <div class="eyebrow">시퀀스</div>
+  <a href="#d7">7 · F-01 흐름</a>
+  <div class="eyebrow">참고</div>
+  <a href="#d8">8 · Phase 3 스케치</a>
+</nav>
+
+<main>
+  <h1 class="title">카미노 프로젝트 — 데이터 모델 UML</h1>
+  <div class="notice">
+    <b>src/schema.ts</b>(단일 진실 공급원)를 손으로 옮겨 그린 것이다. 이 다이어그램과 <code>schema.ts</code>가 어긋나면 <code>schema.ts</code>가 맞다 — 자동 생성이 아니라서 스키마가 바뀌면 이 파일도 같이 고쳐야 한다.<br>
+    03문서의 카드 흐름형·동행 매칭·가족 안심 세트 타입은 "앱 트랙 착수 전까지는 초안"이라 아직 <code>schema.ts</code>에 없다 — 8번 절에 참고용으로만 뒀다.<br>
+    ⚠️ <b>발견된 사항</b>: <code>src/camino-companion.jsx</code>(프로토타입)는 이 스키마를 안 쓰고, 구간 오르막도 마을 고도차로 계산한다 — CLAUDE.md 규칙 3 위반. Phase 1 실제 구현은 이 스키마와 <code>getProfile()</code>을 반드시 거쳐야 한다.
+  </div>
+
+  <section id="d0">
+    <h2><span class="num">0</span> 한눈에 — 관계만</h2>
+    <div class="diagram-card"><pre class="mermaid">
+classDiagram
+    direction LR
+
+    Town "1" --&gt; "0..*" SegmentProfile : fromTownId/toTownId
+    Town "1" --&gt; "0..*" Albergue : townId
+    RouteFork "1" *-- "2..*" RouteVariant : variants
+    RouteVariant "0..*" --&gt; "1..*" Town : townIds
+    Landmark "0..*" --&gt; "0..1" Town : townId
+
+    PlanInput --&gt; MobilityProfile : mobility
+    PlanInput "1" *-- "0..*" PlannedTransport : plannedTransport
+    PlanInput --&gt; Town : startTownId
+
+    Plan "1" *-- "1..*" Stage : stages
+    Stage --&gt; Town : fromTownId/toTownId
+    Stage --&gt; RouteVariant : variantId
+    Stage --&gt; Albergue : lodgingId
+    Stage --&gt; PlannedTransport : transport
+    Stage "1" *-- "0..*" Waypoint : waypoints
+    Stage "1" *-- "0..*" Hazard : hazards
+
+    MobilityProfile --&gt; TravelMode : mode
+    MobilityProfile --&gt; Surface : avoidSurfaces
+    PlannedTransport --&gt; TransportMode : mode
+
+    AccessRoute "1" *-- "1..*" AccessLeg : legs
+    AccessRoute --&gt; Town : toTownId
+
+    Completion --&gt; Plan : planId
+    </pre></div>
+  </section>
+
+  <section id="d1">
+    <h2><span class="num">1</span> 마을 · 경로 · 갈림길</h2>
+    <div class="diagram-card"><pre class="mermaid">
+classDiagram
+    class Town {
+      +string id
+      +string nameEs
+      +string nameKo
+      +string routeId
+      +number km
+      +number elevation
+      +number lat
+      +number lng
+      +Service[] services
+      +number beds
+      +number|null population
+      +string|null notesKo
+    }
+    note for Town "마을 자체 해발(elevation)로 구간 오르막을 계산하지 말 것 → 반드시 SegmentProfile 경유 (규칙 3)"
+
+    class Service {
+      &lt;&lt;enumeration&gt;&gt;
+      WATER
+      BAR
+      SHOP
+      PHARMACY
+      ATM
+      BAG_TRANSFER
+      MEDICAL
+      MASS
+    }
+
+    class SegmentProfile {
+      +string fromTownId
+      +string toTownId
+      +number distanceKm
+      +number ascent
+      +number descent
+      +number maxElevation
+      +number maxGradient
+      +Source source
+    }
+    note for SegmentProfile "source가 ESTIMATED인 동안은 injuryRiskScore를 숫자로 노출 금지"
+
+    class Source {
+      &lt;&lt;enumeration&gt;&gt;
+      OSM+MDT
+      ESTIMATED
+    }
+
+    class RouteFork {
+      +string id
+      +string splitTownId
+      +string mergeTownId
+      +RouteVariant[] variants
+    }
+
+    class RouteVariant {
+      +string id
+      +string forkId
+      +string nameKo
+      +string nameEs
+      +boolean isMain
+      +string[] townIds
+      +number distanceKm
+      +number ascent
+      +number descent
+      +string|null closedFrom
+      +string|null closedTo
+      +number roadShareRatio
+      +boolean hasShelter
+      +VariantTrait[] traits
+      +string[] highlightsKo
+      +string|null cautionKo
+    }
+    note for RouteVariant "closedFrom/closedTo = MM-DD. 예: 나폴레옹 루트 11-01~03-31"
+
+    class VariantTrait {
+      &lt;&lt;enumeration&gt;&gt;
+      SCENERY
+      MONASTERY
+      QUIET
+      SHORTER
+      EASIER
+      WINTER_SAFE
+      HISTORIC
+      ROAD_HEAVY
+    }
+
+    class Landmark {
+      +string id
+      +string|null townId
+      +string nameKo
+      +string nameEs
+      +number lat
+      +number lng
+      +number radiusM
+      +string storyKo
+      +string|null photoUri
+      +number order
+    }
+    note for Landmark "19곳. order 1~19. storyKo는 실측 도보에서 직접 쓴다"
+
+    SegmentProfile --&gt; Source : source
+    RouteFork "1" *-- "2..*" RouteVariant : variants
+    RouteVariant --&gt; VariantTrait : traits
+    Town "1" --&gt; "0..*" Service : services
+    </pre></div>
+  </section>
+
+  <section id="d2">
+    <h2><span class="num">2</span> 숙소 (Albergue)</h2>
+    <div class="diagram-card"><pre class="mermaid">
+classDiagram
+    class Albergue {
+      +string id
+      +string townId
+      +string name
+      +AlbergueType type
+      +number|null beds
+      +number|null priceEur
+      +ReservationMethod reservation
+      +string|null contact
+      +string|null openFrom
+      +string|null openTo
+      +boolean|null hasKitchen
+      +boolean|null hasLaundry
+      +boolean|null hasDryer
+      +boolean|null hasWifi
+      +boolean|null hasHeating
+      +boolean|null acceptsBagTransfer
+      +boolean|null wheelchairAccessible
+      +string|null verifiedAt
+      +AlbergueSource source
+    }
+    note for Albergue "priceEur: 0=기부제, null=미확인. reservation: 하드코딩 금지 (규칙 2)"
+
+    class AlbergueType {
+      &lt;&lt;enumeration&gt;&gt;
+      MUNICIPAL
+      XUNTA
+      PARISH
+      MONASTERY
+      PRIVATE
+      DONATIVO
+    }
+
+    class ReservationMethod {
+      &lt;&lt;enumeration&gt;&gt;
+      NONE
+      PHONE
+      WHATSAPP
+      ONLINE
+      UNKNOWN
+    }
+    note for ReservationMethod "UNKNOWN을 추정으로 채우지 않는다"
+
+    class AlbergueSource {
+      &lt;&lt;enumeration&gt;&gt;
+      FIELD
+      PARTNER
+      USER_REPORT
+      PLACEHOLDER
+    }
+
+    Albergue --&gt; AlbergueType : type
+    Albergue --&gt; ReservationMethod : reservation
+    Albergue --&gt; AlbergueSource : source
+    </pre></div>
+  </section>
+
+  <section id="d3">
+    <h2><span class="num">3</span> 이동 방식 · 접근성 · 이동수단</h2>
+    <div class="diagram-card"><pre class="mermaid">
+classDiagram
+    class TravelMode {
+      &lt;&lt;enumeration&gt;&gt;
+      FOOT
+      BIKE
+      E_BIKE
+      HANDBIKE
+      WHEELCHAIR
+      HORSE
+    }
+    note for TravelMode "E_BIKE는 콤포스텔라 대상 아님"
+
+    class Surface {
+      &lt;&lt;enumeration&gt;&gt;
+      GRAVEL
+      MUD
+      STAIRS
+      STEEP
+      COBBLE
+    }
+
+    class MobilityProfile {
+      +TravelMode mode
+      +number maxKmPerDay
+      +boolean needsSupportVehicle
+      +boolean needsCompanion
+      +Surface[] avoidSurfaces
+      +boolean bagTransferRequired
+    }
+    note for MobilityProfile "maxKmPerDay 하한 없음. 도보 3km, 휠체어 3km도 유효"
+
+    class TransportMode {
+      &lt;&lt;enumeration&gt;&gt;
+      BUS
+      TRAIN
+      TAXI
+      SUPPORT_VEHICLE
+    }
+
+    class PlannedTransport {
+      +string fromTownId
+      +string toTownId
+      +TransportMode mode
+      +string reasonKo
+      +number skippedKm
+      +number|null costEur
+    }
+    note for PlannedTransport "일정 수립 단계에서 넣는 이동수단. Plan B(여정 중 대응)와는 다른 개념"
+
+    class SupportVehicle {
+      +boolean enabled
+      +MeetPoint[] meetPoints
+    }
+
+    class MeetPoint {
+      +number stageDay
+      +string townId
+      +string noteKo
+    }
+
+    MobilityProfile --&gt; TravelMode : mode
+    MobilityProfile --&gt; Surface : avoidSurfaces
+    PlannedTransport --&gt; TransportMode : mode
+    SupportVehicle "1" *-- "0..*" MeetPoint : meetPoints
+    </pre></div>
+  </section>
+
+  <section id="d4">
+    <h2><span class="num">4</span> 접근 교통 (인천 → 생장)</h2>
+    <div class="diagram-card"><pre class="mermaid">
+classDiagram
+    class AccessTransportKind {
+      &lt;&lt;enumeration&gt;&gt;
+      FLIGHT
+      TRAIN
+      BUS
+      SHUTTLE
+      TAXI
+      METRO
+    }
+
+    class AccessLeg {
+      +number order
+      +AccessTransportKind kind
+      +string fromName
+      +string toName
+      +string|null operator
+      +number|null durationMin
+      +number|null costEur
+      +string|null frequencyNote
+      +string|null bookingUrl
+      +string|null cautionKo
+    }
+
+    class AccessRoute {
+      +string id
+      +string nameKo
+      +string toTownId
+      +AccessLeg[] legs
+      +number totalHours
+      +number estimatedCostKrw
+      +AccessTrait[] traits
+    }
+
+    class AccessTrait {
+      &lt;&lt;enumeration&gt;&gt;
+      FAST
+      CHEAP
+      SIMPLE
+      POPULAR
+    }
+
+    AccessLeg --&gt; AccessTransportKind : kind
+    AccessRoute "1" *-- "1..*" AccessLeg : legs
+    AccessRoute --&gt; AccessTrait : traits
+    </pre></div>
+  </section>
+
+  <section id="d5">
+    <h2><span class="num">5</span> 일정 계획 — PlanInput → Stage → Plan</h2>
+    <div class="desc">Phase 1 · <code>F-01</code>이 실제로 만드는 핵심 모델이다.</div>
+    <div class="diagram-card"><pre class="mermaid">
+classDiagram
+    class BagTransferOption {
+      &lt;&lt;enumeration&gt;&gt;
+      none
+      climbs
+      all
+    }
+
+    class PlanInput {
+      +string startTownId
+      +MobilityProfile mobility
+      +number? targetKmPerDay
+      +number? totalDays
+      +Fitness fitness
+      +number restDays
+      +string? startDate
+      +Map~string,string~? variantChoices
+      +BagTransferOption useBagTransfer
+      +PlannedTransport[] plannedTransport
+    }
+    note for PlanInput "targetKmPerDay 하한 없음: 3~32. startDate는 갈림길 계절 폐쇄 판정용. variantChoices: forkId → variantId"
+
+    class Fitness {
+      &lt;&lt;enumeration&gt;&gt;
+      low
+      normal
+      high
+    }
+
+    class StageWarning {
+      &lt;&lt;enumeration&gt;&gt;
+      STEEP_CLIMB
+      STEEP_DESCENT
+      LONG_DISTANCE
+      FEW_BEDS
+      NO_SERVICES
+      EARLY_OVERLOAD
+      CONSECUTIVE_HARD
+    }
+
+    class HazardType {
+      &lt;&lt;enumeration&gt;&gt;
+      STEEP_DESCENT
+      NO_SHELTER
+      EXPOSED
+      NO_WATER
+      ROAD_WALKING
+      SLIPPERY
+      NO_SIGNAL
+      WINTER_RISK
+    }
+
+    class Hazard {
+      +HazardType type
+      +number fromKm
+      +number toKm
+      +string noteKo
+    }
+
+    class WaypointKind {
+      &lt;&lt;enumeration&gt;&gt;
+      START
+      ARRIVE
+      BREAKFAST
+      LUNCH
+      REST
+      WATER
+      PHARMACY
+      ATM
+      BAG_DROP
+      STAMP
+      LANDMARK
+      TRANSPORT
+    }
+
+    class Waypoint {
+      +WaypointKind kind
+      +string|null townId
+      +number km
+      +number etaMinutes
+      +string labelKo
+      +string|null noteKo
+      +string|null opensAt
+    }
+
+    class Stage {
+      +number dayNo
+      +string|null date
+      +string fromTownId
+      +string toTownId
+      +string|null variantId
+      +number distanceKm
+      +number ascent
+      +number descent
+      +number maxElevation
+      +number estimatedMinutes
+      +string suggestedStartTime
+      +Waypoint[] waypoints
+      +Hazard[] hazards
+      +string|null lodgingId
+      +PlannedTransport|null transport
+      +StageWarning[] warnings
+      +boolean isRestDay
+    }
+    note for Stage "ascent/descent는 반드시 SegmentProfile에서 읽는다 (규칙 3)"
+
+    class Plan {
+      +Stage[] stages
+      +number totalKm
+      +number walkedKm
+      +number totalDays
+      +boolean compostelaEligible
+      +boolean doubleStampPerDay
+      +number injuryRiskScore
+      +RiskDataQuality riskDataQuality
+      +string advice
+    }
+    note for Plan "totalKm(이동수단 포함) ≠ walkedKm(도보만). doubleStampPerDay는 위치가 아니라 총 도보거리 기준. riskDataQuality=ESTIMATED면 injuryRiskScore를 UI에서 숨긴다"
+
+    class RiskDataQuality {
+      &lt;&lt;enumeration&gt;&gt;
+      OSM+MDT
+      ESTIMATED
+    }
+
+    PlanInput --&gt; Fitness : fitness
+    PlanInput --&gt; BagTransferOption : useBagTransfer
+    Stage --&gt; StageWarning : warnings
+    Stage "1" *-- "0..*" Hazard : hazards
+    Hazard --&gt; HazardType : type
+    Stage "1" *-- "0..*" Waypoint : waypoints
+    Waypoint --&gt; WaypointKind : kind
+    Plan "1" *-- "1..*" Stage : stages
+    Plan --&gt; RiskDataQuality : riskDataQuality
+    </pre></div>
+  </section>
+
+  <section id="d6">
+    <h2><span class="num">6</span> 완주 · 보상</h2>
+    <div class="diagram-card"><pre class="mermaid">
+classDiagram
+    class FogState {
+      +string[] revealed
+      +Map~string,string~ revealedAt
+      +string[] trackCells
+    }
+    note for FogState "revealed = 개방한 Landmark.id 목록. trackCells = 걸어서 밝힌 지도 셀 해시"
+
+    class MyStone {
+      +string|null photoUri
+      +string noteKo
+      +string registeredAt
+      +string|null placedAt
+    }
+    note for MyStone "placedAt = 철의 십자가 도착 시각"
+
+    class CompletionStats {
+      +number days
+      +number distanceKm
+      +number estimatedSteps
+      +number totalAscent
+      +number totalDescent
+      +number townsPassed
+      +number stampsCollected
+      +number longestDayKm
+      +number highestPointM
+    }
+    note for CompletionStats "estimatedSteps는 추정치. UI에 반드시 '약'을 붙인다"
+
+    class Completion {
+      +string planId
+      +string completedAt
+      +CompletionStats stats
+      +string|null letterToFuture
+      +string|null letterSendAt
+      +boolean dualPilgrimInterest
+    }
+    note for Completion "dualPilgrimInterest = 확장 전략 선행 지표"
+
+    Completion "1" *-- "1" CompletionStats : stats
+    </pre></div>
+  </section>
+
+  <section id="d7">
+    <h2><span class="num">7</span> 시퀀스 — F-01 구간 자동 계획</h2>
+    <div class="desc"><code>lib/planner/split.ts</code> · <code>risk.ts</code>(규칙 6: 순수 함수 + 테스트)의 예상 흐름. 아직 코드가 없으므로 schema.ts 기준의 설계도다.</div>
+    <div class="diagram-card"><pre class="mermaid">
+sequenceDiagram
+    actor U as 사용자 (웹 폼)
+    participant UI as PlanForm (Next.js)
+    participant Split as split.ts
+    participant Data as 정적 데이터(towns·profiles·forks·albergues)
+    participant Risk as risk.ts
+    participant Plan as Plan (결과)
+
+    U-&gt;&gt;UI: 출발지·체력·목표거리 입력
+    UI-&gt;&gt;UI: PlanInput 조립
+    UI-&gt;&gt;Split: split(PlanInput)
+    Split-&gt;&gt;Data: getProfile(fromId, toId) 반복 조회
+    Data--&gt;&gt;Split: SegmentProfile[] (ascent/descent)
+    Note over Split,Data: 마을 고도차 아님. 반드시 profiles.ts 경유 (규칙 3)
+    Split-&gt;&gt;Data: getFork(splitTownId) 조회
+    Data--&gt;&gt;Split: RouteFork·RouteVariant (계절 폐쇄 확인)
+    Split-&gt;&gt;Split: 목표 거리·체력 기준으로 Stage[] 분할 (하한 없음)
+    Split--&gt;&gt;UI: Stage[] (ascent/descent/warnings 채움)
+    UI-&gt;&gt;Risk: score(Stage[])
+    Risk-&gt;&gt;Risk: injuryRiskScore 계산 (STEEP_CLIMB·STEEP_DESCENT·EARLY_OVERLOAD 등 가중)
+    alt SegmentProfile.source === 'ESTIMATED'
+        Risk--&gt;&gt;UI: riskDataQuality='ESTIMATED' (점수를 화면에 숨긴다)
+    else source === 'OSM+MDT'
+        Risk--&gt;&gt;UI: injuryRiskScore 노출 가능
+    end
+    Risk--&gt;&gt;UI: Plan { stages, totalKm, walkedKm, compostelaEligible, advice }
+    UI--&gt;&gt;U: 일정표 렌더 (서버 컴포넌트, SEO)
+    </pre></div>
+  </section>
+
+  <section id="d8">
+    <h2><span class="num">8</span> 아직 schema.ts에 없는 것 (Phase 3 스케치)</h2>
+    <div class="desc">참고용. "앱 트랙 착수 전까지는 초안" — 03_제품과기능.md.</div>
+    <div class="diagram-card"><pre class="mermaid">
+classDiagram
+    class Card {
+      +string id
+      +CardCategory category
+      +CardStep[] steps
+    }
+    class CardStep {
+      +string promptEs
+      +string promptKo
+      +string|null imageUri
+      +CardOption[] options
+    }
+    class CardOption {
+      +string labelEs
+      +string labelKo
+      +CardNext next
+    }
+    class CardNext {
+      &lt;&lt;union&gt;&gt;
+      END
+      NEXT_STEP
+      GOTO_CARD
+      MAP_PICK
+      RECALCULATE_PLAN
+    }
+    class FamilyReassurance {
+      +boolean enabled
+      +Contact[] contacts
+      +string|null lastCheckInAt
+      +string|null lastCheckInTownId
+      +number missedDaysThreshold
+    }
+    class CompanionMatch {
+      +boolean enabled
+      +string startDate
+      +TravelMode travelMode
+      +AgeRange ageRange
+      +string[] blockedUserIds
+    }
+    class CheckIn {
+      +string townId
+      +string atIso
+    }
+
+    Card "1" *-- "1..*" CardStep : steps
+    CardStep "1" *-- "1..*" CardOption : options
+    CardOption --&gt; CardNext : next
+    CompanionMatch --&gt; TravelMode : travelMode
+    </pre></div>
+  </section>
+</main>
+
+<footer>이 문서는 src/schema.ts를 손으로 옮겨 그린 것이다. schema.ts가 바뀌면 이 파일도 같이 고친다 — 자동 생성이 아니다.</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#F2F2EE',
+      primaryBorderColor: '#12253F',
+      primaryTextColor: '#1B2430',
+      lineColor: '#12253F',
+      secondaryColor: '#E7E8E2',
+      tertiaryColor: '#FBFBF9',
+      fontFamily: "'IBM Plex Sans KR', sans-serif",
+      noteBkgColor: '#FDF6E3',
+      noteBorderColor: '#E9D9A8',
+      actorBkg: '#F2F2EE',
+      actorBorder: '#12253F',
+      signalColor: '#12253F',
+      signalTextColor: '#1B2430'
+    }
+  });
+</script>
+</body>
+</html>
