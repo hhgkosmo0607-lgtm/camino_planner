@@ -1,0 +1,423 @@
+/**
+ * lib/planner/split.ts — 부상 회피형 구간 분할 엔진 (F-01)
+ *
+ * ★ 목표는 "최단 일수"가 아니라 "부상 없는 완주 확률"이다.
+ *   무리한 일정을 능동적으로 교정한다.
+ *
+ * ★ 고도는 반드시 data/profiles.ts(SegmentProfile)에서 읽는다.
+ *   towns.elevation 을 빼서 오르막을 구하지 않는다 (CLAUDE.md 규칙 3, 최대 39% 오차).
+ *
+ * 순수 함수. fetch/window/localStorage 참조 없음. 정적 데이터만 import.
+ */
+
+import type {
+  SegmentProfile,
+  PlanInput,
+  Stage,
+  Plan,
+  StageWarning,
+  TravelMode,
+} from '../schema'
+import type { AccumulatedProfile } from './types'
+import { injuryRiskScore, riskDataQuality, riskAdvice } from './risk'
+import { towns as ALL_TOWNS } from '../../data/towns'
+import { profiles as ALL_PROFILES } from '../../data/profiles'
+
+// ── 튜닝 파라미터 ─────────────────────────────────────────────
+const DEFAULT_DAILY_KM = 24
+const FITNESS_MULT: Record<PlanInput['fitness'], number> = { low: 0.85, normal: 1.0, high: 1.15 }
+const EARLY_DAYS = 3
+const EARLY_ADAPT = 0.8 // 1~3일차 목표 ×0.8
+const CLIMB_ADJUST = 0.85 // 다음 구간 상승 600m 초과 시 ×0.85
+const RECOVERY_ADJUST = 0.85 // 힘든 날 다음 날 ×0.85
+const CLIMB_THRESHOLD = 600 // STEEP_CLIMB / 회복 트리거
+const DESCENT_THRESHOLD = 500 // STEEP_DESCENT / 회복 트리거
+const LONG_DISTANCE = 28
+const FEW_BEDS = 30
+const NO_SERVICE_GAP = 10 // 물·식당 없는 거리 km
+const REST_TOWN_MIN_BEDS = 150
+const MERGE_LAST_UNDER = 6 // 마지막 구간 < 6km 병합
+
+// 콤포스텔라 최소 거리 (2025 개정)
+const COMPOSTELA_MIN: Partial<Record<TravelMode, number>> = {
+  FOOT: 100,
+  HORSE: 100,
+  BIKE: 200,
+  HANDBIKE: 100, // 확인 필요 — 잠정 100
+  WHEELCHAIR: 100, // 확인 필요 — 잠정 100
+  // E_BIKE 는 대상 아님 → 항상 불가
+}
+
+// ── 데이터 인덱스 ─────────────────────────────────────────────
+const TOWN_INDEX: Map<string, number> = new Map(ALL_TOWNS.map((t, i) => [t.id, i]))
+const PROFILE_INDEX: Map<string, SegmentProfile> = new Map(
+  ALL_PROFILES.map((p) => [`${p.fromTownId}->${p.toTownId}`, p]),
+)
+
+function townIdx(id: string): number {
+  const i = TOWN_INDEX.get(id)
+  if (i === undefined) throw new Error(`알 수 없는 마을 id: ${id}`)
+  return i
+}
+
+/**
+ * 마을 구간 [fromIdx, toIdx] 의 누적 고도. profiles(연속 마을쌍)를 이어 합산한다.
+ * ★ towns.elevation 은 절대 쓰지 않는다.
+ */
+export function accumulateProfile(fromIdx: number, toIdx: number): AccumulatedProfile {
+  let ascent = 0
+  let descent = 0
+  let maxElevation = 0
+  let maxGradient = 0
+  let source: SegmentProfile['source'] = 'OSM+EUDEM'
+  for (let i = fromIdx; i < toIdx; i++) {
+    const key = `${ALL_TOWNS[i].id}->${ALL_TOWNS[i + 1].id}`
+    const p = PROFILE_INDEX.get(key)
+    if (!p) {
+      // 구간 프로파일이 없으면 위험을 과소평가하지 않도록 ESTIMATED 로 표시
+      source = 'ESTIMATED'
+      continue
+    }
+    ascent += p.ascent
+    descent += p.descent
+    maxElevation = Math.max(maxElevation, p.maxElevation)
+    maxGradient = Math.max(maxGradient, p.maxGradient)
+    if (p.source === 'ESTIMATED') source = 'ESTIMATED'
+  }
+  return { ascent, descent, maxElevation, maxGradient, source }
+}
+
+const round1 = (n: number) => Math.round(n * 10) / 10
+
+function estimatedMinutes(distanceKm: number, ascent: number, descent: number): number {
+  return Math.round((distanceKm / 4.2) * 60 + ascent / 8 + descent / 20)
+}
+
+// ── 서비스 공백 (NO_SERVICES 경고) ────────────────────────────
+function maxServiceGapKm(fromIdx: number, toIdx: number): number {
+  // 물(WATER) 또는 바(BAR)가 있는 마을 사이 최대 거리
+  let lastServiceKm = ALL_TOWNS[fromIdx].km
+  let gap = 0
+  for (let i = fromIdx; i <= toIdx; i++) {
+    const t = ALL_TOWNS[i]
+    const hasService = t.services.includes('WATER') || t.services.includes('BAR')
+    if (hasService) {
+      gap = Math.max(gap, t.km - lastServiceKm)
+      lastServiceKm = t.km
+    }
+  }
+  gap = Math.max(gap, ALL_TOWNS[toIdx].km - lastServiceKm)
+  return gap
+}
+
+// ── 목표 지점에 가장 가까운 '숙소 있는' 마을 찾기 ──────────────
+function nearestLodgingIdx(curIdx: number, targetKm: number, endIdx: number): number {
+  let best = -1
+  let bestDiff = Infinity
+  for (let i = curIdx + 1; i <= endIdx; i++) {
+    if (i !== endIdx && ALL_TOWNS[i].beds <= 0) continue // 산티아고(끝)는 예외
+    const diff = Math.abs(ALL_TOWNS[i].km - targetKm)
+    if (diff < bestDiff) {
+      bestDiff = diff
+      best = i
+    }
+  }
+  return best < 0 ? endIdx : best // 앞에 숙소 없으면 산티아고까지
+}
+
+interface RawStage {
+  fromIdx: number
+  toIdx: number
+  transport: PlanInput['plannedTransport'][number] | null
+}
+
+/**
+ * 계획된 이동수단 구간을 (fromId→toId) 로 조회.
+ * cur 에서 시작하는 이동수단이 있으면 반환.
+ */
+function transportFrom(input: PlanInput, curId: string) {
+  return input.plannedTransport.find((t) => t.fromTownId === curId) ?? null
+}
+
+/** 탐욕 분할 + 부상 회피 후처리로 RawStage 목록을 만든다. */
+function buildRawStages(input: PlanInput): RawStage[] {
+  const startIdx = townIdx(input.startTownId)
+  const endIdx = ALL_TOWNS.length - 1
+  const startKm = ALL_TOWNS[startIdx].km
+  const totalDist = ALL_TOWNS[endIdx].km - startKm
+
+  // 하루 기본 목표 거리
+  let base: number
+  if (input.targetKmPerDay && input.targetKmPerDay > 0) {
+    base = input.targetKmPerDay
+  } else if (input.totalDays && input.totalDays > 0) {
+    const walkingDays = Math.max(1, input.totalDays - input.restDays)
+    base = totalDist / walkingDays
+  } else {
+    base = DEFAULT_DAILY_KM
+  }
+  base *= FITNESS_MULT[input.fitness]
+  // 이동 방식의 하루 상한을 넘지 않는다 (하한은 두지 않는다 — CLAUDE.md)
+  const cap = input.mobility.maxKmPerDay > 0 ? input.mobility.maxKmPerDay : 40
+  base = Math.min(base, cap)
+
+  // 계획된 이동수단의 출발 마을은 '반드시 들르는' 정차점이다.
+  // 탐욕 분할이 이 마을을 지나치면 이동수단이 발동하지 않으므로(F-26 버그),
+  // 도착지가 정차점을 넘어가면 정차점으로 당겨 세운다.
+  const transportOrigins = input.plannedTransport
+    .map((t) => TOWN_INDEX.get(t.fromTownId))
+    .filter((i): i is number => i !== undefined)
+    .sort((a, b) => a - b)
+
+  const raw: RawStage[] = []
+  let cur = startIdx
+  let dayNo = 0
+  let prevHard = false
+  let guard = 0
+
+  while (cur < endIdx && guard++ < 500) {
+    // 계획된 이동수단이 이 지점에서 시작하면 그대로 점프
+    const tr = transportFrom(input, ALL_TOWNS[cur].id)
+    if (tr) {
+      const toI = townIdx(tr.toTownId)
+      if (toI > cur) {
+        raw.push({ fromIdx: cur, toIdx: toI, transport: tr })
+        cur = toI
+        continue
+      }
+    }
+
+    dayNo++
+    let factor = 1.0
+    if (dayNo <= EARLY_DAYS) factor *= EARLY_ADAPT // (a) 초반 적응
+    if (prevHard) factor *= RECOVERY_ADJUST // (c) 회복 배치
+
+    // (b) 오르막 보정: 잠정 도착지의 상승을 보고, 600m 초과면 한 번 더 줄인다
+    const provIdx = nearestLodgingIdx(cur, ALL_TOWNS[cur].km + base * factor, endIdx)
+    const provProfile = accumulateProfile(cur, provIdx)
+    if (provProfile.ascent > CLIMB_THRESHOLD) factor *= CLIMB_ADJUST
+
+    const destIdx = nearestLodgingIdx(cur, ALL_TOWNS[cur].km + base * factor, endIdx)
+    let finalIdx = destIdx > cur ? destIdx : Math.min(cur + 1, endIdx) // 항상 전진 보장
+
+    // 정차점(이동수단 출발지)을 넘어가면 그 앞에서 세운다
+    const stop = transportOrigins.find((i) => i > cur && i < finalIdx)
+    if (stop !== undefined) finalIdx = stop
+
+    const prof = accumulateProfile(cur, finalIdx)
+    prevHard = prof.ascent > CLIMB_THRESHOLD || prof.descent > DESCENT_THRESHOLD
+
+    raw.push({ fromIdx: cur, toIdx: finalIdx, transport: null })
+    cur = finalIdx
+  }
+
+  // (e) 마지막 구간 < 6km → 직전 도보 구간에 병합
+  if (raw.length > 1) {
+    const last = raw[raw.length - 1]
+    const dist = ALL_TOWNS[last.toIdx].km - ALL_TOWNS[last.fromIdx].km
+    if (!last.transport && dist < MERGE_LAST_UNDER) {
+      // 직전 도보 구간을 찾아 병합
+      for (let i = raw.length - 2; i >= 0; i--) {
+        if (!raw[i].transport) {
+          raw[i].toIdx = last.toIdx
+          raw.splice(i + 1)
+          break
+        }
+      }
+    }
+  }
+
+  return raw
+}
+
+// ── 경고 산출 ─────────────────────────────────────────────────
+function warningsFor(
+  dayNo: number,
+  fromIdx: number,
+  toIdx: number,
+  distanceKm: number,
+  prof: AccumulatedProfile,
+  base: number,
+): StageWarning[] {
+  const w: StageWarning[] = []
+  if (prof.ascent > CLIMB_THRESHOLD) w.push('STEEP_CLIMB')
+  if (prof.descent > DESCENT_THRESHOLD) w.push('STEEP_DESCENT')
+  if (distanceKm > LONG_DISTANCE) w.push('LONG_DISTANCE')
+  if (ALL_TOWNS[toIdx].beds > 0 && ALL_TOWNS[toIdx].beds < FEW_BEDS) w.push('FEW_BEDS')
+  if (maxServiceGapKm(fromIdx, toIdx) > NO_SERVICE_GAP) w.push('NO_SERVICES')
+  if (dayNo <= EARLY_DAYS && (distanceKm > base || prof.ascent > 500)) w.push('EARLY_OVERLOAD')
+  return w
+}
+
+/**
+ * 메인 진입점. PlanInput → Plan.
+ * Phase 1: 단일 선형 경로(변형 없음), 도보 중심. variantId 는 항상 null.
+ */
+export function buildPlan(input: PlanInput): Plan {
+  const raw = buildRawStages(input)
+  const endIdx = ALL_TOWNS.length - 1
+  const startIdx = townIdx(input.startTownId)
+  const startKm = ALL_TOWNS[startIdx].km
+
+  // 기본 목표(경고 EARLY_OVERLOAD 기준용) 재계산
+  const totalDist = ALL_TOWNS[endIdx].km - startKm
+  let base: number
+  if (input.targetKmPerDay && input.targetKmPerDay > 0) base = input.targetKmPerDay
+  else if (input.totalDays && input.totalDays > 0)
+    base = totalDist / Math.max(1, input.totalDays - input.restDays)
+  else base = DEFAULT_DAILY_KM
+  base *= FITNESS_MULT[input.fitness]
+
+  const stages: Stage[] = []
+  const allSources: SegmentProfile['source'][] = []
+  let dayNo = 0
+
+  for (const r of raw) {
+    dayNo++
+    const from = ALL_TOWNS[r.fromIdx]
+    const to = ALL_TOWNS[r.toIdx]
+    const distanceKm = round1(to.km - from.km)
+
+    if (r.transport) {
+      // 계획된 이동수단 구간 — 걷지 않는다
+      stages.push({
+        dayNo,
+        date: null,
+        fromTownId: from.id,
+        toTownId: to.id,
+        variantId: null,
+        distanceKm,
+        ascent: 0,
+        descent: 0,
+        maxElevation: 0,
+        estimatedMinutes: 0,
+        suggestedStartTime: '',
+        waypoints: [],
+        hazards: [],
+        lodgingId: null,
+        transport: r.transport,
+        warnings: [],
+        isRestDay: false,
+      })
+      continue
+    }
+
+    const prof = accumulateProfile(r.fromIdx, r.toIdx)
+    allSources.push(prof.source)
+    stages.push({
+      dayNo,
+      date: null,
+      fromTownId: from.id,
+      toTownId: to.id,
+      variantId: null,
+      distanceKm,
+      ascent: prof.ascent,
+      descent: prof.descent,
+      maxElevation: prof.maxElevation,
+      estimatedMinutes: estimatedMinutes(distanceKm, prof.ascent, prof.descent),
+      suggestedStartTime: prof.ascent > CLIMB_THRESHOLD ? '06:30' : '07:00',
+      waypoints: [],
+      hazards: [],
+      lodgingId: null,
+      transport: null,
+      warnings: warningsFor(dayNo, r.fromIdx, r.toIdx, distanceKm, prof, base),
+      isRestDay: false,
+    })
+  }
+
+  // (d) 휴식일 배치 — beds >= 150 인 큰 도시 도착일 뒤에 삽입
+  insertRestDays(stages, input.restDays)
+
+  // 거리 집계
+  const walkedKm = round1(
+    stages.filter((s) => !s.transport && !s.isRestDay).reduce((a, s) => a + s.distanceKm, 0),
+  )
+  const transportedKm = round1(
+    stages.filter((s) => s.transport).reduce((a, s) => a + s.distanceKm, 0),
+  )
+  const totalKm = round1(walkedKm + transportedKm)
+
+  // 콤포스텔라: 산티아고 직전까지 '연속으로 걸은' 거리 기준 (이동수단이 끼면 끊긴다)
+  const continuousWalked = continuousWalkedToSantiago(stages)
+  const minDist = COMPOSTELA_MIN[input.mobility.mode]
+  const compostelaEligible =
+    input.mobility.mode !== 'E_BIKE' && minDist !== undefined && continuousWalked >= minDist
+
+  // 도장 규칙: ★ 위치가 아니라 총 도보 거리 기준.
+  // 최소 거리만 걷는 경우(최소치의 1.5배 이내)만 하루 2개.
+  const doubleStampPerDay =
+    compostelaEligible && minDist !== undefined && continuousWalked <= minDist * 1.5
+
+  const quality = riskDataQuality(allSources)
+  const score = injuryRiskScore(stages)
+
+  return {
+    stages,
+    totalKm,
+    walkedKm,
+    totalDays: stages.length,
+    compostelaEligible,
+    doubleStampPerDay,
+    injuryRiskScore: score,
+    riskDataQuality: quality,
+    advice: riskAdvice(score, quality),
+  }
+}
+
+/** 산티아고에서 뒤로 가며 이동수단을 만날 때까지의 연속 도보 거리. */
+function continuousWalkedToSantiago(stages: Stage[]): number {
+  let sum = 0
+  for (let i = stages.length - 1; i >= 0; i--) {
+    const s = stages[i]
+    if (s.isRestDay) continue
+    if (s.transport) break
+    sum += s.distanceKm
+  }
+  return round1(sum)
+}
+
+/** 큰 도시(beds>=150) 도착일 뒤에 휴식일을 삽입한다. dayNo 재부여. */
+function insertRestDays(stages: Stage[], restDays: number): void {
+  if (restDays <= 0) return
+  // 후보: 큰 도시에 도착한 도보 구간 (마지막 날 제외)
+  const candidates: number[] = []
+  for (let i = 0; i < stages.length - 1; i++) {
+    const s = stages[i]
+    if (s.transport || s.isRestDay) continue
+    const toIdx = TOWN_INDEX.get(s.toTownId)
+    if (toIdx !== undefined && ALL_TOWNS[toIdx].beds >= REST_TOWN_MIN_BEDS) candidates.push(i)
+  }
+  // 여정 전체에 고르게 분산
+  const picks: number[] = []
+  const n = Math.min(restDays, candidates.length)
+  for (let k = 0; k < n; k++) {
+    const target = Math.floor(((k + 1) / (n + 1)) * candidates.length)
+    const idx = candidates[Math.min(target, candidates.length - 1)]
+    if (!picks.includes(idx)) picks.push(idx)
+  }
+  // 뒤에서부터 삽입해야 인덱스가 안 밀린다
+  picks.sort((a, b) => b - a)
+  for (const at of picks) {
+    const town = ALL_TOWNS[TOWN_INDEX.get(stages[at].toTownId)!]
+    stages.splice(at + 1, 0, {
+      dayNo: 0,
+      date: null,
+      fromTownId: town.id,
+      toTownId: town.id,
+      variantId: null,
+      distanceKm: 0,
+      ascent: 0,
+      descent: 0,
+      maxElevation: 0,
+      estimatedMinutes: 0,
+      suggestedStartTime: '',
+      waypoints: [],
+      hazards: [],
+      lodgingId: null,
+      transport: null,
+      warnings: [],
+      isRestDay: true,
+    })
+  }
+  stages.forEach((s, i) => (s.dayNo = i + 1))
+}

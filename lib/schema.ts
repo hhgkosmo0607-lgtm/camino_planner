@@ -51,8 +51,12 @@ export interface SegmentProfile {
   descent: number              // 누적 하강 m. 무릎 부상의 주원인
   maxElevation: number         // 구간 최고점 (고개)
   maxGradient: number          // 최대 경사도 %
-  source: 'OSM+MDT' | 'ESTIMATED'
-  // source가 'ESTIMATED'인 동안은 injuryRiskScore를 사용자에게 숫자로 노출하지 않는다.
+  source: 'OSM+MDT' | 'OSM+EUDEM' | 'ESTIMATED'
+  // 'OSM+MDT'   : 경로 OSM + 고도 스페인 IGN MDT05(5m). 최종 목표 (아직 미사용)
+  // 'OSM+EUDEM' : 경로 OSM + 고도 EU-DEM 25m(Open Topo Data). 현재 실측 데이터
+  //   ※ IGN 5m는 급경사에서 경로 노이즈를 증폭해 오히려 부정확했다(DEVLOG 2026-07-25(2)).
+  //     완만한 구간은 5m≈25m라, 현재 EU-DEM 25m가 실용적으로 더 나은 선택.
+  // 'ESTIMATED' : 추정치. 이 동안은 injuryRiskScore를 숫자로 노출하지 않는다(규칙 3).
 }
 
 export type VariantTrait =
@@ -288,7 +292,7 @@ export interface Plan {
   compostelaEligible: boolean       // 도보 100km / 자전거 200km 기준. 전기자전거는 항상 false
   doubleStampPerDay: boolean        // 총 도보거리 기준. 위치(사리아 등) 기준이 아니다
   injuryRiskScore: number           // 0~100. 낮을수록 안전
-  riskDataQuality: 'OSM+MDT' | 'ESTIMATED'  // ESTIMATED면 UI에 점수를 숨긴다
+  riskDataQuality: SegmentProfile['source']  // ESTIMATED면 UI에 점수를 숨긴다
   advice: string                    // 한 줄 판단
 }
 
