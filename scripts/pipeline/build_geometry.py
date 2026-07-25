@@ -28,7 +28,11 @@ build_geometry.py — 경로·고도 데이터 파이프라인 (프로토타입)
 
 import json
 import math
+import os
+import re
+import sys
 import time
+import unicodedata
 import urllib.request
 import urllib.parse
 from collections import defaultdict
@@ -91,6 +95,20 @@ def fetch_segment_ways(rel_id):
     q = f"[out:json][timeout:150];relation({rel_id});way(r);out geom;"
     result = overpass(q)
     return [e for e in result["elements"] if e["type"] == "way"]
+
+
+def fetch_segment_ways_cached(rel_id, name):
+    """Overpass 응답을 data/geometry/{name}_ways.json 에 캐시.
+    같은 구간을 재조회하지 않도록(예의상 + 재실행 속도) — data/geometry/ 는 gitignore 대상."""
+    os.makedirs(OUT_DIR, exist_ok=True)
+    path = os.path.join(OUT_DIR, f"{name}_ways.json")
+    if os.path.exists(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    ways = fetch_segment_ways(rel_id)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(ways, f)
+    return ways
 
 
 # ────────────────────────────────────────────────
@@ -254,8 +272,267 @@ def _idx_at(cum, meters):
     return next((i for i, c in enumerate(cum) if c >= meters), len(cum) - 1)
 
 
+# ────────────────────────────────────────────────
+# 4. 6개 구간 전체를 이어붙여 하나의 773km 경로로 만들기
+# ────────────────────────────────────────────────
+def build_full_route():
+    """SEGMENTS 순서대로 각 구간을 스티칭하고, 구간 경계끼리 이어붙여
+    하나의 연속 경로(path)와 누적거리(cum, 0부터 시작)를 만든다.
+    결과를 data/geometry/full_route.json 에 저장(gitignore 대상, 좌표 포함하므로 배포 금지)."""
+    full_path = []
+    full_cum = []
+    offset = 0.0
+    boundary_gaps = []
+    prev_end = None
+
+    for rel_id, name, near_point in SEGMENTS:
+        print(f"{name} 가져오는 중...")
+        ways = fetch_segment_ways_cached(rel_id, name)
+        anchor = prev_end if prev_end is not None else near_point
+        path, cum, ok = stitch(ways, anchor)
+        if not ok:
+            raise RuntimeError(f"{name}: 스티칭 실패 (ok=False)")
+        print(f"  ok={ok}, {cum[-1]/1000:.1f}km, {len(path)}점")
+
+        if prev_end is not None:
+            gap = haversine(prev_end, path[0])
+            boundary_gaps.append((name, gap))
+            if gap > 500:
+                print(f"  ⚠️ 경계 불연속: 이전 구간 끝점과 {gap:.0f}m 떨어짐 (재확인 필요)")
+
+        if full_path and prev_end is not None:
+            full_path.extend(path[1:])
+            full_cum.extend([offset + c for c in cum[1:]])
+        else:
+            full_path.extend(path)
+            full_cum.extend([offset + c for c in cum])
+
+        offset = full_cum[-1]
+        prev_end = path[-1]
+
+    print(f"\n전체 경로: {full_cum[-1]/1000:.1f}km, {len(full_path)}점 (기준값 773.1km)")
+    for name, gap in boundary_gaps:
+        print(f"  경계({name}) 이전 구간과 거리: {gap:.0f}m")
+
+    os.makedirs(OUT_DIR, exist_ok=True)
+    out_path = os.path.join(OUT_DIR, "full_route.json")
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump({"path": full_path, "cum": full_cum}, f)
+    print(f"저장: {out_path}")
+    return full_path, full_cum
+
+
+
+# ════════════════════════════════════════════════════════════════
+# 5. 82개 마을 좌표 매핑 + 구간 프로파일 → data/towns.ts, data/profiles.ts
+# ════════════════════════════════════════════════════════════════
+#
+# ── 설계 결정 (사용자 부재 중 진행, 근거를 여기 남긴다) ──
+# TODO 주석에 있던 3가지 선택지: (a) Nominatim 지오코딩+스냅 (b) km 비율 보간
+# (c) 교차검증. Nominatim은 소도시 동명이인 위험(여러 지방에 같은 이름 마을)과
+# 공개 API rate limit(1req/s, 무인증)이 있어 82개를 무인 배치로 신뢰성 있게
+# 처리하기 어렵다고 판단해 (b) km 비율 보간을 택했다.
+#
+# 근거: 1일차 검증에서 우리가 이어붙인 실제 경로 길이(163.3km)가 가이드북 km
+# (로그로뇨 162.2km)과 0.7%밖에 차이 나지 않았다 — 카미노는 굴곡이 완만해서
+# "가이드북 km 비율 = 경로상 위치 비율"이 잘 성립한다. ratio = 우리_총길이 /
+# 가이드북_총길이(773.1km)로 스케일링해 각 마을의 실제 경로상 지점을 찾는다.
+#
+# town.km / town.elevation 은 절대 이 값으로 덮어쓰지 않는다 — 기존 검증된
+# 값(camino-companion.jsx, CLAUDE.md 규칙 1)을 그대로 보존하고, 지금까지 없던
+# lat/lng만 새로 채운다.
+
+TOWNS_SOURCE_FILE = "src/camino-companion.jsx"
+
+_TOWN_ROW_RE = re.compile(
+    r'\{\s*es:\s*"([^"]+)",\s*ko:\s*"([^"]+)",\s*km:\s*([\d.]+),\s*el:\s*(\d+),'
+    r'\s*beds:\s*(\d+),\s*sv:\s*"([a-z]*)"\s*\}'
+)
+
+_SV_MAP = {
+    "w": "WATER", "b": "BAR", "s": "SHOP",
+    "p": "PHARMACY", "a": "ATM", "x": "BAG_TRANSFER",
+}
+
+
+def load_towns_source():
+    """검증된 82개 마을 원본 데이터를 src/camino-companion.jsx에서 직접 파싱.
+    숫자를 여기 다시 옮겨 적지 않는다 — 오타로 값이 틀릴 위험을 없애기 위해
+    소스 파일을 그대로 정규식으로 읽는다."""
+    with open(TOWNS_SOURCE_FILE, "r", encoding="utf-8") as f:
+        text = f.read()
+    rows = _TOWN_ROW_RE.findall(text)
+    if len(rows) < 80:
+        raise RuntimeError(f"마을 파싱 개수 이상함: {len(rows)}개 (82개 기대)")
+    towns = []
+    for es, ko, km, el, beds, sv in rows:
+        towns.append({
+            "es": es, "ko": ko, "km": float(km), "el": int(el),
+            "beds": int(beds), "services": [_SV_MAP[c] for c in sv],
+        })
+    return towns
+
+
+def slugify(es):
+    s = unicodedata.normalize("NFKD", es)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    s = s.lower()
+    s = re.sub(r"[^a-z0-9]+", "-", s).strip("-")
+    return s
+
+
+def point_at(path, cum, meters):
+    """path 위에서 시작점 기준 meters 지점의 (lat,lon)을 선형보간으로 구한다."""
+    meters = max(0.0, min(meters, cum[-1]))
+    j = 0
+    while j < len(cum) - 1 and cum[j + 1] < meters:
+        j += 1
+    if j >= len(cum) - 1:
+        return path[-1]
+    d0, d1 = cum[j], cum[j + 1]
+    p0, p1 = path[j], path[j + 1]
+    f = 0 if d1 == d0 else (meters - d0) / (d1 - d0)
+    return (p0[0] + (p1[0] - p0[0]) * f, p0[1] + (p1[1] - p0[1]) * f)
+
+
+def profile_for_range_full(elevations, from_m, to_m, step=100.0):
+    """elevations: 0m부터 step 간격 전체 경로 고도 배열.
+    [from_m, to_m] 구간의 ascent/descent/maxElevation/maxGradient(%)."""
+    i0 = max(0, int(from_m / step))
+    i1 = min(len(elevations) - 1, int(round(to_m / step)))
+    seg = elevations[i0:i1 + 1]
+    if len(seg) < 2:
+        v = seg[0] if seg else 0
+        return {"ascent": 0, "descent": 0, "maxElevation": round(v), "maxGradient": 0.0}
+    sm = _moving_avg(seg, 5)
+    a, d = clean_gain_loss(sm, 3.0)
+    grad = max(abs(sm[i + 1] - sm[i]) for i in range(len(sm) - 1)) if len(sm) > 1 else 0.0
+    return {
+        "ascent": round(a), "descent": round(d),
+        "maxElevation": round(max(seg)), "maxGradient": round(grad, 1),
+    }
+
+
+def build_profiles_and_towns():
+    route_path = os.path.join(OUT_DIR, "full_route.json")
+    if not os.path.exists(route_path):
+        raise RuntimeError("먼저 `python3 build_geometry.py full` 로 전체 경로를 만들어야 함")
+    with open(route_path, "r", encoding="utf-8") as f:
+        route = json.load(f)
+    full_path, full_cum = route["path"], route["cum"]
+
+    towns = load_towns_source()
+    guidebook_total_m = towns[-1]["km"] * 1000
+    ratio = full_cum[-1] / guidebook_total_m
+    print(f"경로 실측 {full_cum[-1]/1000:.1f}km vs 가이드북 {towns[-1]['km']}km → ratio={ratio:.4f}")
+
+    for t in towns:
+        t["scaled_m"] = t["km"] * 1000 * ratio
+        t["lat"], t["lng"] = point_at(full_path, full_cum, t["scaled_m"])
+
+    elev_path = os.path.join(OUT_DIR, "full_elevations.json")
+    if os.path.exists(elev_path):
+        with open(elev_path, "r", encoding="utf-8") as f:
+            elevations = json.load(f)
+        print(f"고도 캐시 로드: {len(elevations)}점")
+    else:
+        resampled = resample(full_path, full_cum, step=100.0)
+        print(f"고도 조회 중: {len(resampled)}점 (100m 간격, 공개 API라 시간 걸림)")
+        elevations = fetch_elevations(resampled)
+        with open(elev_path, "w", encoding="utf-8") as f:
+            json.dump(elevations, f)
+        print(f"저장: {elev_path}")
+
+    profiles = []
+    for i in range(len(towns) - 1):
+        a, b = towns[i], towns[i + 1]
+        prof = profile_for_range_full(elevations, a["scaled_m"], b["scaled_m"])
+        prof["fromTownId"] = slugify(a["es"])
+        prof["toTownId"] = slugify(b["es"])
+        prof["distanceKm"] = round((b["scaled_m"] - a["scaled_m"]) / 1000, 1)
+        profiles.append(prof)
+
+    ids = [slugify(t["es"]) for t in towns]
+    dupes = {i for i in ids if ids.count(i) > 1}
+    if dupes:
+        raise RuntimeError(f"슬러그 중복 발생: {dupes} — slugify 규칙 조정 필요")
+
+    write_towns_ts(towns)
+    write_profiles_ts(profiles)
+    print(f"\n완료: 마을 {len(towns)}개, 구간 {len(profiles)}개")
+    print("source: 'OSM+EUDEM' (경로 OSM + 고도 EU-DEM 25m). IGN 5m는 급경사 노이즈로 부정확 —")
+    print("   DEVLOG 2026-07-25(2) 3소스 교차검증 참조.")
+
+
+def ts_str(s):
+    """작은따옴표 TS 문자열 리터럴 (프로젝트 스타일). 내부 작은따옴표는 이스케이프."""
+    return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'"
+
+
+def write_towns_ts(towns):
+    out = []
+    out.append("// data/towns.ts — 마을 82곳 마스터 데이터")
+    out.append("// km · elevation: src/camino-companion.jsx 검증값 그대로 보존 (수정 금지, CLAUDE.md 규칙 1)")
+    out.append("// lat/lng: scripts/pipeline/build_geometry.py 로 OSM 경로 위에 km-비율 스케일링해 도출")
+    out.append("// 경로 데이터 © OpenStreetMap contributors (ODbL)")
+    out.append("import type { Town } from '../lib/schema'")
+    out.append("")
+    out.append("export const towns: Town[] = [")
+    for t in towns:
+        out.append("  {")
+        out.append(f"    id: {ts_str(slugify(t['es']))},")
+        out.append(f"    nameEs: {ts_str(t['es'])},")
+        out.append(f"    nameKo: {ts_str(t['ko'])},")
+        out.append("    routeId: 'camino-frances',")
+        out.append(f"    km: {t['km']},")
+        out.append(f"    elevation: {t['el']},")
+        out.append(f"    lat: {t['lat']:.6f},")
+        out.append(f"    lng: {t['lng']:.6f},")
+        out.append(f"    services: [{', '.join(ts_str(s) for s in t['services'])}],")
+        out.append(f"    beds: {t['beds']},")
+        out.append("    population: null,")
+        out.append("    notesKo: null,")
+        out.append("  },")
+    out.append("]")
+    os.makedirs("data", exist_ok=True)
+    with open("data/towns.ts", "w", encoding="utf-8") as f:
+        f.write("\n".join(out) + "\n")
+    print("저장: data/towns.ts")
+
+
+def write_profiles_ts(profiles):
+    out = []
+    out.append("// data/profiles.ts — 마을 간 81개 구간 실측 고도 프로파일")
+    out.append("// 경로: OpenStreetMap contributors (ODbL) · 고도: EU-DEM 25m (CC BY, Copernicus) via Open Topo Data")
+    out.append("// source: 'OSM+EUDEM' — 경로 OSM + 고도 EU-DEM 25m. IGN MDT05(5m)는 급경사에서")
+    out.append("//   경로 노이즈를 증폭해 오히려 부정확했다(DEVLOG 2026-07-25(2)). 현재는 EU-DEM 25m가 실용적 정답.")
+    out.append("import type { SegmentProfile } from '../lib/schema'")
+    out.append("")
+    out.append("export const profiles: SegmentProfile[] = [")
+    for p in profiles:
+        out.append("  {")
+        out.append(f"    fromTownId: {ts_str(p['fromTownId'])},")
+        out.append(f"    toTownId: {ts_str(p['toTownId'])},")
+        out.append(f"    distanceKm: {p['distanceKm']},")
+        out.append(f"    ascent: {p['ascent']},")
+        out.append(f"    descent: {p['descent']},")
+        out.append(f"    maxElevation: {p['maxElevation']},")
+        out.append(f"    maxGradient: {p['maxGradient']},")
+        out.append("    source: 'OSM+EUDEM',")
+        out.append("  },")
+    out.append("]")
+    with open("data/profiles.ts", "w", encoding="utf-8") as f:
+        f.write("\n".join(out) + "\n")
+    print("저장: data/profiles.ts")
+
+
 if __name__ == "__main__":
-    validate_day1()
+    if len(sys.argv) > 1 and sys.argv[1] == "full":
+        build_full_route()
+    elif len(sys.argv) > 1 and sys.argv[1] == "profiles":
+        build_profiles_and_towns()
+    else:
+        validate_day1()
 
 # ══════════════════════════════════════════════════
 # TODO (다음 세션에서 이어서) — 아직 안 끝난 것:
@@ -272,7 +549,7 @@ if __name__ == "__main__":
 #    → 다음 세션에서 사용자와 방법 확정하고 진행.
 #
 # 3. 각 구간(마을→마을)별 profile_for_range()로 ascent/descent 계산
-#    → data/profiles.ts 생성 (SegmentProfile[] 타입, source:'OSM+MDT')
+#    → data/profiles.ts 생성 (SegmentProfile[] 타입, source:'OSM+EUDEM')
 #    ⚠️ 좌표는 profiles.ts에 넣지 않는다 — 숫자만 (ODbL 파생DB 배포 회피)
 #
 # 4. 최종본을 scripts/build-profiles.ts (TypeScript)로 포팅
