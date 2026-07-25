@@ -1,26 +1,31 @@
 @import "tailwindcss";
 
 /*
- * 디자인 토큰 — CLAUDE.md "디자인 토큰" 절 그대로.
- * 카미노 공식 표지(사아코베오)의 코발트 + 노란 화살표에서 가져왔다.
- * 임의로 색을 추가/변경하지 않는다. 특히 --flecha(노란 화살표)는
- * 길 안내·현재 위치·활성 상태에만 쓴다 (장식 금지).
+ * 디자인 토큰.
+ * 메인 톤은 따뜻한 크림(--sand #f9e3ab) — 코발트(--ink)와 짝지어 미니멀하게.
+ * ★ 크림은 '캔버스'(페이지 배경)로만 쓴다. 콘텐츠는 흰 카드·코발트 헤더 위에 올려
+ *   노란 화살표(--flecha)가 크림에 묻히지 않게 한다.
+ * ★ --flecha(노란 화살표)는 길 안내·현재 위치·활성 상태에만 (장식 금지).
  */
 :root {
-  --ink: #12253f;
+  --ink: #12253f;      /* 코발트 — 헤더·본문·주요 */
   --ink-2: #1d3b5e;
-  --granite: #e7e8e2;
-  --stone: #c6c8be;
-  --flecha: #f0b429;
-  --vino: #7a2e39;
-  --moss: #3f5d4a;
+  --sand: #f9e3ab;     /* 메인 크림 — 페이지 배경 */
+  --sand-2: #fdf3d2;   /* 옅은 크림 */
+  --granite: #f9e3ab;  /* 하위호환: bg-granite = 메인 크림 */
+  --stone: #cbab66;    /* 따뜻한 테두리·구분선 (흰 카드 위 가시성) */
+  --flecha: #f0b429;   /* 노란 화살표 — 길 안내 전용 */
+  --vino: #7a2e39;     /* 도장 잉크 — 경고 강조 */
+  --moss: #3f5d4a;     /* 안전·확인 */
   --text: #1b2430;
-  --muted: #6b7280;
+  --muted: #6f6450;    /* 따뜻한 muted (크림/흰색 대비 확보) */
 }
 
 @theme inline {
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
+  --color-sand: var(--sand);
+  --color-sand-2: var(--sand-2);
   --color-granite: var(--granite);
   --color-stone: var(--stone);
   --color-flecha: var(--flecha);
@@ -53,5 +58,32 @@ body {
   body {
     background: #fff;
     color: #000;
+    font-size: 11pt; /* 인쇄물 9pt 이상 */
   }
+  /* 화면 전용 요소는 인쇄에서 숨긴다 */
+  .no-print {
+    display: none !important;
+  }
+  /* 인쇄용 시트는 여백을 줄이고 전체 폭을 쓴다 */
+  .print-sheet {
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  /* 한 구간(행)이 페이지 경계에서 잘리지 않게 */
+  .print-row,
+  tr {
+    break-inside: avoid;
+  }
+  thead {
+    display: table-header-group; /* 페이지마다 표 머리 반복 */
+  }
+  /* 인쇄물에 링크 URL 을 덧붙이지 않는다 */
+  a[href]::after {
+    content: none !important;
+  }
+}
+
+@page {
+  margin: 14mm;
 }
