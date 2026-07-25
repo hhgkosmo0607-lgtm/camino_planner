@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>산티아고 순례길 지리 인포그래픽</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yellow:#F2B705;
+  --yellow-lt:#FFE9A8;
+  --blue:#0B3C8C;
+  --blue-lt:#2A63C4;
+  --navy:#071F45;
+  --cream:#FBF7EE;
+  --paper:#FFFFFF;
+  --terra:#C1502E;
+  --sage:#5E7A56;
+  --sand:#D9C7A3;
+  --ink:#20242B;
+  --muted:#6A7180;
+  --line:#E3DCCB;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:#EDE7DA;
+  color:var(--ink);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+.deck{max-width:1180px;margin:0 auto;padding:28px 16px 60px}
+.panel{
+  background:var(--cream);
+  border-radius:20px;
+  padding:44px 48px 48px;
+  margin-bottom:26px;
+  box-shadow:0 4px 24px rgba(7,31,69,.10);
+  position:relative;
+  overflow:hidden;
+}
+.panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:6px;
+  background:linear-gradient(90deg,var(--yellow) 0%,var(--yellow) 60%,var(--blue) 60%,var(--blue) 100%);
+}
+.pnum{
+  position:absolute;top:26px;right:34px;
+  font-family:'Playfair Display',serif;font-size:64px;font-weight:900;
+  color:rgba(11,60,140,.08);line-height:1;letter-spacing:-2px;
+}
+.eyebrow{
+  font-size:11px;font-weight:700;letter-spacing:2.4px;text-transform:uppercase;
+  color:var(--terra);margin-bottom:8px;
+}
+h2{
+  font-size:31px;font-weight:900;letter-spacing:-.8px;color:var(--navy);
+  line-height:1.25;margin-bottom:10px;
+}
+h3{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.lede{font-size:14.5px;color:var(--muted);max-width:780px;margin-bottom:26px;font-weight:300}
+.rule{height:2px;background:var(--line);margin:24px 0}
+
+/* cover */
+.cover{background:linear-gradient(160deg,var(--navy) 0%,var(--blue) 55%,#124aa8 100%);color:#fff;padding:60px 48px 52px}
+.cover::before{background:var(--yellow)}
+.cover h1{font-family:'Playfair Display',serif;font-size:60px;font-weight:900;line-height:1.05;letter-spacing:-2px;margin:14px 0 6px}
+.cover .sub{font-size:19px;font-weight:300;color:#CFE0FF;margin-bottom:8px}
+.cover .eyebrow{color:var(--yellow)}
+.shellwrap{position:absolute;right:-40px;bottom:-70px;opacity:.14}
+.covergrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:38px;position:relative;z-index:2}
+.cstat{background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:16px 16px 14px}
+.cstat b{display:block;font-family:'Playfair Display',serif;font-size:32px;color:var(--yellow);line-height:1.1}
+.cstat span{font-size:11.5px;color:#CFE0FF;font-weight:300}
+
+/* generic bits */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+.card .t{font-size:14.5px;font-weight:700;color:var(--navy);margin-bottom:5px;display:flex;align-items:center;gap:7px}
+.card p{font-size:12.5px;color:var(--muted);font-weight:300;line-height:1.62}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.stat{font-family:'Playfair Display',serif;font-size:30px;font-weight:900;color:var(--blue);line-height:1}
+.statlbl{font-size:11px;color:var(--muted);letter-spacing:.4px;margin-top:3px}
+table{width:100%;border-collapse:collapse;font-size:12.4px}
+th{
+  background:var(--navy);color:#fff;text-align:left;padding:9px 10px;font-weight:500;
+  font-size:11px;letter-spacing:.6px;
+}
+td{padding:8px 10px;border-bottom:1px solid var(--line);color:#39404D}
+tbody tr:nth-child(even){background:rgba(255,255,255,.6)}
+tbody tr.hl{background:var(--yellow-lt)}
+td b{color:var(--navy)}
+.tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.4px}
+.t-easy{background:#DFF0DC;color:#2F5C28}
+.t-mid{background:#FDEFCB;color:#8A6206}
+.t-hard{background:#F8DAD1;color:#993318}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:22px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.note{font-size:11px;color:#98A0AE;font-weight:300;margin-top:14px;font-style:italic}
+.foot{text-align:center;font-size:11.5px;color:#7C8494;padding:14px 20px 0;line-height:1.9}
+.foot a{color:var(--blue);text-decoration:none}
+.mapbox{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:14px}
+svg{display:block;width:100%;height:auto}
+.pillrow{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.pill{background:#fff;border:1px solid var(--line);border-radius:20px;padding:4px 12px;font-size:11.5px;color:#454C59}
+.pill b{color:var(--terra)}
+@media print{
+  body{background:#fff}
+  .deck{max-width:none;padding:0}
+  .panel{page-break-after:always;box-shadow:none;border-radius:0;margin:0;min-height:100vh}
+}
+@media(max-width:840px){
+  .grid2,.grid3,.grid4,.covergrid{grid-template-columns:1fr}
+  .panel{padding:30px 22px 34px}
+  .cover h1{font-size:38px}
+  h2{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- ══════════ 01 COVER ══════════ -->
+<section class="panel cover">
+  <div class="shellwrap">
+    <svg width="420" height="420" viewBox="0 0 100 100"><g fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M50 88 C22 70 10 46 14 28 C17 15 30 10 40 16"/><path d="M50 88 L50 14"/><path d="M50 88 C78 70 90 46 86 28 C83 15 70 10 60 16"/><path d="M50 88 C40 66 34 40 36 18"/><path d="M50 88 C60 66 66 40 64 18"/><path d="M50 88 C30 68 20 44 22 22"/><path d="M50 88 C70 68 80 44 78 22"/><circle cx="50" cy="12" r="7"/></g></svg>
+  </div>
+  <div class="eyebrow">Geographical Infographic · 2026</div>
+  <h1>산티아고<br>순례길</h1>
+  <div class="sub">Camino de Santiago — 이베리아반도를 가로지르는 1,200년의 길</div>
+  <p style="font-size:13.5px;color:#B9CEF5;font-weight:300;max-width:620px;margin-top:14px">
+    피레네의 눈 덮인 고개에서 카스티야의 끝없는 밀밭을 지나, 대서양의 안개 낀 갈리시아 숲까지 —
+    노선·지형·기후·숙소·음식·명소를 한눈에 담은 지리 안내서.
+  </p>
+  <div class="covergrid">
+    <div class="cstat"><b>40+</b><span>공식·준공식 순례 노선</span></div>
+    <div class="cstat"><b>772km</b><span>카미노 프란세스 총거리</span></div>
+    <div class="cstat"><b>530,987</b><span>2025년 콤포스텔라 수령자</span></div>
+    <div class="cstat"><b>1,505m</b><span>최고 지점 · 크루스 데 페로</span></div>
+  </div>
+</section>
+
+<!-- ══════════ 02 전체 노선 지도 ══════════ -->
+<section class="panel">
+  <div class="pnum">02</div>
+  <div class="eyebrow">Route Network</div>
+  <h2>이베리아반도를 잇는 순례길 네트워크</h2>
+  <p class="lede">모든 길은 갈리시아 서쪽 끝 산티아고 데 콤포스텔라 대성당으로 모인다. 프랑스·포르투갈·안달루시아·지중해 연안에서 출발하는 수십 개의 노선이 별처럼 수렴하는 구조다.</p>
+
+  <div class="mapbox">
+  <svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#DCE9F5"/><stop offset="100%" stop-color="#C9DDF0"/>
+      </linearGradient>
+    </defs>
+    <rect x="0" y="0" width="1000" height="640" fill="url(#sea)" rx="10"/>
+    <!-- landmass -->
+    <path d="M127,16 L192,20 L300,19 L391,30 L444,26 L513,30 L602,33 L684,71 L794,87 L877,103 L990,109
+             L998,153 L912,192 L828,218 L810,245 L758,310 L760,403 L705,445 L691,473 L639,496 L602,524
+             L550,554 L461,563 L397,563 L323,610 L251,578 L203,524 L164,526 L155,499 L55,538 L55,461
+             L2,399 L49,290 L56,211 L49,153 L51,135 L37,97 L16,71 L24,48 L52,36 L94,20 Z"
+          fill="#F3EDDF" stroke="#C9BFA6" stroke-width="1.6"/>
+    <!-- Portugal border -->
+    <path d="M49,153 L67,139 L60,165 L84,179 L83,215 L70,250 L74,290 L79,330 L88,360 L79,395 L82,430 L74,470 L83,500 L100,520 L155,499"
+          fill="none" stroke="#C9BFA6" stroke-width="1.2" stroke-dasharray="4 4"/>
+
+    <!-- ROUTES -->
+    <!-- Vía de la Plata (Sevilla→Salamanca→Astorga) -->
+    <path d="M274,509 L247,388 L244,343 L293,270 L300,225 L293,183 L280,150 L269,107" fill="none" stroke="#8E44AD" stroke-width="3.4" stroke-linecap="round"/>
+    <!-- Camino Sanabrés (Granja de Moreruela → Ourense → Santiago) -->
+    <path d="M291,176 L240,150 L180,132 L128,116 L100,96 L75,73" fill="none" stroke="#C0392B" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="9 5"/>
+    <!-- Camino Portugués Central (Lisboa→Porto→Tui→Santiago) -->
+    <path d="M28,404 L60,340 L72,270 L70,211 L78,175 L67,139 L67,109 L66,84 L75,73" fill="none" stroke="#16A085" stroke-width="3.6" stroke-linecap="round"/>
+    <!-- Portugués Coastal -->
+    <path d="M70,211 L58,175 L52,150 L61,124 L67,109" fill="none" stroke="#16A085" stroke-width="2.6" stroke-dasharray="7 4" stroke-linecap="round"/>
+    <!-- Camino del Norte (Irún→Bilbao→Santander→Gijón→Ribadeo→Santiago) -->
+    <path d="M602,37 L513,43 L444,27 L371,30 L300,21 L268,33 L192,21 L167,29 L142,40 L120,58 L100,68 L75,73" fill="none" stroke="#2980B9" stroke-width="3.6" stroke-linecap="round"/>
+    <!-- Camino Primitivo (Oviedo→Lugo→Melide) -->
+    <path d="M286,35 L250,44 L215,52 L180,58 L152,63 L128,68 L116,71 L75,73" fill="none" stroke="#E67E22" stroke-width="3.4" stroke-linecap="round"/>
+    <!-- Camino Francés -->
+    <path d="M645,51 L639,63 L614,79 L601,90 L584,90 L551,106 L512,108 L453,116 L398,122 L349,114 L307,95 L269,107 L227,99 L192,87 L163,81 L116,71 L75,73" fill="none" stroke="#F2B705" stroke-width="5" stroke-linecap="round"/>
+    <!-- Camino Aragonés (Somport→Jaca→Puente la Reina) -->
+    <path d="M702,80 L699,98 L660,95 L630,92 L601,90" fill="none" stroke="#F2B705" stroke-width="3" stroke-dasharray="8 4" stroke-linecap="round"/>
+    <!-- Camino Inglés (Ferrol/A Coruña→Santiago) -->
+    <path d="M99,25 L92,42 L84,56 L75,73 M86,34 L82,52 L78,64" fill="none" stroke="#7F8C8D" stroke-width="3" stroke-linecap="round"/>
+    <!-- Camino de Invierno (Ponferrada→Monforte→Lalín→Santiago) -->
+    <path d="M227,99 L205,110 L175,108 L156,101 L130,96 L109,91 L88,82 L75,73" fill="none" stroke="#34495E" stroke-width="2.8" stroke-dasharray="6 4" stroke-linecap="round"/>
+    <!-- Finisterre-Muxía -->
+    <path d="M75,73 L52,72 L30,68 L18,71 M30,68 L22,56" fill="none" stroke="#D35400" stroke-width="3" stroke-linecap="round"/>
+    <!-- Camino de Madrid -->
+    <path d="M453,269 L440,230 L420,190 L390,150 L349,114" fill="none" stroke="#9B59B6" stroke-width="2.4" stroke-dasharray="5 4" stroke-linecap="round"/>
+    <!-- Camino de Levante / Sureste -->
+    <path d="M712,344 L640,320 L560,300 L470,285 L427,313 L400,260 L420,190" fill="none" stroke="#BDC3C7" stroke-width="2.4" stroke-dasharray="5 4"/>
+    <!-- Camino Catalán -->
+    <path d="M912,192 L820,190 L740,180 L673,171 L640,150 L610,120 L601,90" fill="none" stroke="#BDC3C7" stroke-width="2.4" stroke-dasharray="5 4"/>
+    <!-- Camino Mozárabe -->
+    <path d="M461,526 L430,480 L400,440 L360,410 L300,400 L247,388" fill="none" stroke="#BDC3C7" stroke-width="2.4" stroke-dasharray="5 4"/>
+
+    <!-- Santiago star -->
+    <g transform="translate(75,73)">
+      <circle r="17" fill="#fff" stroke="#0B3C8C" stroke-width="2.5"/>
+      <path d="M0,-11 L2.6,-3.5 L10.5,-3.5 L4.2,1.3 L6.5,8.9 L0,4.2 L-6.5,8.9 L-4.2,1.3 L-10.5,-3.5 L-2.6,-3.5 Z" fill="#F2B705"/>
+    </g>
+    <text x="75" y="106" font-size="14" font-weight="800" fill="#0B3C8C" text-anchor="middle" font-family="Noto Sans KR">SANTIAGO</text>
+
+    <!-- city dots + labels -->
+    <g font-family="Noto Sans KR" font-size="11.5" fill="#2C3440">
+      <g fill="#0B3C8C">
+        <circle cx="645" cy="51" r="4"/><circle cx="614" cy="79" r="4"/><circle cx="551" cy="106" r="4"/>
+        <circle cx="453" cy="116" r="4"/><circle cx="307" cy="95" r="4"/><circle cx="269" cy="107" r="4"/>
+        <circle cx="227" cy="99" r="4"/><circle cx="163" cy="81" r="4"/><circle cx="286" cy="35" r="4"/>
+        <circle cx="152" cy="63" r="4"/><circle cx="602" cy="37" r="4"/><circle cx="513" cy="43" r="4"/>
+        <circle cx="444" cy="27" r="4"/><circle cx="99" cy="25" r="4"/><circle cx="70" cy="211" r="4"/>
+        <circle cx="28" cy="404" r="4"/><circle cx="274" cy="509" r="4"/><circle cx="300" cy="225" r="4"/>
+        <circle cx="128" cy="116" r="4"/><circle cx="18" cy="71" r="4"/><circle cx="702" cy="80" r="4"/>
+        <circle cx="453" cy="269" r="4"/>
+      </g>
+      <text x="656" y="48">생장피에드포르</text>
+      <text x="608" y="94">팜플로나</text>
+      <text x="545" y="122">로그로뇨</text>
+      <text x="447" y="132">부르고스</text>
+      <text x="300" y="88" text-anchor="end">레온</text>
+      <text x="266" y="122" text-anchor="end">아스토르가</text>
+      <text x="222" y="115" text-anchor="end">폰페라다</text>
+      <text x="170" y="78">사리아</text>
+      <text x="295" y="31">오비에도</text>
+      <text x="158" y="58">루고</text>
+      <text x="610" y="30">이룬</text>
+      <text x="505" y="58" text-anchor="end">빌바오</text>
+      <text x="440" y="17" text-anchor="middle">산탄데르</text>
+      <text x="108" y="21">페롤</text>
+      <text x="80" y="215">포르투</text>
+      <text x="38" y="408">리스본</text>
+      <text x="284" y="513">세비야</text>
+      <text x="310" y="229">살라망카</text>
+      <text x="138" y="120">오렌세</text>
+      <text x="8" y="88" text-anchor="middle">피스테라</text>
+      <text x="712" y="76">솜포르트</text>
+      <text x="463" y="273">마드리드</text>
+    </g>
+  </svg>
+  </div>
+
+  <div class="legend">
+    <span><i style="background:#F2B705"></i>카미노 프란세스 (프랑스길)</span>
+    <span><i style="background:#2980B9"></i>카미노 델 노르테 (북쪽길)</span>
+    <span><i style="background:#E67E22"></i>카미노 프리미티보 (원조길)</span>
+    <span><i style="background:#16A085"></i>카미노 포르투게스 (포르투갈길)</span>
+    <span><i style="background:#8E44AD"></i>비아 데 라 플라타 (은의 길)</span>
+    <span><i style="background:#C0392B"></i>카미노 사나브레스</span>
+    <span><i style="background:#7F8C8D"></i>카미노 잉글레스 (영국길)</span>
+    <span><i style="background:#34495E"></i>카미노 데 인비에르노 (겨울길)</span>
+    <span><i style="background:#D35400"></i>피스테라·묵시아 연장</span>
+    <span><i style="background:#BDC3C7"></i>기타 내륙·지중해 노선</span>
+  </div>
+  <p class="note">※ 지도는 노선의 지리적 관계를 보여주기 위한 개략도이며 실제 경로와 축척은 다릅니다.</p>
+</section>
+
+<!-- ══════════ 03 노선 총정리 ══════════ -->
+<section class="panel">
+  <div class="pnum">03</div>
+  <div class="eyebrow">All Routes</div>
+  <h2>순례 노선 총정리 — 90km부터 1,000km까지</h2>
+  <p class="lede">순례자 사무소가 콤포스텔라 증서 발급 시 인정하는 주요 노선과, 이들에 합류하는 대표적 지선(支線)을 모두 정리했다. 거리는 산티아고까지 기준이다.</p>
+
+  <table>
+    <thead><tr>
+      <th style="width:22%">노선</th><th style="width:26%">출발지 → 경유</th><th style="width:9%">거리</th>
+      <th style="width:9%">소요</th><th style="width:10%">난이도</th><th>지리적 성격</th>
+    </tr></thead>
+    <tbody>
+      <tr class="hl"><td><b>카미노 프란세스</b><br><span style="font-size:10.5px;color:#8A8F9A">Camino Francés</span></td><td>생장피에드포르 → 팜플로나·부르고스·레온</td><td><b>772km</b></td><td>31~35일</td><td><span class="tag t-mid">중급</span></td><td>피레네·메세타·갈리시아 산지를 모두 통과하는 종합 종단선. 전체 순례자의 45.6%</td></tr>
+      <tr><td><b>카미노 포르투게스 (중앙)</b></td><td>리스본/포르투 → 코임브라·투이</td><td>620 / 260km</td><td>25 / 12일</td><td><span class="tag t-easy">초급</span></td><td>대서양 충적평야와 미뉴강 유역. 완만한 구릉, 최근 가장 빠르게 성장</td></tr>
+      <tr><td><b>카미노 포르투게스 (해안)</b></td><td>포르투 → 비아나두카스텔루·바이오나</td><td>280km</td><td>13일</td><td><span class="tag t-easy">초급</span></td><td>대서양 해안 산책로·모래언덕, 리아스식 해안 조망</td></tr>
+      <tr><td><b>카미노 델 노르테</b></td><td>이룬 → 빌바오·산탄데르·히혼</td><td>825km</td><td>33~38일</td><td><span class="tag t-hard">고급</span></td><td>칸타브리아 해안 절벽. 누적 오르내림이 가장 크고 강수량 최다</td></tr>
+      <tr><td><b>카미노 프리미티보</b></td><td>오비에도 → 그란다스 데 살리메·루고</td><td>313km</td><td>13~14일</td><td><span class="tag t-hard">고급</span></td><td>가장 오래된 원조 노선. 칸타브리아산맥 능선, 1,150m 오스피탈레스 고원</td></tr>
+      <tr><td><b>비아 데 라 플라타</b></td><td>세비야 → 메리다·카세레스·살라망카</td><td>1,000km</td><td>40~45일</td><td><span class="tag t-hard">고급</span></td><td>최장 노선. 로마 가도를 따라 데헤사(참나무 방목지)와 반건조 고원 종단</td></tr>
+      <tr><td><b>카미노 사나브레스</b></td><td>그란하 데 모레루엘라 → 오렌세</td><td>365km</td><td>15일</td><td><span class="tag t-mid">중급</span></td><td>플라타의 갈리시아 분기선. 실강 협곡과 저수지 지대</td></tr>
+      <tr><td><b>카미노 잉글레스</b></td><td>페롤 / 아 코루냐</td><td>119 / 75km</td><td>5~6일</td><td><span class="tag t-easy">초급</span></td><td>중세 영국·북유럽 순례자의 해상 상륙로. 갈리시아 리아스 내륙</td></tr>
+      <tr><td><b>카미노 데 인비에르노</b></td><td>폰페라다 → 라스 메둘라스·몬포르테</td><td>263km</td><td>10~11일</td><td><span class="tag t-mid">중급</span></td><td>겨울에 오 세브레이로 눈을 피하는 우회로. 시강 협곡·리베이라 사크라 포도밭</td></tr>
+      <tr><td><b>카미노 아라고네스</b></td><td>솜포르트 고개 → 하카 → 푸엔테 라 레이나</td><td>165km</td><td>7일</td><td><span class="tag t-mid">중급</span></td><td>중앙 피레네를 넘어 프란세스에 합류하는 고전적 진입로</td></tr>
+      <tr><td><b>피스테라·묵시아</b></td><td>산티아고 → 피스테라 → 묵시아</td><td>90~120km</td><td>3~4일</td><td><span class="tag t-easy">초급</span></td><td>유일하게 산티아고에서 '출발'하는 길. '땅끝'과 죽음의 해안(Costa da Morte)</td></tr>
+      <tr><td>카미노 바스코 델 인테리오르</td><td>이룬 → 비토리아 → 산토도밍고</td><td>190km</td><td>8일</td><td><span class="tag t-mid">중급</span></td><td>바스크 내륙 산지, 노르테와 프란세스를 잇는 연결로</td></tr>
+      <tr><td>카미노 데 마드리드</td><td>마드리드 → 세고비아 → 사아군</td><td>320km</td><td>13일</td><td><span class="tag t-mid">중급</span></td><td>과다라마 산맥(1,800m)을 넘어 메세타 북부로</td></tr>
+      <tr><td>카미노 모사라베</td><td>말라가/그라나다/알메리아 → 메리다</td><td>~400km</td><td>17일</td><td><span class="tag t-hard">고급</span></td><td>안달루시아 산악·건조지대. 여름 극심한 더위</td></tr>
+      <tr><td>카미노 데 레반테 / 수레스테</td><td>발렌시아 / 알리칸테 → 사모라</td><td>~1,000km</td><td>40일</td><td><span class="tag t-hard">고급</span></td><td>지중해에서 대서양까지 반도 대각선 횡단</td></tr>
+      <tr><td>카미노 카탈란</td><td>몬세라트 → 사라고사 → 로그로뇨</td><td>~600km</td><td>25일</td><td><span class="tag t-mid">중급</span></td><td>에브로 계곡을 따라가는 건조 회랑</td></tr>
+      <tr><td>카미노 데 라 라나 / 델 에브로 / 올비다도</td><td>알리칸테·타라고나·빌바오 등</td><td>400~700km</td><td>—</td><td><span class="tag t-hard">고급</span></td><td>인프라가 드문 '잊힌 길'. 자립형 순례자용</td></tr>
+      <tr><td>카미노 레바니에고 · 살바도르</td><td>산 비센테→포테스 / 레온→오비에도</td><td>72 / 120km</td><td>3~5일</td><td><span class="tag t-hard">고급</span></td><td>피코스 데 에우로파·칸타브리아 산악 연결로</td></tr>
+    </tbody>
+  </table>
+  <p class="note">거리는 자료·측정 방식에 따라 ±20km 차이가 날 수 있음 · 통계 출처: 순례자 사무소(Oficina del Peregrino) 2025</p>
+</section>
+
+<!-- ══════════ 04 고도 프로파일 ══════════ -->
+<section class="panel">
+  <div class="pnum">04</div>
+  <div class="eyebrow">Elevation Profile</div>
+  <h2>카미노 프란세스 종단면 — 772km의 오르내림</h2>
+  <p class="lede">해발 170m의 생장에서 시작해 두 번의 1,400m급 산악 구간과 200km의 고원을 거쳐 대서양 쪽 260m로 내려온다. 누적 상승고도는 약 <b>+13,960m</b>(에베레스트 1.6회분).</p>
+
+  <div class="mapbox">
+  <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="elev" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#F2B705" stop-opacity=".85"/>
+        <stop offset="100%" stop-color="#F2B705" stop-opacity=".12"/>
+      </linearGradient>
+    </defs>
+    <!-- gridlines -->
+    <g stroke="#E3DCCB" stroke-width="1">
+      <line x1="40" y1="230" x2="985" y2="230"/>
+      <line x1="40" y1="162" x2="985" y2="162"/>
+      <line x1="40" y1="94" x2="985" y2="94"/>
+      <line x1="40" y1="46" x2="985" y2="46"/>
+    </g>
+    <g font-size="10" fill="#98A0AE" font-family="Noto Sans KR">
+      <text x="34" y="234" text-anchor="end">150m</text>
+      <text x="34" y="166" text-anchor="end">650m</text>
+      <text x="34" y="98" text-anchor="end">1150m</text>
+      <text x="34" y="50" text-anchor="end">1500m</text>
+    </g>
+    <!-- profile -->
+    <path d="M40,227 L64,56 L70,121 L97,180 L128,189 L144,143 L156,203 L183,193 L209,189 L243,198
+             L270,185 L296,164 L324,146 L344,94 L352,115 L383,134 L432,142 L476,145 L500,138 L549,138
+             L594,138 L632,132 L661,94 L670,46 L691,181 L722,181 L758,74 L785,160 L813,189 L840,203
+             L870,174 L910,197 L941,211 L970,200 L980,215 L980,258 L40,258 Z" fill="url(#elev)"/>
+    <path d="M40,227 L64,56 L70,121 L97,180 L128,189 L144,143 L156,203 L183,193 L209,189 L243,198
+             L270,185 L296,164 L324,146 L344,94 L352,115 L383,134 L432,142 L476,145 L500,138 L549,138
+             L594,138 L632,132 L661,94 L670,46 L691,181 L722,181 L758,74 L785,160 L813,189 L840,203
+             L870,174 L910,197 L941,211 L970,200 L980,215"
+          fill="none" stroke="#C1502E" stroke-width="2.4" stroke-linejoin="round"/>
+    <!-- peak markers -->
+    <g font-family="Noto Sans KR" font-size="10" fill="#C1502E" font-weight="700">
+      <circle cx="64" cy="56" r="4" fill="#C1502E"/><text x="64" y="44" text-anchor="middle">레포에데르 고개 1,430m</text>
+      <circle cx="144" cy="143" r="3.5" fill="#C1502E"/><text x="144" y="133" text-anchor="middle">페르돈 790m</text>
+      <circle cx="344" cy="94" r="3.5" fill="#C1502E"/><text x="344" y="84" text-anchor="middle">몬테스 데 오카 1,150m</text>
+      <circle cx="670" cy="46" r="4.5" fill="#C1502E"/><text x="670" y="34" text-anchor="middle">크루스 데 페로 1,505m</text>
+      <circle cx="758" cy="74" r="4.5" fill="#C1502E"/><text x="758" y="62" text-anchor="middle">오 세브레이로 1,300m</text>
+    </g>
+    <!-- city axis -->
+    <g font-family="Noto Sans KR" font-size="10" fill="#454C59">
+      <g stroke="#B9BFC9" stroke-width="1" stroke-dasharray="2 3">
+        <line x1="40" y1="258" x2="40" y2="266"/><line x1="128" y1="258" x2="128" y2="266"/>
+        <line x1="243" y1="258" x2="243" y2="266"/><line x1="383" y1="258" x2="383" y2="266"/>
+        <line x1="549" y1="258" x2="549" y2="266"/><line x1="594" y1="258" x2="594" y2="266"/>
+        <line x1="691" y1="258" x2="691" y2="266"/><line x1="813" y1="258" x2="813" y2="266"/>
+        <line x1="980" y1="258" x2="980" y2="266"/>
+      </g>
+      <text x="40" y="280" text-anchor="start">생장 0km</text>
+      <text x="128" y="280" text-anchor="middle">팜플로나 72</text>
+      <text x="243" y="280" text-anchor="middle">로그로뇨 167</text>
+      <text x="383" y="280" text-anchor="middle">부르고스 282</text>
+      <text x="549" y="292" text-anchor="middle">사아군 418</text>
+      <text x="594" y="280" text-anchor="middle">레온 455</text>
+      <text x="691" y="280" text-anchor="middle">폰페라다 535</text>
+      <text x="813" y="280" text-anchor="middle">사리아 635</text>
+      <text x="980" y="280" text-anchor="end">산티아고 772km</text>
+    </g>
+  </svg>
+  </div>
+
+  <div class="grid4" style="margin-top:20px">
+    <div class="card"><div class="stat">+13,960m</div><div class="statlbl">총 누적 상승</div></div>
+    <div class="card"><div class="stat">1,250m</div><div class="statlbl">1일차 피레네 상승고도</div></div>
+    <div class="card"><div class="stat">~25km</div><div class="statlbl">1일 평균 이동거리</div></div>
+    <div class="card"><div class="stat">33일</div><div class="statlbl">도보 평균 소요일</div></div>
+  </div>
+</section>
+
+<!-- ══════════ 05 지형 구간 ══════════ -->
+<section class="panel">
+  <div class="pnum">05</div>
+  <div class="eyebrow">Terrain Zones</div>
+  <h2>다섯 개의 지리 구간</h2>
+  <p class="lede">카미노 프란세스는 서로 완전히 다른 다섯 개의 자연 지리 단위를 통과한다. 기반암, 토양, 식생, 농업 방식이 구간마다 뚜렷이 바뀐다.</p>
+
+  <div class="grid3">
+    <div class="card" style="border-top:4px solid #6C5CE7">
+      <div class="t"><span class="dot" style="background:#6C5CE7"></span>① 피레네·나바라</div>
+      <p><b>0–140km · 습윤 산악</b><br>백악기 석회암과 플리시 층. 너도밤나무·참나무 혼합림, 고산 목초지. 안개와 급변하는 기상. 알토 델 페르돈 능선에서 대서양·지중해 분수계를 넘는다.</p>
+    </div>
+    <div class="card" style="border-top:4px solid #C0392B">
+      <div class="t"><span class="dot" style="background:#C0392B"></span>② 라 리오하</div>
+      <p><b>140–210km · 에브로 계곡</b><br>붉은 철분질 충적토와 자갈 테라스. 에브로강 지류가 만든 계단식 단구 위 포도밭이 지평선까지. 대륙성 기후에 지중해 영향이 섞인 전이대.</p>
+    </div>
+    <div class="card" style="border-top:4px solid #E1A93C">
+      <div class="t"><span class="dot" style="background:#E1A93C"></span>③ 메세타 (카스티야 고원)</div>
+      <p><b>280–455km · 반건조 고원</b><br>해발 750~900m의 광대한 침식평원. 나무 없는 밀·보리 단작지. 그늘이 거의 없고 일교차 20℃ 이상. 순례자들이 가장 힘들어하는 심리적 구간.</p>
+    </div>
+    <div class="card" style="border-top:4px solid #8E5A3C">
+      <div class="t"><span class="dot" style="background:#8E5A3C"></span>④ 몬테스 데 레온·엘 비에르소</div>
+      <p><b>455–560km · 산악 분지</b><br>고생대 석영암 산릉. 크루스 데 페로(1,505m)로 올라 비에르소 함몰분지로 급강하. 미세기후 덕에 포도·체리·피망이 자라는 '따뜻한 섬'.</p>
+    </div>
+    <div class="card" style="border-top:4px solid #27AE60">
+      <div class="t"><span class="dot" style="background:#27AE60"></span>⑤ 갈리시아</div>
+      <p><b>560–772km · 대서양 구릉</b><br>화강암·편암 기반의 파상 구릉. 연강수량 1,000~1,800mm. 유칼립투스·밤나무 숲, 돌담(코렐로)과 소규모 목축. 항상 축축한 흙길.</p>
+    </div>
+    <div class="card" style="background:var(--navy);color:#fff;border:none">
+      <div class="t" style="color:var(--yellow)">기후 요약</div>
+      <p style="color:#C6D6F2">
+        <b style="color:#fff">봄(4~5월)</b> 야생화·적당한 기온, 비 잦음<br>
+        <b style="color:#fff">여름(6~8월)</b> 메세타 35℃ 이상, 가장 혼잡<br>
+        <b style="color:#fff">가을(9~10월)</b> 포도 수확기, 최적 시즌<br>
+        <b style="color:#fff">겨울(11~3월)</b> 피레네·오 세브레이로 폐쇄 가능, 알베르게 대부분 휴업
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 06 행정구역과 도시 ══════════ -->
+<section class="panel">
+  <div class="pnum">06</div>
+  <div class="eyebrow">Regions &amp; Cities</div>
+  <h2>통과 지역과 거점 도시</h2>
+  <p class="lede">프란세스 노선 하나로 스페인 4개 자치주(나바라·라리오하·카스티야이레온·갈리시아)를 지난다. 다른 노선을 합치면 스페인 대부분의 자치주와 포르투갈 북부가 순례 네트워크에 포함된다.</p>
+
+  <div class="grid2">
+    <div>
+      <table>
+        <thead><tr><th>자치주</th><th>주요 거점</th><th style="width:22%">지리 키워드</th></tr></thead>
+        <tbody>
+          <tr><td><b>나바라</b></td><td>론세스바예스 · 팜플로나 · 푸엔테 라 레이나 · 에스테야</td><td>피레네 남록</td></tr>
+          <tr><td><b>라 리오하</b></td><td>로그로뇨 · 나헤라 · 산토 도밍고</td><td>에브로 단구</td></tr>
+          <tr><td><b>카스티야이레온</b></td><td>부르고스 · 프로미스타 · 사아군 · 레온 · 아스토르가 · 폰페라다</td><td>북부 메세타</td></tr>
+          <tr><td><b>갈리시아</b></td><td>오 세브레이로 · 사리아 · 포르토마린 · 멜리데 · 아르수아 · 산티아고</td><td>대서양 구릉</td></tr>
+          <tr><td>아스투리아스</td><td>오비에도 · 히혼 · 그라도 <span style="font-size:10px;color:#8A8F9A">(프리미티보·노르테)</span></td><td>칸타브리아 산맥</td></tr>
+          <tr><td>칸타브리아 · 바스크</td><td>산탄데르 · 빌바오 · 산세바스티안 <span style="font-size:10px;color:#8A8F9A">(노르테)</span></td><td>해안 절벽</td></tr>
+          <tr><td>엑스트레마두라 · 안달루시아</td><td>세비야 · 메리다 · 카세레스 <span style="font-size:10px;color:#8A8F9A">(플라타)</span></td><td>데헤사 초지</td></tr>
+          <tr><td>포르투갈 북부</td><td>포르투 · 바르셀루스 · 폰테 데 리마 · 발렌사</td><td>미뉴강 유역</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="t">🗺️ 거리 감각 잡기</div>
+        <p>부르고스–레온 사이 <b>메세타 183km</b>는 서울–대전 왕복에 해당한다. 프란세스 전체 772km는 서울–부산(약 400km)을 왕복하는 거리다.</p>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="t">🏙️ 3대 대성당 도시</div>
+        <p><b>팜플로나</b>(20만) · <b>부르고스</b>(17만) · <b>레온</b>(12만). 순례길에서 만나는 유일한 대도시 구간으로, 장비 보충·의료·휴식일(rest day)의 표준 지점이다.</p>
+      </div>
+      <div class="card" style="margin-bottom:14px">
+        <div class="t">📍 사리아 — 가장 붐비는 시작점</div>
+        <p>산티아고까지 <b>111km</b>. 콤포스텔라 증서 최소 요건(도보 100km)을 갓 넘기는 지점이라 전체 순례자의 약 4분의 1이 여기서 출발한다. 마지막 5일 구간은 밀도가 급증한다.</p>
+      </div>
+      <div class="card">
+        <div class="t">🌊 피스테라 — 로마인의 '세상의 끝'</div>
+        <p>산티아고에서 서쪽으로 90km. 라틴어 <i>Finis Terrae</i>. 중세 이전부터 이어진 태양 숭배 유적지로, 많은 순례자가 여기서 일몰을 보며 여정을 마무리한다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 07 숙소 ══════════ -->
+<section class="panel">
+  <div class="pnum">07</div>
+  <div class="eyebrow">Accommodation</div>
+  <h2>알베르게 — 순례길의 숙박 생태계</h2>
+  <p class="lede">평균 5~10km마다 순례자 전용 숙소가 있다. 핵심 통행권은 <b>크레덴시알(Credencial, 순례자 여권)</b>로, 이 도장책이 있어야 공립 알베르게에 묵고 도착 시 콤포스텔라 증서를 받을 수 있다.</p>
+
+  <div class="grid4">
+    <div class="card" style="border-top:4px solid #2980B9">
+      <div class="t">🏛️ 공립 (Municipal)</div>
+      <p><b>10~12 €</b> / 1박<br>지자체 운영. 2층 침대·공용 욕실·주방. 예약 불가, 선착순. 도보 순례자 우선. 갈리시아 공립은 대부분 10€ 균일가.</p>
+    </div>
+    <div class="card" style="border-top:4px solid #8E44AD">
+      <div class="t">⛪ 교구·수도원 (Parroquial)</div>
+      <p><b>기부제 (Donativo)</b><br>본당·수도회·순례자 협회 운영. 공동 저녁식사와 저녁 기도가 있는 곳이 많다. 통상 8~12€ 상당의 기부가 관례.</p>
+    </div>
+    <div class="card" style="border-top:4px solid #16A085">
+      <div class="t">🛏️ 사설 (Privado)</div>
+      <p><b>17~22 €</b> / 1박<br>소규모·쾌적. 온라인/전화 예약 가능, 세탁기·건조기·조식 제공. 커튼·개인 사물함이 있는 고급형은 25€ 이상.</p>
+    </div>
+    <div class="card" style="border-top:4px solid #C1502E">
+      <div class="t">🏨 오스탈 · 카사 루랄 · 파라도르</div>
+      <p><b>40~120 €</b> / 1박<br>1인실이 필요한 날, 또는 도시 휴식일용. 산티아고의 파라도르는 1499년 왕립 순례자 병원 건물이다.</p>
+    </div>
+  </div>
+
+  <div class="rule"></div>
+
+  <div class="grid2">
+    <div>
+      <h3>알베르게 이용 규칙</h3>
+      <div class="pillrow">
+        <span class="pill"><b>체크인</b> 보통 13:00~</span>
+        <span class="pill"><b>소등</b> 22:00</span>
+        <span class="pill"><b>퇴실</b> 08:00까지</span>
+        <span class="pill"><b>연박 불가</b> 원칙적으로 1박</span>
+        <span class="pill"><b>침낭</b> 필수 (침구 미제공 다수)</span>
+        <span class="pill"><b>도장</b> 하루 최소 1개 (마지막 100km는 2개)</span>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);font-weight:300;margin-top:14px">
+        여름 성수기(7~8월)와 사리아 이후 구간에서는 오후 2시면 만실이 되는 곳이 흔하다.
+        노르테·프리미티보·플라타처럼 인프라가 성긴 노선은 다음 숙소까지 30km 이상 떨어진 구간이 있어 사전 확인이 필요하다.
+      </p>
+    </div>
+    <div>
+      <h3>하루 예산 구조 (프란세스 기준)</h3>
+      <div class="mapbox" style="padding:16px 18px">
+        <svg viewBox="0 0 500 190" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="Noto Sans KR" font-size="12">
+            <text x="0" y="18" fill="#454C59">숙박</text>
+            <rect x="70" y="7" width="150" height="15" rx="4" fill="#2980B9"/>
+            <text x="228" y="18" fill="#0B3C8C" font-weight="700">10~20 €</text>
+
+            <text x="0" y="48" fill="#454C59">아침·간식</text>
+            <rect x="70" y="37" width="55" height="15" rx="4" fill="#16A085"/>
+            <text x="133" y="48" fill="#0B3C8C" font-weight="700">4~7 €</text>
+
+            <text x="0" y="78" fill="#454C59">점심</text>
+            <rect x="70" y="67" width="85" height="15" rx="4" fill="#E1A93C"/>
+            <text x="163" y="78" fill="#0B3C8C" font-weight="700">6~10 €</text>
+
+            <text x="0" y="108" fill="#454C59">순례자 정식</text>
+            <rect x="70" y="97" width="120" height="15" rx="4" fill="#C1502E"/>
+            <text x="198" y="108" fill="#0B3C8C" font-weight="700">12~16 €</text>
+
+            <text x="0" y="138" fill="#454C59">기타·세탁</text>
+            <rect x="70" y="127" width="45" height="15" rx="4" fill="#7F8C8D"/>
+            <text x="123" y="138" fill="#0B3C8C" font-weight="700">3~6 €</text>
+
+            <line x1="0" y1="152" x2="500" y2="152" stroke="#E3DCCB" stroke-width="1.5"/>
+            <text x="0" y="176" fill="#0B3C8C" font-weight="700" font-size="13">1일 합계</text>
+            <text x="500" y="176" fill="#C1502E" font-weight="900" font-size="17" text-anchor="end" font-family="Playfair Display">35 ~ 55 €</text>
+          </g>
+        </svg>
+      </div>
+      <p class="note">33일 완주 기준 총 예산 약 1,200~1,800 € (항공권 제외)</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 08 음식 지도 ══════════ -->
+<section class="panel">
+  <div class="pnum">08</div>
+  <div class="eyebrow">Food Geography</div>
+  <h2>지역별 음식 지도 — 걸으면 메뉴가 바뀐다</h2>
+  <p class="lede">순례길의 식문화는 지형을 그대로 반영한다. 산악의 목축, 에브로 계곡의 포도, 메세타의 곡물과 양, 대서양의 해산물. 어느 마을 바에서든 <b>메뉴 델 페레그리노</b>(순례자 정식, 12~16€ / 전채·메인·디저트·와인·빵)를 주문할 수 있다.</p>
+
+  <div class="grid3">
+    <div class="card" style="border-left:5px solid #6C5CE7">
+      <div class="t">🇪🇸 나바라 · 바스크</div>
+      <p><b>핀초스</b>(바 카운터의 한입 안주)<br><b>차룰레타</b> 아스파라거스, 피키요 고추<br><b>코르데로 알 치릴린드론</b> 어린양 스튜<br><b>이디아사발</b> 훈제 양젖 치즈<br><b>트루차 아 라 나바라</b> 하몬 넣은 송어구이</p>
+    </div>
+    <div class="card" style="border-left:5px solid #C0392B">
+      <div class="t">🍷 라 리오하</div>
+      <p><b>파타타스 아 라 리오하나</b> 초리소 감자조림<br><b>바칼라오 아 라 리오하나</b> 대구 토마토조림<br><b>출레티야스 알 사르미엔토</b> 포도덩굴 숯불 양갈비<br><b>피미엔토스 아사도스</b> 구운 파프리카</p>
+    </div>
+    <div class="card" style="border-left:5px solid #E1A93C">
+      <div class="t">🌾 카스티야이레온</div>
+      <p><b>모르시야 데 부르고스</b> 쌀 넣은 순대<br><b>레차소 아사도</b> 젖먹이양 장작구이<br><b>소파 데 아호</b> 마늘·빵 수프<br><b>세시나 데 레온</b> 소고기 건조 훈제육<br><b>코시도 마라가토</b> (아스토르가) 고기부터 거꾸로 먹는 스튜</p>
+    </div>
+    <div class="card" style="border-left:5px solid #8E5A3C">
+      <div class="t">🍇 엘 비에르소</div>
+      <p><b>보티요</b> 훈제 돼지고기 소시지 찜<br><b>피미엔토스 델 비에르소</b> 원산지 보호 파프리카<br><b>멘시아</b> 품종 적포도주<br>미세기후 덕에 카스티야와 갈리시아 식문화가 겹치는 전이 지대</p>
+    </div>
+    <div class="card" style="border-left:5px solid #27AE60">
+      <div class="t">🐙 갈리시아</div>
+      <p><b>풀포 아 페이라</b> 문어 + 굵은소금 + 훈제 파프리카 (멜리데가 성지)<br><b>칼도 가예고</b> 순무잎·흰콩 국물<br><b>엠파나다 가예가</b> 참치·조개 파이<br><b>케이소 데 아르수아·테티야</b> 젖소 치즈<br><b>페베레스 데 파드론</b> 파드론 꽈리고추</p>
+    </div>
+    <div class="card" style="border-left:5px solid #16A085">
+      <div class="t">🇵🇹 포르투갈길</div>
+      <p><b>프란세지냐</b> (포르투) 고기·치즈 샌드위치<br><b>바칼랴우</b> 대구 요리 수백 가지<br><b>아로스 데 사르하다스</b> 조개밥<br><b>비뉴 베르드</b> 미뉴 지방의 청량한 미숙성 화이트</p>
+    </div>
+  </div>
+  <p class="note">마을 바(bar)는 사실상 순례길의 인프라다 — 카페·식당·매점·화장실·와이파이·도장(sello)이 한곳에 모여 있다.</p>
+</section>
+
+<!-- ══════════ 09 디저트 & 음료 ══════════ -->
+<section class="panel">
+  <div class="pnum">09</div>
+  <div class="eyebrow">Sweets &amp; Drinks</div>
+  <h2>디저트 · 음료 · 와인 산지</h2>
+
+  <div class="grid2">
+    <div>
+      <h3 style="margin-bottom:12px">🍰 디저트</h3>
+      <div class="card" style="margin-bottom:10px"><div class="t">타르타 데 산티아고</div><p>아몬드 가루·설탕·달걀만으로 굽는 갈리시아 케이크. 표면에 야고보 십자가(Cruz de Santiago)를 설탕으로 새긴다. 유럽연합 지리적표시(IGP) 보호 품목. <b>도착의 상징</b>.</p></div>
+      <div class="card" style="margin-bottom:10px"><div class="t">필리모이스 · 파스타스 데 오비에도</div><p>아스투리아스·갈리시아의 얇은 크레프와 버터 과자. 프리미티보 구간에서 흔하다.</p></div>
+      <div class="card" style="margin-bottom:10px"><div class="t">만테카다스 데 아스토르가 / 초콜릿</div><p>아스토르가는 18세기 스페인 초콜릿 가공의 중심지였고 지금도 초콜릿 박물관이 있다. 버터 카스텔라 '만테카다스'가 특산.</p></div>
+      <div class="card"><div class="t">파스텔 데 나타 · 아로스 도세</div><p>포르투갈길에서 만나는 에그타르트와 계피 라이스푸딩. 하루 두 번은 먹게 된다.</p></div>
+    </div>
+    <div>
+      <h3 style="margin-bottom:12px">🍷 음료 · 와인 산지</h3>
+      <div class="card" style="margin-bottom:10px"><div class="t">라 리오하 (템프라니요)</div><p>순례길이 관통하는 스페인 최고 명성의 와인 산지. 이라체 수도원의 <b>무료 와인 수도꼭지(Fuente del Vino)</b>는 순례길 최고 명물 중 하나.</p></div>
+      <div class="card" style="margin-bottom:10px"><div class="t">나바라 로사도 · 비에르소 멘시아 · 리베이라 사크라</div><p>로제, 가벼운 적포도주, 그리고 시강 협곡의 급경사 계단식 포도밭(겨울길 구간)까지 — 노선마다 와인이 다르다.</p></div>
+      <div class="card" style="margin-bottom:10px"><div class="t">알바리뇨 · 리바이로</div><p>갈리시아 리아스 바이샤스의 화이트. 문어·조개와 함께 마신다.</p></div>
+      <div class="card" style="margin-bottom:10px"><div class="t">케이마다 (Queimada)</div><p>갈리시아 증류주 오루호에 설탕·레몬·커피콩을 넣고 불을 붙여, <b>주문(conxuro)</b>을 외우며 악령을 쫓는 의식성 음료. 순례 마지막 밤의 단골 행사.</p></div>
+      <div class="card"><div class="t">일상 음료</div><p><b>카페 콘 레체</b>(아침 필수) · <b>클라라</b>(맥주+레몬소다) · <b>시드라</b>(아스투리아스 사과주, 높이 들어 따름) · <b>오루호 데 이에르바스</b> 약초 증류주</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ 10 명소 ══════════ -->
+<section class="panel">
+  <div class="pnum">10</div>
+  <div class="eyebrow">Landmarks</div>
+  <h2>꼭 지나치는 명소 — 순례길 자체가 유네스코 유산</h2>
+  <p class="lede">1993년 카미노 프란세스가, 2015년 북부 노선(노르테·프리미티보·리에바나·내륙)이 유네스코 세계유산으로 등재되었다. 산티아고 구시가지 전체 역시 별도의 세계유산이다.</p>
+
+  <table>
+    <thead><tr><th style="width:16%">위치</th><th style="width:22%">명소</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td>피레네</td><td>론세스바예스 왕립수도원</td><td>『롤랑의 노래』 전투의 무대. 프란세스 스페인 구간의 실질적 관문</td></tr>
+      <tr><td>팜플로나</td><td>산 페르민 축제 · 성벽</td><td>7월 소몰이 축제로 유명. 순례길이 도심 성벽을 통과한다</td></tr>
+      <tr><td>푸엔테 라 레이나</td><td>11세기 로마네스크 순례자 다리</td><td>프란세스와 아라고네스가 합류하는 지점. 순례길 건축의 상징</td></tr>
+      <tr><td>에스테야 인근</td><td>이라체 와인 샘</td><td>수도원 옆 벽면의 무료 와인 수도꼭지</td></tr>
+      <tr class="hl"><td>부르고스</td><td>부르고스 대성당 (1984 등재)</td><td>스페인 고딕의 정점. 15개 예배당, 엘 시드의 무덤</td></tr>
+      <tr><td>프로미스타</td><td>산 마르틴 데 투르 성당</td><td>순수 로마네스크 양식의 교과서적 사례 (11세기)</td></tr>
+      <tr class="hl"><td>레온</td><td>레온 대성당 <i>Pulchra Leonina</i></td><td>1,800㎡의 스테인드글라스. 유럽 고딕 중 유리 비율 최고 수준</td></tr>
+      <tr><td>레온</td><td>가우디의 카사 보티네스</td><td>가우디가 카탈루냐 밖에 남긴 세 작품 중 하나</td></tr>
+      <tr><td>아스토르가</td><td>가우디 주교궁 · 로마 유적 · 초콜릿 박물관</td><td>마라가테리아 문화권의 중심</td></tr>
+      <tr><td>폰페라다</td><td>템플기사단 성 (Castillo de los Templarios)</td><td>12세기 순례자 보호를 위해 세워진 요새</td></tr>
+      <tr class="hl"><td>몬테스 데 레온</td><td>크루스 데 페로 (1,505m)</td><td>돌무더기 위 철십자가. 고향에서 가져온 돌을 내려놓는 순례길 최고 지점</td></tr>
+      <tr><td>오 세브레이로</td><td>산타 마리아 성당 · 파요사 초가</td><td>갈리시아 관문. 켈트계 원형 초가와 성체 기적 전설</td></tr>
+      <tr><td>사모스</td><td>산 훌리안 왕립수도원</td><td>스페인 최고(最古)급 수도원 중 하나, 6세기 창건</td></tr>
+      <tr><td>산티아고</td><td>대성당 · 오브라도이로 광장 · 보타푸메이로</td><td>야고보 성인의 유해. 80kg 대형 향로가 성당 횡랑을 가로지른다</td></tr>
+      <tr><td>피스테라</td><td>0.00km 표석 · 등대</td><td>대서양 절벽 위 '땅끝'. 일몰 명소</td></tr>
+      <tr><td>루고 <span style="font-size:10px;color:#8A8F9A">(프리미티보)</span></td><td>로마 성벽 (2000 등재)</td><td>세계에서 유일하게 완전히 보존된 로마 도시 성벽</td></tr>
+      <tr><td>폰페라다 인근 <span style="font-size:10px;color:#8A8F9A">(겨울길)</span></td><td>라스 메둘라스 (1997 등재)</td><td>로마 시대 수압 금광 채굴이 만든 붉은 기암 지형</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ══════════ 11 실전 & 통계 ══════════ -->
+<section class="panel">
+  <div class="pnum">11</div>
+  <div class="eyebrow">By the Numbers</div>
+  <h2>순례자 통계와 실전 요약</h2>
+
+  <div class="grid4" style="margin-bottom:24px">
+    <div class="card"><div class="stat">530,987</div><div class="statlbl">2025년 콤포스텔라 발급 (사상 첫 50만 돌파)</div></div>
+    <div class="card"><div class="stat">45.6%</div><div class="statlbl">카미노 프란세스 비중 (242,058명)</div></div>
+    <div class="card"><div class="stat">1/3 +</div><div class="statlbl">포르투갈길(중앙+해안) 합산 비중 — 가장 빠른 성장</div></div>
+    <div class="card"><div class="stat">42%</div><div class="statlbl">스페인 국적 비중. 국외 1위는 미국</div></div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <h3>콤포스텔라 증서 받는 조건</h3>
+      <div class="card" style="margin-bottom:12px">
+        <p style="font-size:13px;line-height:1.85">
+          <b style="color:var(--terra)">도보·승마</b> 마지막 <b>100km</b> 이상 &nbsp;|&nbsp; <b style="color:var(--terra)">자전거</b> 마지막 <b>200km</b> 이상<br>
+          → 크레덴시알에 <b>하루 2개 이상의 도장(sello)</b><br>
+          → 산티아고 순례자 사무소(Rúa Carretas 33)에서 발급, 무료<br>
+          → 종교적/영적 동기가 아니면 <i>Certificado de Bienvenida</i> 발급<br>
+          → 거리 증명서(Certificado de Distancia)는 별도 3€
+        </p>
+      </div>
+      <h3>대표적 출발점과 남은 거리</h3>
+      <div class="pillrow">
+        <span class="pill">사리아 <b>111km</b></span>
+        <span class="pill">투이(포르투갈길) <b>119km</b></span>
+        <span class="pill">페롤(영국길) <b>119km</b></span>
+        <span class="pill">레온 <b>317km</b></span>
+        <span class="pill">부르고스 <b>490km</b></span>
+        <span class="pill">포르투 <b>260km</b></span>
+        <span class="pill">오비에도 <b>313km</b></span>
+        <span class="pill">이룬 <b>825km</b></span>
+        <span class="pill">세비야 <b>1,000km</b></span>
+      </div>
+    </div>
+    <div>
+      <h3>길 찾기와 표식</h3>
+      <div class="card" style="margin-bottom:12px">
+        <p style="font-size:12.8px;line-height:1.8">
+        <b>🟨 노란 화살표(Flecha Amarilla)</b> — 1980년대 오 세브레이로의 사제 엘리아스 발리냐가 도로용 페인트로 그리기 시작한 것이 표준이 되었다. 담벼락·바닥·전봇대·나무 어디에나 있다.<br><br>
+        <b>🐚 가리비 껍데기(Vieira)</b> — 여러 갈래가 한 점으로 모이는 무늬가 모든 길이 산티아고로 모임을 뜻한다. 갈리시아에서는 <b>부챗살이 벌어진 쪽</b>이 진행 방향, 다른 지역에서는 반대로 쓰이기도 하니 화살표를 우선한다.<br><br>
+        <b>🪨 모혼(Mojón)</b> — 갈리시아의 화강암 이정표. 산티아고까지 남은 거리가 100m 단위로 새겨져 있다.
+        </p>
+      </div>
+      <h3>짐 꾸리기 원칙</h3>
+      <div class="pillrow">
+        <span class="pill">배낭 무게 = <b>체중의 10% 이내</b></span>
+        <span class="pill">발볼 넉넉한 <b>길들인 신발</b></span>
+        <span class="pill">여름에도 <b>비옷·방풍</b></span>
+        <span class="pill">침낭(라이너)</span>
+        <span class="pill">모자·자외선차단</span>
+        <span class="pill">발 관리 용품</span>
+        <span class="pill">짐 배송 서비스 <b>5~7€/구간</b></span>
+      </div>
+      <p class="note">무거운 배낭은 부상의 최대 원인이다. 대부분의 물품은 도중에 조달할 수 있으므로 '없으면 사는' 쪽이 낫다.</p>
+    </div>
+  </div>
+</section>
+
+<div class="foot">
+  <b>산티아고 순례길 지리 인포그래픽</b> · 2026년 7월 작성<br>
+  데이터 출처 — 산티아고 순례자 사무소(Oficina de Acogida al Peregrino) 2025 통계, UNESCO 세계유산센터,
+  Caminoways, American Pilgrims on the Camino, Stingy Nomads, spain.info<br>
+  ※ 요금·거리·운영 정보는 시즌과 연도에 따라 변동됩니다. 출발 전 최신 정보를 확인하세요.
+</div>
+
+</div>
+</body>
+</html>
