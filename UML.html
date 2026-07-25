@@ -201,6 +201,7 @@ classDiagram
     class Source {
       &lt;&lt;enumeration&gt;&gt;
       OSM+MDT
+      OSM+EUDEM
       ESTIMATED
     }
 
@@ -572,6 +573,7 @@ classDiagram
     class RiskDataQuality {
       &lt;&lt;enumeration&gt;&gt;
       OSM+MDT
+      OSM+EUDEM
       ESTIMATED
     }
 
@@ -659,7 +661,7 @@ sequenceDiagram
     Risk-&gt;&gt;Risk: injuryRiskScore 계산 (STEEP_CLIMB·STEEP_DESCENT·EARLY_OVERLOAD 등 가중)
     alt SegmentProfile.source === 'ESTIMATED'
         Risk--&gt;&gt;UI: riskDataQuality='ESTIMATED' (점수를 화면에 숨긴다)
-    else source === 'OSM+MDT'
+    else source === 'OSM+EUDEM' (또는 OSM+MDT)
         Risk--&gt;&gt;UI: injuryRiskScore 노출 가능
     end
     Risk--&gt;&gt;UI: Plan { stages, totalKm, walkedKm, compostelaEligible, advice }

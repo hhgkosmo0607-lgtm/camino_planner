@@ -55,13 +55,15 @@
 - ❌ `toTown.elevation - fromTown.elevation`
 - ✅ `getProfile(fromId, toId).ascent` / `.descent`
 
-`data/profiles.ts`는 `scripts/build-profiles.ts`가 생성한다.
-경로는 OpenStreetMap(ODbL), 고도는 스페인 IGN MDT05(CC BY 4.0)에서 가져와 직접 계산한다.
+`data/profiles.ts`는 `scripts/pipeline/build_geometry.py`(파이썬 일회성 배치)가 생성한다. 검증 도구: `compare_dem.py`(고도 데이터 비교), `verify_route.py`(경로 정확도).
+경로는 OpenStreetMap(ODbL), 고도는 **EU-DEM 25m(Copernicus, CC BY)** 에서 가져와 직접 계산한다. `source`는 `'OSM+EUDEM'`.
 
-- `source: 'ESTIMATED'` 인 동안은 **`injuryRiskScore`를 사용자에게 숫자로 노출하지 않는다**
+> ⚠️ **왜 IGN MDT05(5m)가 아닌가**: 원래 IGN 5m를 지정했으나, 실제 조회해 비교하니 **급경사(피레네)에서 5m가 경로 노이즈를 증폭해 오히려 크게 틀렸다**(누적 상승 +2,355m vs 실제 ~1,280m). 독립 3개 데이터(EU-DEM·SRTM·ASTER)가 ~1,320m로 수렴, IGN 5m만 outlier. 완만한 구간은 5m≈25m. → **EU-DEM 25m가 실용적으로 더 정확**하다. 상세: DEVLOG 2026-07-25(2). `source: 'OSM+MDT'`는 스키마에 미래(IGN)용으로 예약만 해둔다.
+
+- `source: 'ESTIMATED'` 인 동안은 **`injuryRiskScore`를 사용자에게 숫자로 노출하지 않는다** (현재는 `'OSM+EUDEM'` 실측이라 노출 가능. 단 risk 가중치는 의학 근거 없는 임시값 — 규칙 11)
 - **좌표를 `profiles.ts`에 넣지 않는다.** 숫자만 남긴다 (ODbL 파생 DB 배포 회피)
 - `data/geometry/` 는 gitignore 대상이다
-- 출처 표시 의무: "경로 데이터 © OpenStreetMap contributors (ODbL)" / "고도 데이터 © Instituto Geográfico Nacional (CC BY 4.0)"
+- 출처 표시 의무: "경로 데이터 © OpenStreetMap contributors (ODbL)" / "고도 데이터 © EU-DEM (Copernicus)"
 
 ### 4. 프랑스 길은 하나의 선이 아니다 🔴
 
@@ -167,22 +169,26 @@ NFT·블록체인 기반 증서도 만들지 않는다 (→ 03 문서 6.2절).
 
 ## 디자인 토큰
 
-카미노 공식 표지(사아코베오)의 코발트 + 노란 화살표에서 가져왔다.
+메인 톤은 **따뜻한 크림(`--sand` #f9e3ab)**, 코발트(`--ink`)와 짝지어 미니멀하게. 코발트+노란 화살표는 카미노 공식 표지(사아코베오)에서 왔다.
 
 ```
---ink:     #12253F   짙은 코발트. 헤더, 이정표 판
+--ink:     #12253F   짙은 코발트. 헤더, 이정표 판, 본문
 --ink-2:   #1D3B5E
---granite: #E7E8E2   갈리시아 화강암. 페이지 배경
---stone:   #C6C8BE   테두리, 구분선
+--sand:    #f9e3ab   ★ 메인 크림. 페이지 배경(캔버스)
+--sand-2:  #FDF3D2   옅은 크림
+--granite: #f9e3ab   하위호환: bg-granite = 메인 크림
+--stone:   #CBAB66   따뜻한 테두리·구분선 (흰 카드 위 가시성)
 --flecha:  #F0B429   노란 화살표
---vino:    #7A2E39   도장 잉크
---moss:    #3F5D4A
+--vino:    #7A2E39   도장 잉크. 경고 강조
+--moss:    #3F5D4A   안전·확인
 --text:    #1B2430
---muted:   #6B7280
+--muted:   #6F6450   따뜻한 muted (대비 4.5:1 확보)
 ```
+
+**크림(`--sand`)은 '캔버스'다: 페이지 배경으로만 쓴다.** 콘텐츠는 흰 카드·코발트 헤더 위에 올려, 노란 화살표(`--flecha`)가 크림에 묻히지 않게 한다.
 
 **노란색(`--flecha`) 사용 규칙: 길 안내·현재 위치·활성 상태에만.**
-실제 카미노에서 노란색은 방향 지시 전용이다. 장식이나 강조에 남용하면 규칙이 무너진다.
+실제 카미노에서 노란색은 방향 지시 전용이다. 장식이나 강조에 남용하면 규칙이 무너진다. (크림 메인 톤을 도입해도 이 규칙은 그대로다 — 크림은 배경, flecha는 길 안내.)
 
 **서체**
 - 표제: `Gowun Batang` (한글 세리프) — 아껴서
@@ -237,8 +243,10 @@ apps/web/                   (Phase 1은 이게 저장소 루트나 다름없다)
     landmarks.ts              안개 지도 스팟 19곳
     albergues.ts              숙소 (실측 전까지 대부분 PLACEHOLDER)
     routes.ts
-  /scripts
-    build-profiles.ts         ★ 일회성 배치. 서비스 코드에서 import 금지
+  /scripts/pipeline
+    build_geometry.py         ★ 일회성 배치(파이썬). towns.ts/profiles.ts 생성. 서비스 코드에서 import 금지
+    compare_dem.py            고도 데이터 비교 검증(IGN 5m vs EU-DEM)
+    verify_route.py           OSM 경로 정확도 검증
 
 # 앱 트랙 착수 후 (React Native 추가, packages/ 승격)
 packages/schema/               ← lib/schema.ts 이동

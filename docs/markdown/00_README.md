@@ -239,13 +239,14 @@
 
 ```
 경로  ← OpenStreetMap 하이킹 릴레이션   (ODbL)
-고도  ← 스페인 IGN MDT05               (CC BY 4.0, LiDAR 5m 격자)
+고도  ← EU-DEM 25m (Copernicus)         (CC BY)   ← 실측 확정
       ↓
 직접 계산 → ascent / descent
 ```
 
-- **데이터 비용 0원.** IGN은 출처 표시만 하면 상업 이용 가능
-- 작업 약 3일 (`scripts/build-profiles.ts`)
+- ✅ **2026-07 실측 완료** (`scripts/pipeline/build_geometry.py`, source `'OSM+EUDEM'`). towns.ts/profiles.ts 생성됨.
+- **데이터 비용 0원.**
+- ⚠️ **IGN MDT05(5m) 아님**: 원안은 IGN 5m였으나 급경사에서 5m가 경로 노이즈를 증폭해 오히려 부정확(+2,355m vs 실제 ~1,280m). 독립 3소스(EU-DEM·SRTM·ASTER)가 ~1,320m로 수렴. → EU-DEM 25m가 실용적으로 더 정확. (DEVLOG 2026-07-25(2))
 - ⚠️ **함정**: 고도를 그대로 더하면 노이즈 때문에 실제의 2~3배. 평활화 필수
 - 개발 프롬프트 **P0.5**가 이 작업. **P1보다 먼저 한다**
 
