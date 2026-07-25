@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 실측 경로 좌표 원본 (ODbL 파생 DB 배포 회피 — CLAUDE.md 규칙 3)
+/data/geometry/
+
+# 파이썬 데이터 파이프라인 캐시
+__pycache__/
+*.pyc
