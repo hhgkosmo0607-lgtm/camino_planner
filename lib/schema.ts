@@ -209,6 +209,8 @@ export interface AccessRoute {
   totalHours: number
   estimatedCostKrw: number
   traits: ('FAST' | 'CHEAP' | 'SIMPLE' | 'POPULAR')[]
+  source: 'FIELD' | 'GUIDEBOOK' | 'ESTIMATED'  // RouteVariant와 같은 패턴. 시간표·요금은 자주 바뀌므로 checkedAt과 함께 본다
+  checkedAt: string                // YYYY-MM. 04 문서 "정기 재확인" 기준 연 2회(3월·9월) 갱신 대상
 }
 
 // ────────────────────────────────────────────────────────────

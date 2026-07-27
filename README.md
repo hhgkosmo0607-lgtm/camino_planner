@@ -11,9 +11,9 @@ Next.js 16 (App Router) · TypeScript strict · Tailwind CSS v4(디자인 값은
 - **데이터**: `data/towns.ts`(마을 82) · `data/profiles.ts`(구간 81, 실측 고도). 경로는 OpenStreetMap(무료 오픈 지도, 라이선스 ODbL) + 고도는 **EU-DEM 25m**(유럽 Copernicus 위성이 만든 고도 데이터) — 파이썬 파이프라인 `scripts/pipeline/`으로 생성. 더 정밀한 IGN 5m는 안 씀(급경사에서 오히려 부정확, DEVLOG 참조).
 - **엔진**: `lib/planner/`(F-01 구간 분할·부상 위험). 순수 함수, 테스트 30/30.
 - **E2E**: Playwright `e2e/`. 06 문서가 정한 3개 시나리오 중 지금 있는 기능으로 되는 시나리오 1(생성→공유→복원)만 구현 — 나머지 둘은 해당 UI가 생기는 Phase 2·3에서 추가. 접근성 자동 검사(axe-core, 화면 템플릿 10종, critical/serious 0건)도 여기 포함.
-- **화면**: `/plan`(계산기) · `/plan/print`(인쇄) · `/town·/stage·/route`(SEO 정적 175p) · `/tools/{cost,pack,timeline}`(무료 도구) · `/privacy`(개인정보 처리방침). `npm run build` → 181 페이지.
+- **화면**: `/plan`(계산기) · `/plan/print`(인쇄) · `/town·/stage·/route`(SEO 정적 175p) · `/tools/{cost,pack,timeline,access}`(무료 도구 4종) · `/privacy`(개인정보 처리방침). `npm run build` → 182 페이지.
 - **계측(P7)**: Vercel Analytics(방문자 행동 자동 기록 도구) 커스텀 이벤트 6종(`components/Track.tsx`) · `app/api/health` 헬스체크(서버가 살아있는지 확인) · 선택적 이메일 수집(Resend라는 이메일 발송 서비스 이용, `RESEND_API_KEY`/`RESEND_AUDIENCE_ID` 미설정 시 폼 자체가 비활성화 — 계산 기능과 무관).
-- **다음 단계**: Phase 2는 실측 도보 완료 전까지 착수하지 않는다(06 문서 "이후 단계 — 조건부").
+- **Phase 2 진행 중**: "실측 도보 완료 후"가 아니라 "출처 있는 데이터면 착수 가능"으로 조건 정정(2026-07). `data/forks.ts`(갈림길 11곳, 구조만)·`data/access.ts`(접근 교통 4경로, 화면 완료)가 선례. 전부 `source: 'GUIDEBOOK'` — 개인 실측 아님. 알베르게 실데이터는 아직 미착수.
 
 ## 개발 서버
 

@@ -249,9 +249,10 @@ apps/web/                   (Phase 1은 이게 저장소 루트나 다름없다)
   /data
     towns.ts                  마을 마스터 (검증 완료, 수정 금지)
     profiles.ts               ★ 구간별 누적 상승/하강. 고도는 여기서만 읽는다
-    forks.ts                  ★ 갈림길 11곳. 변형 경로와 계절 폐쇄
+    forks.ts                  ★ 갈림길 11곳. 변형 경로와 계절 폐쇄(구조는 있음, 정밀 수치는 실측 전 null)
     landmarks.ts              안개 지도 스팟 19곳
     albergues.ts              숙소 (실측 전까지 대부분 PLACEHOLDER)
+    access.ts                 ★ 접근 교통(인천→생장) 4개 경로. 가이드북 출처, checkedAt 확인 후 사용
     routes.ts
   /scripts/pipeline
     build_geometry.py         ★ 일회성 배치(파이썬). towns.ts/profiles.ts 생성. 서비스 코드에서 import 금지
@@ -428,7 +429,7 @@ pnpm-workspace.yaml
 | F-21 | **Plan B** | 3 | **별도 화면이 아니라 각 날짜 카드 안에 접혀 있다** |
 | F-22 | 체크리스트 | 2 | **오늘 일정에서 자동으로 채워진다** |
 | F-23 | 예산 관리 | 2 | **오프라인 필수** |
-| F-24 | **접근·귀환 교통** | 2 | 인천 → 생장. Day 0으로 표시 |
+| F-24 | **접근·귀환 교통** | 2 | 인천 → 생장. `data/access.ts` 4개 경로 확보 + `/tools/access` 화면 완료(2026-07). Day 0으로 일정에 통합하는 건 남음 |
 | F-25 | 이동 방식·접근성 | 4~5 | 6종. 하루 거리 하한 없음. 위험 부위가 다르다 |
 | F-26 | **계획된 이동수단** | 2 | **메세타 건너뛰기는 Plan A일 수 있다** |
 

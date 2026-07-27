@@ -10,6 +10,7 @@ const ITEMS = [
   { href: '/tools/cost', ko: '비용' },
   { href: '/tools/pack', ko: '배낭 무게' },
   { href: '/tools/timeline', ko: '준비 타임라인' },
+  { href: '/tools/access', ko: '접근 교통' },
 ]
 
 export function ToolNav({ current }: { current?: string }) {
