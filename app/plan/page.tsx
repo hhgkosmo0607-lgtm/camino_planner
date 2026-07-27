@@ -177,7 +177,7 @@ function CompostelaNotice({
 }) {
   if (!eligible) {
     return (
-      <section className="rounded-lg border border-vino/40 bg-vino/5 px-4 py-3 text-[15px] leading-relaxed text-text">
+      <section className="rounded-lg border border-vino/40 bg-vino/5 px-4 py-3 text-[17px] leading-relaxed text-text">
         <b className="text-vino">콤포스텔라 요건 미충족.</b> 완주 증서를 받으려면 산티아고까지
         연속으로 100km 이상 걸어야 합니다 (현재 걸은 거리 {walkedKm.toFixed(0)}km). 이동수단으로
         건너뛴 구간은 도보 거리에서 제외됩니다.
@@ -185,7 +185,7 @@ function CompostelaNotice({
     )
   }
   return (
-    <section className="rounded-lg border border-moss/40 bg-moss/5 px-4 py-3 text-[15px] leading-relaxed text-text">
+    <section className="rounded-lg border border-moss/40 bg-moss/5 px-4 py-3 text-[17px] leading-relaxed text-text">
       <b className="text-moss">콤포스텔라 발급 요건 충족.</b> 산티아고까지 연속 도보{' '}
       {walkedKm.toFixed(0)}km입니다.{' '}
       {doubleStamp

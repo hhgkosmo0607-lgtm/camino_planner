@@ -4,6 +4,22 @@
 
 ---
 
+## 2026-07-27 (13) — 배포 전 최종 점검 + 규칙 9 위반 수정
+
+`이어서작업.md`의 "배포 전 최종 점검" 체크리스트를 실행했다.
+
+- **Windows 세션 `node_modules` 누락**: 지난 Mac 세션에서 추가된 `@vercel/analytics`·`vitest`가 이 머신엔 설치돼 있지 않아 `tsc`·`test`가 전부 모듈 못 찾음 에러였다. `npm install`로 해결 — 코드 문제 아니었음.
+- `npx tsc --noEmit` / `npm test`(30/30) / `npm run build`(181페이지) 전부 통과.
+- `npm audit` 12 high는 전부 `next`·`eslint`가 번들한 전이 의존성(postcss·sharp·minimatch)이고, 제안된 "수정"이 사실 `next` 9.3.3으로의 다운그레이드라 무의미 — 손대지 않음.
+- `/api/health`, `/privacy` 응답 정상. `EmailCapture`는 `RESEND_API_KEY` 없으면 `/plan`에서 완전히 사라지고, 있으면(가짜 키로도) 정상 렌더 — 규칙 8 확인.
+- `security-review` 스킬은 PR diff 기반이라 커밋된 `/api/subscribe`·`/api/health`엔 못 돌림 → 수동 검토. 이메일 정규식 검증, 고정된 Resend 호스트(SSRF 불가), 시크릿·PII 로깅 없음 — 발견 사항 없음.
+- **규칙 9(본문 최소 17px) 위반 발견·수정**: `app/globals.css`가 `body` 기본값을 17px로 잡아뒀는데, `RiskGauge`(부상 위험 안내 문구!)를 포함해 8개 파일의 실제 본문 문단이 `text-[15px]`로 그 위를 덮어쓰고 있었다. `StageCard.tsx`는 도보일 제목만 17px(`text-[17px] font-semibold`)이고 휴식일·이동수단 제목은 15px로 같은 컴포넌트 안에서도 일관성이 깨져 있었다. 버튼·칩·배지·내비 링크처럼 본문이 아닌 짧은 UI 요소는 그대로 두고, 실제로 읽어야 하는 문단·설명·체크리스트 항목만 17px로 올렸다.
+  - 수정 파일: `components/RiskGauge.tsx`, `components/CalculatorCTA.tsx`, `components/EmailCapture.tsx`, `components/StageCard.tsx`, `app/page.tsx`, `app/plan/page.tsx`, `app/route/[slug]/page.tsx`, `app/tools/{cost,pack,timeline}/page.tsx`, `app/town/[slug]/page.tsx`.
+  - 수정 후 `tsc`·`test`·`build` 재확인, 전부 통과.
+- 남은 배포 콘솔 작업(체크리스트만, 코드 아님): Vercel에 `NEXT_PUBLIC_SITE_URL`·`RESEND_API_KEY`·`RESEND_AUDIENCE_ID` 설정 여부.
+
+---
+
 ## 2026-07-27 (12) — P7 계측, 웹 트랙 Phase 1(P0~P7) 완료
 
 `@vercel/analytics` 연결 + 커스텀 이벤트 6종, 헬스체크, 개인정보 처리방침, 선택적 이메일 수집. 이걸로 웹 트랙 Phase 1 코드 구현이 전부 끝났다.

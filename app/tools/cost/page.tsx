@@ -74,7 +74,7 @@ export default async function CostPage({ searchParams }: { searchParams: SP }) {
       <div className="bg-ink px-5 py-7 text-white">
         <div className="mx-auto max-w-3xl">
           <h1 className="font-display text-2xl font-bold">카미노 비용 계산기</h1>
-          <p className="mt-1 text-[15px] text-white/70">
+          <p className="mt-1 text-[17px] text-white/70">
             항공·숙박·식비·장비를 범위로 추정합니다. 가입 없이 바로.
           </p>
         </div>
@@ -95,7 +95,7 @@ export default async function CostPage({ searchParams }: { searchParams: SP }) {
 
         <section className="rounded-lg border border-stone bg-white px-4 py-4">
           <h2 className="mb-3 font-display text-lg text-text">항목별</h2>
-          <table className="w-full text-[15px]">
+          <table className="w-full text-[17px]">
             <tbody>
               {rows.map((r) => (
                 <tr key={r.ko} className="border-b border-stone last:border-0">

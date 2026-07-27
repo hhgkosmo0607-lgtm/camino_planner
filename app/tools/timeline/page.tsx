@@ -57,7 +57,7 @@ export default async function TimelinePage({ searchParams }: { searchParams: SP 
       <div className="no-print bg-ink px-5 py-7 text-white">
         <div className="mx-auto max-w-3xl">
           <h1 className="font-display text-2xl font-bold">준비 타임라인</h1>
-          <p className="mt-1 text-[15px] text-white/70">
+          <p className="mt-1 text-[17px] text-white/70">
             출발일만 넣으면 언제 뭘 해야 하는지 날짜로 정리해 드립니다.
           </p>
         </div>
@@ -91,7 +91,7 @@ export default async function TimelinePage({ searchParams }: { searchParams: SP 
               </div>
               <ul className="mt-2 space-y-1.5">
                 {m.items.map((it) => (
-                  <li key={it.ko} className="flex items-start gap-2 text-[15px] text-text">
+                  <li key={it.ko} className="flex items-start gap-2 text-[17px] text-text">
                     <span aria-hidden className="mt-0.5 text-muted">☐</span>
                     {it.href ? (
                       <Link href={it.href} className="underline-offset-2 hover:underline">

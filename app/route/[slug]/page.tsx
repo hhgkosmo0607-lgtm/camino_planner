@@ -81,7 +81,7 @@ export default async function RoutePage({ params }: { params: Params }) {
           <nav className="mb-3 text-[13px] text-white/60">순례길 루트</nav>
           <h1 className="font-display text-3xl font-bold">{r.nameKo}</h1>
           <p className="mt-1 text-[17px] text-white/75">{r.nameEs}</p>
-          <p className="mt-3 text-[15px] leading-relaxed text-white/80">{r.summaryKo}</p>
+          <p className="mt-3 text-[17px] leading-relaxed text-white/80">{r.summaryKo}</p>
           <div className="mt-4 flex flex-wrap gap-x-6 gap-y-1 font-mono text-[15px] tabular-nums text-white/85">
             <span>총 {dist}km</span>
             <span>표준 {r.standardDays}일</span>

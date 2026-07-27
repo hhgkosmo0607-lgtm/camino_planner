@@ -73,7 +73,7 @@ export default async function TownPage({ params }: { params: Params }) {
               ))}
             </ul>
           ) : (
-            <p className="text-[15px] text-muted">확인된 시설 정보가 없습니다.</p>
+            <p className="text-[17px] text-muted">확인된 시설 정보가 없습니다.</p>
           )}
         </section>
 
@@ -82,7 +82,7 @@ export default async function TownPage({ params }: { params: Params }) {
           <h2 className="mb-2 font-display text-lg text-text">
             알베르게 <span className="text-[13px] text-muted">Albergue</span>
           </h2>
-          <p className="text-[15px] text-muted">
+          <p className="text-[17px] text-muted">
             {t.beds > 0
               ? `이 마을에는 약 ${t.beds}개의 침대가 있는 것으로 파악됩니다. 개별 알베르게의 요금·예약·개방 기간은 정보 확인 중입니다.`
               : '확인된 숙소 정보가 없습니다.'}

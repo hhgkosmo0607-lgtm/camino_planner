@@ -71,7 +71,7 @@ export function StageCard({ stage }: { stage: Stage }) {
         <div className="flex items-center gap-3">
           <DayNo n={stage.dayNo} muted />
           <div>
-            <div className="text-[15px] font-semibold text-text">
+            <div className="text-[17px] font-semibold text-text">
               휴식일 · {to?.nameKo}
             </div>
             <div className="text-[13px] text-muted">{to?.nameEs}에서 하루 쉼</div>
@@ -89,7 +89,7 @@ export function StageCard({ stage }: { stage: Stage }) {
         <div className="flex items-start gap-3">
           <DayNo n={stage.dayNo} muted />
           <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-semibold text-text">
+            <div className="text-[17px] font-semibold text-text">
               {TRANSPORT_LABEL[t.mode] ?? t.mode} 이동 · {to?.nameKo}
               <span className="ml-1.5 text-[13px] font-normal text-muted">{to?.nameEs}</span>
             </div>

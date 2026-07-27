@@ -65,7 +65,7 @@ export default async function PackPage({ searchParams }: { searchParams: SP }) {
       <div className="bg-ink px-5 py-7 text-white">
         <div className="mx-auto max-w-3xl">
           <h1 className="font-display text-2xl font-bold">배낭 무게 계산기</h1>
-          <p className="mt-1 text-[15px] text-white/70">
+          <p className="mt-1 text-[17px] text-white/70">
             물집·무릎 부담의 큰 원인은 과한 짐입니다. 체중의 10%가 기준입니다.
           </p>
         </div>
@@ -95,7 +95,7 @@ export default async function PackPage({ searchParams }: { searchParams: SP }) {
               합계 {total.toFixed(1)}kg
             </span>
           </div>
-          <table className="w-full text-[15px]">
+          <table className="w-full text-[17px]">
             <tbody>
               {items.map((it) => (
                 <tr key={it.ko} className="border-b border-stone last:border-0">
@@ -111,14 +111,14 @@ export default async function PackPage({ searchParams }: { searchParams: SP }) {
 
         {/* 판단 */}
         {transfer ? (
-          <section className="rounded-lg border border-moss/40 bg-moss/5 px-4 py-4 text-[15px] leading-relaxed text-text">
+          <section className="rounded-lg border border-moss/40 bg-moss/5 px-4 py-4 text-[17px] leading-relaxed text-text">
             <b className="text-moss">짐 배송을 이용하면 매일 메는 무게가 크게 줄어듭니다.</b> 주
             배낭은 다음 마을로 보내고, 물·간식·비옷·귀중품만 든 데이파크(약 3kg)만 메세요. 단,{' '}
             <b>공립 알베르게는 배송 수령이 안 되는 경우가 많으니</b> 그날 숙소가 배송을 받는지 미리
             확인하세요.
           </section>
         ) : over > 0 ? (
-          <section className="rounded-lg border border-vino/40 bg-vino/5 px-4 py-4 text-[15px] leading-relaxed text-text">
+          <section className="rounded-lg border border-vino/40 bg-vino/5 px-4 py-4 text-[17px] leading-relaxed text-text">
             <b className="text-vino">권장 상한보다 약 {over.toFixed(1)}kg 무겁습니다.</b> 아래
             순서로 줄여 보세요:
             <ol className="mt-2 list-decimal space-y-1 pl-5">
@@ -132,7 +132,7 @@ export default async function PackPage({ searchParams }: { searchParams: SP }) {
             </ol>
           </section>
         ) : (
-          <section className="rounded-lg border border-moss/40 bg-moss/5 px-4 py-4 text-[15px] leading-relaxed text-text">
+          <section className="rounded-lg border border-moss/40 bg-moss/5 px-4 py-4 text-[17px] leading-relaxed text-text">
             <b className="text-moss">권장 상한 안에 들어옵니다.</b> 무리 없는 무게입니다. 물은 마을마다
             보충하며 항상 가득 채우지 않는 것만 지키세요.
           </section>

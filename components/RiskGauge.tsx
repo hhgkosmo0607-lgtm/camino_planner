@@ -28,7 +28,7 @@ export function RiskGauge({ score, quality, advice }: RiskGaugeProps) {
     return (
       <section className="rounded-lg border border-stone bg-white/60 px-4 py-4">
         <div className="text-[13px] font-medium tracking-wide text-muted">부상 위험 판단</div>
-        <p className="mt-2 text-[15px] leading-relaxed text-text">{advice}</p>
+        <p className="mt-2 text-[17px] leading-relaxed text-text">{advice}</p>
         <p className="mt-2 text-[13px] text-muted">
           아직 실측 고도로 검증되지 않아 점수는 표시하지 않습니다.
         </p>
@@ -67,7 +67,7 @@ export function RiskGauge({ score, quality, advice }: RiskGaugeProps) {
         />
       </div>
 
-      <p className="mt-3 text-[15px] leading-relaxed text-text">{advice}</p>
+      <p className="mt-3 text-[17px] leading-relaxed text-text">{advice}</p>
     </section>
   )
 }

@@ -47,7 +47,7 @@ export function EmailCapture() {
       <h2 className="font-display text-lg text-text">
         출국 D-90 체크리스트 받기 <span className="text-[13px] font-normal text-muted">(선택)</span>
       </h2>
-      <p className="mt-1 text-[15px] text-muted">
+      <p className="mt-1 text-[17px] text-muted">
         이메일만 입력하면 준비 체크리스트를 보내드립니다. 입력하지 않아도 위 계산 결과는 그대로
         이용할 수 있어요.
       </p>
