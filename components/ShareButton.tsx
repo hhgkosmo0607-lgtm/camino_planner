@@ -6,6 +6,7 @@
  */
 
 import { useState } from 'react'
+import { track } from '@vercel/analytics'
 
 export function ShareButton() {
   const [copied, setCopied] = useState(false)
@@ -14,6 +15,7 @@ export function ShareButton() {
     try {
       await navigator.clipboard.writeText(window.location.href)
       setCopied(true)
+      track('plan_link_copied')
       setTimeout(() => setCopied(false), 2000)
     } catch {
       setCopied(false)

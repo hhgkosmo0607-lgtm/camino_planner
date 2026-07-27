@@ -9,6 +9,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { CostControls } from '@/components/CostControls'
 import { ToolNav } from '@/components/ToolNav'
+import { Track } from '@/components/Track'
 
 export const metadata: Metadata = {
   title: '카미노 순례길 비용 계산기 · 항공·숙박·식비 예산',
@@ -69,6 +70,7 @@ export default async function CostPage({ searchParams }: { searchParams: SP }) {
 
   return (
     <main className="min-h-screen bg-granite pb-16">
+      <Track event="tool_used" data={{ tool: 'cost' }} />
       <div className="bg-ink px-5 py-7 text-white">
         <div className="mx-auto max-w-3xl">
           <h1 className="font-display text-2xl font-bold">카미노 비용 계산기</h1>

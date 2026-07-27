@@ -16,6 +16,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: p === '' ? 1 : 0.9,
   }))
 
+  const toolPages = ['/tools/cost', '/tools/pack', '/tools/timeline'].map((p) => ({
+    url: `${BASE_URL}${p}`,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }))
+
+  const legalPages = ['/privacy'].map((p) => ({
+    url: `${BASE_URL}${p}`,
+    changeFrequency: 'yearly' as const,
+    priority: 0.2,
+  }))
+
   const routePages = ROUTES.map((r) => ({
     url: `${BASE_URL}/route/${r.slug}`,
     changeFrequency: 'monthly' as const,
@@ -34,5 +46,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }))
 
-  return [...staticPages, ...routePages, ...townPages, ...stagePages]
+  return [...staticPages, ...toolPages, ...legalPages, ...routePages, ...townPages, ...stagePages]
 }

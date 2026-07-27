@@ -12,6 +12,7 @@ import { towns } from '@/data/towns'
 import { getStage, allStages, estimatedMinutes, difficultyKo, SERVICE_LABEL } from '@/lib/geo'
 import { Elevation } from '@/components/Elevation'
 import { CalculatorCTA } from '@/components/CalculatorCTA'
+import { Track } from '@/components/Track'
 
 export function generateStaticParams() {
   return allStages().map((s) => ({ slug: s.slug }))
@@ -43,6 +44,7 @@ export default async function StagePage({ params }: { params: Params }) {
 
   return (
     <main className="min-h-screen bg-granite pb-16">
+      <Track event="stage_page_viewed" data={{ slug: s.slug }} />
       <div className="bg-ink px-5 py-8 text-white">
         <div className="mx-auto max-w-3xl">
           <nav className="mb-3 text-[13px] text-white/60">

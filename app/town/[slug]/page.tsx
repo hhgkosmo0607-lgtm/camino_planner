@@ -12,6 +12,7 @@ import { notFound } from 'next/navigation'
 import { towns } from '@/data/towns'
 import { getTown, townNeighbors, remainingKm, SERVICE_LABEL } from '@/lib/geo'
 import { CalculatorCTA } from '@/components/CalculatorCTA'
+import { Track } from '@/components/Track'
 
 export function generateStaticParams() {
   return towns.map((t) => ({ slug: t.id }))
@@ -40,6 +41,7 @@ export default async function TownPage({ params }: { params: Params }) {
 
   return (
     <main className="min-h-screen bg-granite pb-16">
+      <Track event="town_page_viewed" data={{ slug: t.id }} />
       <div className="bg-ink px-5 py-8 text-white">
         <div className="mx-auto max-w-3xl">
           <nav className="mb-3 text-[13px] text-white/60">

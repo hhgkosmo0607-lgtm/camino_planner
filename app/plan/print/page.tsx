@@ -152,7 +152,7 @@ export default async function PrintPage({ searchParams }: { searchParams: SP }) 
         <span className="text-[11px] text-neutral-500">
           {brand.nameKo} · 경로 © OpenStreetMap (ODbL) · 고도 © EU-DEM (Copernicus)
         </span>
-        <PrintButton />
+        <PrintButton event="plan_printed" />
       </div>
     </main>
   )

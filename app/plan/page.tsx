@@ -13,6 +13,8 @@ import { StageCard } from '@/components/StageCard'
 import { RiskGauge } from '@/components/RiskGauge'
 import { PlanControls } from '@/components/PlanControls'
 import { ShareButton } from '@/components/ShareButton'
+import { Track } from '@/components/Track'
+import { EmailCapture } from '@/components/EmailCapture'
 import { buildPlan } from '@/lib/planner/split'
 import { decodePlan } from '@/lib/url'
 import { towns } from '@/data/towns'
@@ -61,6 +63,15 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
 
   return (
     <main className="min-h-screen bg-granite pb-16">
+      <Track
+        event="plan_calculated"
+        data={{
+          route: input.startTownId,
+          targetKm: input.targetKmPerDay ?? 0,
+          fitness: input.fitness,
+          ...(plan.riskDataQuality !== 'ESTIMATED' ? { riskScore: Math.round(plan.injuryRiskScore) } : {}),
+        }}
+      />
       <Mojon
         title={brand.nameKo}
         remainingKm={plan.walkedKm}
@@ -136,6 +147,8 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
             ))}
           </div>
         </section>
+
+        {process.env.RESEND_API_KEY && <EmailCapture />}
       </div>
     </main>
   )

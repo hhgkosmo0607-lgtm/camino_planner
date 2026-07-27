@@ -9,6 +9,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { PackControls } from '@/components/PackControls'
 import { ToolNav } from '@/components/ToolNav'
+import { Track } from '@/components/Track'
 
 export const metadata: Metadata = {
   title: '카미노 배낭 무게 계산기 · 체중 10% 기준 짐 목록',
@@ -60,6 +61,7 @@ export default async function PackPage({ searchParams }: { searchParams: SP }) {
 
   return (
     <main className="min-h-screen bg-granite pb-16">
+      <Track event="tool_used" data={{ tool: 'pack' }} />
       <div className="bg-ink px-5 py-7 text-white">
         <div className="mx-auto max-w-3xl">
           <h1 className="font-display text-2xl font-bold">배낭 무게 계산기</h1>

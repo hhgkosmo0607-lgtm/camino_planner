@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { TimelineControls } from '@/components/TimelineControls'
 import { ToolNav } from '@/components/ToolNav'
 import { PrintButton } from '@/components/PrintButton'
+import { Track } from '@/components/Track'
 
 export const metadata: Metadata = {
   title: '카미노 준비 타임라인 · 출발일 D-90 역산 체크리스트',
@@ -52,6 +53,7 @@ export default async function TimelinePage({ searchParams }: { searchParams: SP 
 
   return (
     <main className="min-h-screen bg-granite pb-16">
+      <Track event="tool_used" data={{ tool: 'timeline' }} />
       <div className="no-print bg-ink px-5 py-7 text-white">
         <div className="mx-auto max-w-3xl">
           <h1 className="font-display text-2xl font-bold">준비 타임라인</h1>
