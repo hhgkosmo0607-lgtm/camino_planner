@@ -7,7 +7,8 @@
 
 import { towns } from '../data/towns'
 import { profiles } from '../data/profiles'
-import type { Town, SegmentProfile, Service } from './schema'
+import { albergues } from '../data/albergues'
+import type { Town, SegmentProfile, Service, Albergue, AlbergueType, ReservationMethod } from './schema'
 
 export const SANTIAGO_ID = 'santiago-de-compostela'
 export const TOTAL_KM = 773.1
@@ -35,6 +36,28 @@ export function townNeighbors(slug: string): { prev?: Town; next?: Town } {
 }
 
 export const remainingKm = (t: Town): number => Math.round((TOTAL_KM - t.km) * 10) / 10
+
+// ── 알베르게(숙소) — 파일럿 20개 마을만 있음. 없는 마을은 빈 배열(규칙 1) ──
+export const ALBERGUE_TYPE_LABEL: Record<AlbergueType, string> = {
+  MUNICIPAL: '시립',
+  XUNTA: '갈리시아 공립',
+  PARISH: '교구·수도회',
+  MONASTERY: '수도원',
+  PRIVATE: '사설',
+  DONATIVO: '기부제',
+}
+
+export const RESERVATION_LABEL: Record<ReservationMethod, string> = {
+  NONE: '예약 불가(선착순)',
+  PHONE: '전화 예약',
+  WHATSAPP: '왓츠앱 예약',
+  ONLINE: '온라인 예약',
+  UNKNOWN: '확인 중',
+}
+
+export function alberguesForTown(townId: string): Albergue[] {
+  return albergues.filter((a) => a.townId === townId)
+}
 
 // ── 구간(연속 마을쌍 81개) ──────────────────────────────────
 export interface Stage {

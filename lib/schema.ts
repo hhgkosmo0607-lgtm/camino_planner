@@ -135,7 +135,7 @@ export interface Albergue {
   acceptsBagTransfer: boolean | null   // 공립은 대부분 false. 마을 단위(Service)와 별개
   wheelchairAccessible: boolean | null // 계단 유무 등. 확인 전까지 null 유지
   verifiedAt: string | null       // YYYY-MM. UI에 노출
-  source: 'FIELD' | 'PARTNER' | 'USER_REPORT' | 'PLACEHOLDER'
+  source: 'FIELD' | 'PARTNER' | 'USER_REPORT' | 'GUIDEBOOK' | 'PLACEHOLDER'
 }
 
 // ────────────────────────────────────────────────────────────

@@ -251,7 +251,7 @@ apps/web/                   (Phase 1은 이게 저장소 루트나 다름없다)
     profiles.ts               ★ 구간별 누적 상승/하강. 고도는 여기서만 읽는다
     forks.ts                  ★ 갈림길 11곳. 변형 경로와 계절 폐쇄(구조는 있음, 정밀 수치는 실측 전 null)
     landmarks.ts              안개 지도 스팟 19곳
-    albergues.ts              숙소 (실측 전까지 대부분 PLACEHOLDER)
+    albergues.ts              숙소. 마을 82곳 전체 gronze.com 조사 완료(source: 'GUIDEBOOK', 275개 항목). 침대 수 등 출처 간 불일치는 null
     access.ts                 ★ 접근 교통(인천→생장) 4개 경로. 가이드북 출처, checkedAt 확인 후 사용
     routes.ts
   /scripts/pipeline
