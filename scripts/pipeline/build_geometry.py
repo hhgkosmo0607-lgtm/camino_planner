@@ -7,7 +7,8 @@ build_geometry.py — 경로·고도 데이터 파이프라인 (프로토타입)
    지금은 파이썬으로 API 호출+가공을 빠르게 검증하는 용도.
 
 실행: python scripts/pipeline/build_geometry.py
-  (Windows 이 환경에서는 python3 아니라 python 을 써야 한다 — python3은 MS Store 스텁)
+  (Windows 이 환경에서는 python3 아니라 python 을 써야 한다 — python3은 실제 파이썬이 아니라
+   "설치 안 돼 있으니 스토어에서 받으라"고 안내만 하는 가짜 실행 파일(MS Store 스텁)이다)
 
 의존성: 표준 라이브러리만 사용 (urllib). 별도 설치 불필요.
 
@@ -61,6 +62,7 @@ OUT_DIR = "data/geometry"  # ⚠️ CLAUDE.md: data/geometry/ 는 gitignore 대�
 # 기하 유틸
 # ────────────────────────────────────────────────
 def haversine(a, b):
+    """하버사인 공식 — 위도·경도 두 점 사이의 실제 지표면 거리(직선이 아니라 지구 곡률을 반영한 거리)를 구한다."""
     R = 6371000.0
     lat1, lon1 = math.radians(a[0]), math.radians(a[1])
     lat2, lon2 = math.radians(b[0]), math.radians(b[1])
@@ -382,7 +384,7 @@ def slugify(es):
 
 
 def point_at(path, cum, meters):
-    """path 위에서 시작점 기준 meters 지점의 (lat,lon)을 선형보간으로 구한다."""
+    """path 위에서 시작점 기준 meters 지점의 (lat,lon)을 선형보간(앞뒤 두 점을 비율대로 섞어 그 사이의 값을 추정하는 방법)으로 구한다."""
     meters = max(0.0, min(meters, cum[-1]))
     j = 0
     while j < len(cum) - 1 and cum[j + 1] < meters:
@@ -455,7 +457,7 @@ def build_profiles_and_towns():
     ids = [slugify(t["es"]) for t in towns]
     dupes = {i for i in ids if ids.count(i) > 1}
     if dupes:
-        raise RuntimeError(f"슬러그 중복 발생: {dupes} — slugify 규칙 조정 필요")
+        raise RuntimeError(f"슬러그(URL에 쓰는 짧고 영문 소문자로만 된 식별자, 예: 'sarria') 중복 발생: {dupes} — slugify 규칙 조정 필요")
 
     write_towns_ts(towns)
     write_profiles_ts(profiles)

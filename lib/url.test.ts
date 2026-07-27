@@ -26,7 +26,7 @@ describe('url 인코딩/디코딩', () => {
     expect(encodePlan(base)).toBe('')
   })
 
-  it('라운드트립: 사리아 20km high 휴식2', () => {
+  it('라운드트립(encode 했다가 다시 decode 해서 원래 값이 그대로 나오는지 확인): 사리아 20km high 휴식2', () => {
     const input: PlanInput = {
       ...base,
       startTownId: 'sarria',

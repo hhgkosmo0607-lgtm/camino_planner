@@ -129,7 +129,10 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-display text-lg text-text">
-              에타파 <span className="text-[13px] text-muted">Etapa · {plan.totalDays}일</span>
+              에타파{' '}
+              <span className="text-[13px] text-muted" data-testid="plan-total-days">
+                Etapa · {plan.totalDays}일
+              </span>
             </h2>
             <div className="flex gap-2">
               <a

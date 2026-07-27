@@ -139,7 +139,7 @@ function transportFrom(input: PlanInput, curId: string) {
   return input.plannedTransport.find((t) => t.fromTownId === curId) ?? null
 }
 
-/** 탐욕 분할 + 부상 회피 후처리로 RawStage 목록을 만든다. */
+/** 탐욕 분할(매 구간마다 그 순간 목표 거리에 가장 가까운 마을을 바로 선택하는 방식 — 전체를 다시 계산하지 않아 빠르다) + 부상 회피 후처리로 RawStage 목록을 만든다. */
 function buildRawStages(input: PlanInput): RawStage[] {
   const startIdx = townIdx(input.startTownId)
   const endIdx = ALL_TOWNS.length - 1

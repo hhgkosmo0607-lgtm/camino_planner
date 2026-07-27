@@ -362,8 +362,9 @@ export interface Completion {
  *      계획된 이동수단인 경우에만 값을 갖는 단일 필드(배열 아님).
  *
  * 6. RouteVariant.forkId
- *    03문서 원본에는 없었으나 RouteFork.variants 배열의 역참조가 없어
- *    조회가 불편했다. → forkId 필드 추가.
+ *    03문서 원본에는 없었으나 RouteFork.variants 배열의 역참조(자식 쪽에서
+ *    거꾸로 부모를 가리키는 연결. 이게 없으면 variant 하나만 보고는 자기가
+ *    어느 fork 소속인지 알 수 없다)가 없어 조회가 불편했다. → forkId 필드 추가.
  *
  * 7. Albergue.wheelchairAccessible
  *    F-25에서 "숙소 접근성 데이터 필요"라고 서술만 있고 필드가 없었다.

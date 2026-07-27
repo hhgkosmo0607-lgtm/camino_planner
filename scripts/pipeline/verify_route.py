@@ -98,8 +98,8 @@ def main():
     print(f"\n  지오코딩 성공 {n}/{len(towns)}개")
     if n:
         median = dists[n // 2]
-        p90 = dists[int(n * 0.9)]
-        print(f"  경로까지 거리 — 중앙값 {median:.0f}m / 90%ile {p90:.0f}m / 최대 {dists[-1]:.0f}m")
+        p90 = dists[int(n * 0.9)]  # 상위 10%(가장 먼 마을들)를 뺀 나머지 90%가 이 거리 안에 든다
+        print(f"  경로까지 거리 — 중앙값 {median:.0f}m / 90%ile(상위 10% 제외 최대값) {p90:.0f}m / 최대 {dists[-1]:.0f}m")
         within500 = sum(1 for d in dists if d <= 500)
         within1k = sum(1 for d in dists if d <= 1000)
         print(f"  500m 이내 {within500}/{n} ({within500/n*100:.0f}%), 1km 이내 {within1k}/{n} ({within1k/n*100:.0f}%)")

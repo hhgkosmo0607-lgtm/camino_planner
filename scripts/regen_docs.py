@@ -3,7 +3,8 @@
 regen_docs.py — .md 정본에서 파생 산출물(docx 12개 + 문서뷰어.html) 재생성.
 
 .md 파일이 정본이다. 이 스크립트는 그것을 공유용으로 내보낸다.
- - docs/docx/*.docx : pandoc(pypandoc_binary)으로 각 .md → .docx
+ - docs/docx/*.docx : pandoc(여러 문서 형식을 서로 변환해주는 프로그램. 여기선
+   파이썬에서 그걸 호출하는 pypandoc_binary 패키지를 씀)으로 각 .md → .docx
  - 문서뷰어.html    : <script id="payload"> JSON 배열의 md만 현재 내용으로 교체
                       (file/title/sub/순서 메타데이터는 기존 것 보존)
 
@@ -57,7 +58,7 @@ def regen_docx(entries):
         src = source_path(e["file"])
         base = os.path.splitext(os.path.basename(e["file"]))[0]
         dst = os.path.join(DOCX_DIR, base + ".docx")
-        pypandoc.convert_file(src, "docx", outputfile=dst, extra_args=["--from=gfm"])
+        pypandoc.convert_file(src, "docx", outputfile=dst, extra_args=["--from=gfm"])  # gfm = GitHub식 마크다운 문법으로 읽으라는 옵션
         print(f"  {src} → {dst}")
 
 

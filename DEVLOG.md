@@ -4,6 +4,29 @@
 
 ---
 
+## 2026-07-27 (16) — 전 문서·코드 주석 쉬운 말 정리
+
+"모든 문서파일과 주석을 쉬운 용어로, 전문용어는 괄호로 뜻을 설명" 요청에 따라 3단계로 나눠 진행했다.
+
+- **1단계 — 핵심 문서**: `CLAUDE.md`(순수 함수·서버 렌더·useEffect·ODbL·EU-DEM·React Native·워크스페이스 등), `README.md`(Vitest·Playwright·Resend 등), `이어서작업.md`(레이트리밋·SDK 등)에 괄호 설명 추가. `학습노트.md`는 이미 이 취지로 잘 쓰여 있어 깨진 글자(mojibake) 하나만 고쳤다. 카미노 스페인어 도메인 용어(알베르게·크레덴시알 등)는 규칙 5(원어 병기)의 대상이라 그대로 뒀다.
+- **2단계 — 코드 주석 44개 파일**: `app/`·`components/`·`lib/`·`config/`·`scripts/` 전수 확인. 대부분 이미 짧고 명확했고, 실제로 손댄 곳은 `lib/schema.ts`(역참조)·`lib/planner/split.ts`(탐욕 분할)·파이썬 파이프라인 3종(haversine·선형보간·슬러그·LiDAR·WCS INSPIRE 등)·`scripts/regen_docs.py`(pandoc·gfm) 정도. `python -m py_compile`로 파이썬 문법 확인.
+- **3단계 — docs/markdown 사업·전략 문서 11개**(약 12,700줄): 전체를 다시 쓰지 않고, 반복 등장하는 비즈니스·개발 전문용어(세그먼트·전환율·리텐션·바이럴·화이트라벨·페르소나·MVP·KPI·LTV·GPX)를 각 문서 안 **첫 등장 지점에서만** 괄호로 풀이했다. `A_순례길입문.md`는 검색에 걸리는 용어가 없어 그대로 뒀다.
+- 세 단계 모두 뒤 `tsc`·`vitest`(30/30)·`playwright test`(1/1)·`next build`(181페이지)로 재확인, 매번 통과.
+- `docs/markdown`·`CLAUDE.md`를 여러 차례 고쳤으므로 그때그때 `python scripts/regen_docs.py`로 `docs/docx/*`·`문서뷰어.html` 재생성.
+
+## 2026-07-27 (15) — Playwright E2E 도입 (06 문서 시나리오 1)
+
+`06_개발가이드.md` "테스트 전략"이 명시한 3개 E2E 시나리오 중 지금 있는 기능으로 실행 가능한 **시나리오 1(일정 생성 → 공유 → 복원)** 만 구현했다. 시나리오 2(갈림길 선택)·3(Plan B)은 해당 UI가 아직 없어(Phase 2·3) 지금 만들면 존재하지 않는 기능을 테스트하게 되므로 보류 — CLAUDE.md가 이미 경고한 "P1 프롬프트에 Phase 2·3이 끼어드는" 실수를 피했다.
+
+- `@playwright/test` devDependency(개발할 때만 쓰고 실제 서비스에는 안 들어가는 패키지) 추가, `playwright.config.ts`(webServer 설정이 `next build && next start`로 테스트용 서버를 자동으로 띄워준다), `e2e/plan-share-restore.spec.ts`.
+- 클립보드 권한에 기대지 않고, 컨트롤 변경 후의 URL을 완전히 새 브라우저 컨텍스트에서 열어 같은 결과가 나오는지로 "공유 링크로 복원"을 검증한다 — 상태가 URL에만 있다는 규칙 8을 그대로 이용.
+- 라디오 입력이 `sr-only`라 `.check()`가 라벨에 가로막혀 실패 — 라벨 텍스트를 클릭하도록 수정.
+- `app/plan/page.tsx`의 "에타파 · N일" 텍스트에 `data-testid="plan-total-days"` 추가(테스트용 훅, 화면엔 영향 없음).
+- vitest가 `e2e/*.spec.ts`까지 테스트로 주워가 `@playwright/test`의 `test()`와 충돌 — `vitest.config.ts`를 새로 만들어 `e2e/`를 제외.
+- `package.json`에 `"test:e2e": "playwright test"` 추가. `.gitignore`에 `test-results/`·`playwright-report/`·`blob-report/`·`playwright/.cache/` 추가.
+- `npx playwright install chromium --with-deps`로 브라우저 바이너리 설치 필요(최초 1회, ~300MB).
+- 재확인: `tsc`·`vitest`(30/30)·`playwright test`(1/1)·`next build`(181페이지)·`eslint` 전부 통과.
+
 ## 2026-07-27 (14) — 이어서작업.md·CLAUDE.md 일정 표기에서 확정 날짜 제거
 
 `이어서작업.md`의 "판단 게이트" 표가 "~2026-09", "2026-10초~11초" 같은 구체 날짜를 못 박고 있어 계속 갱신이 필요했던 문제를 정리했다. 실행 시점은 달력 날짜가 아니라 **순서·선행조건**으로 판단하도록 표를 다시 썼다(예: "게이트 2 선행조건 → 게이트 2 → 실측 도보 → 게이트 3" 순서). CLAUDE.md의 "웹 트랙 Phase 1 완료" 문장에서도 `2026-07-27` 고정 날짜를 뺐다(정확한 날짜는 git 커밋 이력·DEVLOG에 이미 있음).
@@ -20,7 +43,7 @@
 - `npx tsc --noEmit` / `npm test`(30/30) / `npm run build`(181페이지) 전부 통과.
 - `npm audit` 12 high는 전부 `next`·`eslint`가 번들한 전이 의존성(postcss·sharp·minimatch)이고, 제안된 "수정"이 사실 `next` 9.3.3으로의 다운그레이드라 무의미 — 손대지 않음.
 - `/api/health`, `/privacy` 응답 정상. `EmailCapture`는 `RESEND_API_KEY` 없으면 `/plan`에서 완전히 사라지고, 있으면(가짜 키로도) 정상 렌더 — 규칙 8 확인.
-- `security-review` 스킬은 PR diff 기반이라 커밋된 `/api/subscribe`·`/api/health`엔 못 돌림 → 수동 검토. 이메일 정규식 검증, 고정된 Resend 호스트(SSRF 불가), 시크릿·PII 로깅 없음 — 발견 사항 없음.
+- `security-review` 스킬은 PR diff(커밋되기 전 변경 내용 비교) 기반이라 이미 커밋된 `/api/subscribe`·`/api/health`엔 못 돌림 → 수동 검토. 이메일 정규식(패턴으로 문자열 형식을 검사하는 방법) 검증, 목적지 주소가 코드에 고정돼 있어 SSRF(공격자가 서버를 속여 임의의 다른 주소로 요청을 보내게 만드는 공격) 불가, 비밀키·PII(이름·이메일 같은 개인식별정보) 로깅 없음 — 발견 사항 없음.
 - **규칙 9(본문 최소 17px) 위반 발견·수정**: `app/globals.css`가 `body` 기본값을 17px로 잡아뒀는데, `RiskGauge`(부상 위험 안내 문구!)를 포함해 8개 파일의 실제 본문 문단이 `text-[15px]`로 그 위를 덮어쓰고 있었다. `StageCard.tsx`는 도보일 제목만 17px(`text-[17px] font-semibold`)이고 휴식일·이동수단 제목은 15px로 같은 컴포넌트 안에서도 일관성이 깨져 있었다. 버튼·칩·배지·내비 링크처럼 본문이 아닌 짧은 UI 요소는 그대로 두고, 실제로 읽어야 하는 문단·설명·체크리스트 항목만 17px로 올렸다.
   - 수정 파일: `components/RiskGauge.tsx`, `components/CalculatorCTA.tsx`, `components/EmailCapture.tsx`, `components/StageCard.tsx`, `app/page.tsx`, `app/plan/page.tsx`, `app/route/[slug]/page.tsx`, `app/tools/{cost,pack,timeline}/page.tsx`, `app/town/[slug]/page.tsx`.
   - 수정 후 `tsc`·`test`·`build` 재확인, 전부 통과.
@@ -85,7 +108,7 @@
 - `app/tools/timeline` — 준비 타임라인(F-08). 출발일 → D-90~D-1 역산 체크리스트(날짜 계산), 항목별 관련 페이지 링크, 인쇄 가능. ★ 의료 정보 없음(규칙 11): 상비약은 "준비" 리마인더만, 약품명·처치법 배제 + "의료 정보를 제공하지 않습니다" 면책.
 - `components/ToolNav` — 세 도구 ↔ /plan 상호 링크.
 
-**검증**(`npm run build` → **178 페이지**): tsc·eslint clean. 각 도구 SSR(JS-off) 렌더, 파라미터별 결과 변화(비용 40일 320~570만 / 10일 160~270만), 체중 미입력→7kg·w=60→6.0kg, 타임라인 9/1 출발→D-90 6/3 역산, 도구 상호·`/plan` 링크, 약품명 미노출 확인. 도구는 searchParams 의존이라 동적 렌더(canonical 무파라미터 URL은 SSR 인덱싱 가능).
+**검증**(`npm run build` → **178 페이지**): tsc·eslint clean. 각 도구 SSR(JS-off) 렌더, 파라미터별 결과 변화(비용 40일 320~570만 / 10일 160~270만), 체중 미입력→7kg·w=60→6.0kg, 타임라인 9/1 출발→D-90 6/3 역산, 도구 상호·`/plan` 링크, 약품명 미노출 확인. 도구는 searchParams 의존이라 동적 렌더(canonical(검색엔진에 "이 주소가 진짜 대표 주소"라고 알려주는 것) 무파라미터 URL은 SSR 인덱싱 가능).
 
 ---
 
@@ -96,7 +119,7 @@
 - `lib/geo.ts` — 공유 조회 헬퍼: getTown/townNeighbors/remainingKm, allStages(81 연속쌍)/getStage, estimatedMinutes/difficultyKo, SERVICE_LABEL, ROUTES(3). 순수 조회.
 - `app/town/[slug]/page.tsx` — **82개**. generateStaticParams. 한글+원어명, 산티아고까지 남은 거리, 해발, 이전/다음 마을, 서비스, 침대. ★ 숙소는 데이터 없어 "정보 확인 중"(규칙 1 — 안 지어냄). /plan CTA + 인접 구간 링크.
 - `app/stage/[slug]/page.tsx` — **81개**. slug `A-to-B`(town id에 `-to-` 없음 확인). 거리·고도단면(Elevation, profiles 경유)·예상소요·난이도·통과 마을(링크). 고도는 profiles만(규칙 3).
-- `app/route/[slug]/page.tsx` — **3개**(전 구간/레온/사리아). 총거리·표준일수·주요도시·기간별 추천일정 3(→/plan)·전체 고도단면·**TouristTrip JSON-LD**.
+- `app/route/[slug]/page.tsx` — **3개**(전 구간/레온/사리아). 총거리·표준일수·주요도시·기간별 추천일정 3(→/plan)·전체 고도단면·**TouristTrip JSON-LD**(검색엔진이 페이지 내용을 정형화된 형식으로 미리 읽을 수 있게 코드 안에 심어두는 구조화 데이터).
 - `app/sitemap.ts`(168 URL) + `app/robots.ts`(/dev·/plan/print 제외, sitemap 링크). 모든 SEO 페이지 하단 `CalculatorCTA`.
 - flecha(노랑)는 CTA 버튼에 안 씀(길 안내 전용) → 흰 버튼으로.
 
@@ -135,7 +158,7 @@ EU-DEM은 (추정이 아니라) 실측이므로 injuryRiskScore 숫자 노출은
 06 문서 P3 사양대로 일정 계산기 구현. **URL 쿼리스트링이 유일한 상태 저장소**(규칙 8, localStorage 없음).
 
 - `lib/url.ts` — `encodePlan`/`decodePlan`. 순수 함수, 잘못된 값 기본값 폴백. 쿼리 예: `?start=sarria&d=20&f=high&rest=1&skip=burgos~leon`. 라운드트립 테스트 6/6.
-- `app/plan/page.tsx` — **async 서버 컴포넌트**. searchParams→decodePlan→buildPlan을 서버에서 계산(규칙 7). Mojon·요약(일수/거리/평균)·RiskGauge·콤포스텔라 안내·고도단면·StageCard 목록. `generateMetadata`로 동적 OG("산티아고 순례길 N일 일정 — …").
+- `app/plan/page.tsx` — **async 서버 컴포넌트**. searchParams→decodePlan→buildPlan을 서버에서 계산(규칙 7). Mojon·요약(일수/거리/평균)·RiskGauge·콤포스텔라 안내·고도단면·StageCard 목록. `generateMetadata`로 동적 OG(Open Graph — 카카오톡·페이스북 등에 링크를 공유하면 뜨는 미리보기 카드 규격)("산티아고 순례길 N일 일정 — …").
 - `components/PlanControls.tsx` (client) — 출발지 칩3·모드토글·km슬라이더·체력·휴식일·메세타버스. onChange→`router.replace`로 URL만 갱신(계산은 서버). `<form method="get">`라 **JS 꺼도 제출 동작**(noscript 적용 버튼).
 - `components/ShareButton.tsx` (client) — `navigator.clipboard`로 현재 URL 복사.
 
@@ -198,7 +221,7 @@ EU-DEM은 (추정이 아니라) 실측이므로 injuryRiskScore 숫자 노출은
 CLAUDE.md가 지정한 IGN MDT05(5m)로 바꾸면 더 정확할 거라 가정하고, 실제로 IGN 5m를 조회해 EU-DEM 25m와 비교했다. **결과는 반대였다 — 가장 중요한 날(피레네)에서 5m가 오히려 크게 틀린다.**
 
 ### 취득 방법
-IGN 5m는 공개 조회 API가 없지만, 스페인 IGN **WCS INSPIRE 서비스**(`servicios.idee.es/wcs-inspire/mdt`, `COVERAGEID=Elevacion4258_5`)가 좁은 bbox 실시간 조회를 지원한다. 검증용으로 필요한 지점만 작게 조회했다(배포용 전체 도엽 다운로드 아님 → CLAUDE.md 취지 준수). 도구: `scripts/pipeline/compare_dem.py` (rasterio 필요).
+IGN 5m는 공개 조회 API가 없지만, 스페인 IGN **WCS INSPIRE 서비스**(유럽 공공기관들이 지도 데이터를 표준 규격으로 조회할 수 있게 열어둔 서비스, 주소: `servicios.idee.es/wcs-inspire/mdt`, `COVERAGEID=Elevacion4258_5`)가 좁은 bbox(조회하려는 좌표 범위 사각형) 실시간 조회를 지원한다. 검증용으로 필요한 지점만 작게 조회했다(배포용 전체 도엽 다운로드 아님 → CLAUDE.md 취지 준수). 도구: `scripts/pipeline/compare_dem.py` (rasterio(파이썬에서 지도·고도 같은 격자 데이터를 다루는 라이브러리) 필요).
 
 ### 구간별 누적 상승/하강 (둘 다 동일 스무딩 win5/hys3m)
 
@@ -222,7 +245,7 @@ IGN 5m는 공개 조회 API가 없지만, 스페인 IGN **WCS INSPIRE 서비스*
 | win9/hys5m | 2,328m | **1,288m** ← 기준 근접 |
 | win41/hys15m | 1,858m | 1,112m |
 
-**원인**: 5m LiDAR는 미세 지형(요철)까지 충실히 담는데, OSM 경로에 내재한 수평 위치 오차(수 m~수십 m)가 급경사(30%+)에서는 지점마다 수 m의 수직 오차로 증폭된다. 256개 점에 걸쳐 이 오차가 "가짜 오르내림"으로 누적된다. 25m DEM은 셀 자체가 25m×25m 평균이라 이 미세 노이즈를 원천적으로 눌러준다. → **경로 트랙을 따라 누적 상승을 잴 때는 고해상도가 오히려 독이 될 수 있다** (하이킹 데이터에서 알려진 함정).
+**원인**: 5m LiDAR(레이저를 쏴서 반사되는 시간으로 지형을 정밀 측량하는 기술)는 미세 지형(요철)까지 충실히 담는데, OSM 경로에 내재한 수평 위치 오차(수 m~수십 m)가 급경사(30%+)에서는 지점마다 수 m의 수직 오차로 증폭된다. 256개 점에 걸쳐 이 오차가 "가짜 오르내림"으로 누적된다. 25m DEM은 셀 자체가 25m×25m 평균이라 이 미세 노이즈를 원천적으로 눌러준다. → **경로 트랙을 따라 누적 상승을 잴 때는 고해상도가 오히려 독이 될 수 있다** (하이킹 데이터에서 알려진 함정).
 
 ### reference 없이 검증 — 독립 3개 데이터 교차검증
 
@@ -230,7 +253,7 @@ IGN 5m는 공개 조회 API가 없지만, 스페인 IGN **WCS INSPIRE 서비스*
 
 | 데이터 | 제작 주체·방식 | 누적 상승 | 누적 하강 |
 |---|---|---|---|
-| **IGN MDT05 (5m)** | 스페인, 항공 LiDAR | **2,355m** | 1,437m |
+| **IGN MDT05 (5m)** | 스페인, 항공 LiDAR(레이저 측량) | **2,355m** | 1,437m |
 | EU-DEM (25m) | 유럽 Copernicus, 합성 | 1,327m | 574m |
 | SRTM (30m) | 미국 NASA, 우주왕복선 레이더 | 1,309m | 560m |
 | ASTER (30m) | 미국·일본, 위성 광학 | 1,324m | 573m |
@@ -255,9 +278,9 @@ IGN 5m는 공개 조회 API가 없지만, 스페인 IGN **WCS INSPIRE 서비스*
 
 - **6개 OSM 릴레이션 → 단일 767.5km 경로**로 스티칭. 구간 경계 간격 전부 0m(완벽 연결), 가이드북 773.1km 대비 0.7% 오차.
 - **82개 마을 좌표 매핑** — 설계 결정: **km-비율 보간** 채택(Nominatim 지오코딩 아님).
-  - 근거: 실측 경로(767.5km)가 가이드북 km(773.1km)와 0.7%밖에 안 달라(ratio 0.9928) km 비율이 경로상 위치와 잘 일치. Nominatim은 동명 마을·rate limit로 무인 배치에 부적합.
+  - 근거: 실측 경로(767.5km)가 가이드북 km(773.1km)와 0.7%밖에 안 달라(ratio 0.9928) km 비율이 경로상 위치와 잘 일치. Nominatim(주소·지명을 좌표로 바꿔주는 OSM의 지오코딩 서비스)은 동명 마을·rate limit(짧은 시간에 너무 많이 요청하면 막아버리는 제한)로 사람 손 없이 자동으로 돌리는 배치 작업엔 부적합.
 - **`data/towns.ts`**(마을 82, lat/lng 포함) · **`data/profiles.ts`**(구간 81, ascent/descent/maxElevation/maxGradient) 생성. `lib/schema.ts` 준수, `tsc` 통과.
-- **원본 값 보존**: `towns.km`·`elevation`은 검증된 원본(`src/camino-companion.jsx`)을 정규식으로 그대로 읽어 덮어쓰지 않고, 없던 `lat`/`lng`만 채웠다(CLAUDE.md 규칙 1).
+- **원본 값 보존**: `towns.km`·`elevation`은 검증된 원본(`src/camino-companion.jsx`)을 정규식(패턴을 정해두고 문자열에서 원하는 부분만 골라내는 방법)으로 그대로 읽어 덮어쓰지 않고, 없던 `lat`/`lng`만 채웠다(CLAUDE.md 규칙 1).
 - **좌표 원본**(`data/geometry/`)·`__pycache__`는 `.gitignore`로 제외(ODbL 파생 DB 배포 회피, 규칙 3). 커밋되는 건 `towns.ts`/`profiles.ts` 숫자뿐.
 
 ### 2. API 검증 — 지어낸 값이 아님을 확인 (CLAUDE.md 규칙 1)
@@ -313,5 +336,5 @@ IGN 5m는 공개 조회 API가 없지만, 스페인 IGN **WCS INSPIRE 서비스*
 
 ### 환경 메모
 
-- 이 Mac은 Node 없어 Homebrew로 node 26 설치(`/opt/homebrew/bin`). 데이터 도구는 `python3`. python.org 빌드라 `Install Certificates.command` 1회 실행해 SSL 해결. (직전 Windows 세션 지침과 다름)
-- Vitest 추가(devDep), `package.json`에 `"test": "vitest run"`.
+- 이 Mac은 Node 없어 Homebrew로 node 26 설치(`/opt/homebrew/bin`). 데이터 도구는 `python3`. python.org에서 받은 빌드라 `Install Certificates.command`를 1회 실행해 SSL(인터넷 통신을 암호화하는 보안 규격) 인증서 문제 해결. (직전 Windows 세션 지침과 다름)
+- Vitest 추가(devDependency로), `package.json`에 `"test": "vitest run"`.
