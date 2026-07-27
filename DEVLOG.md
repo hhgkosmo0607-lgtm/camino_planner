@@ -4,6 +4,25 @@
 
 ---
 
+## 2026-07-27 (12) — P7 계측, 웹 트랙 Phase 1(P0~P7) 완료
+
+`@vercel/analytics` 연결 + 커스텀 이벤트 6종, 헬스체크, 개인정보 처리방침, 선택적 이메일 수집. 이걸로 웹 트랙 Phase 1 코드 구현이 전부 끝났다.
+
+- `components/Track.tsx` — 서버 렌더 페이지(SEO 마을·구간·도구·계산 결과)에서도 조회 이벤트를 보낼 수 있게 하는 범용 클라이언트 트래커. `useEffect`에서 `track()` 한 번 호출하고 화면엔 아무것도 안 그린다.
+- 이벤트: `plan_calculated`(app/plan, route·targetKm·fitness·riskScore) · `plan_link_copied`(ShareButton) · `plan_printed`(PrintButton에 `event` prop 추가, `/plan/print`에서만 넘김) · `tool_used`(cost/pack/timeline) · `town_page_viewed`/`stage_page_viewed`.
+- ★ `plan_calculated`도 규칙 3을 따른다: `riskDataQuality === 'ESTIMATED'`면 이벤트에서 `riskScore` 필드 자체를 뺀다(RiskGauge가 화면에서 숨기는 것과 같은 가드).
+- `app/api/health/route.ts` — 배포 모니터링용. 일정 계산과는 무관(규칙 10 저촉 아님).
+- `app/privacy/page.tsx` — 가입 없음/URL 저장 원칙 재확인, Analytics 수집 항목 나열, 이메일 선택 수집 고지. 문의 연락처는 서비스명 확정 전이라 placeholder.
+- 이메일 수집은 **Resend**로 결정(SDK 안 씀, `fetch`로 Audiences API 직접 호출 — 새 의존성 최소화). `app/api/subscribe/route.ts`가 `RESEND_API_KEY`/`RESEND_AUDIENCE_ID` 미설정 시 503을 내고, `app/plan/page.tsx`는 그 환경변수 존재 여부로 `EmailCapture` 컴포넌트 자체를 서버에서 렌더하지 않는다 — 키가 없어도 계산 기능은 완전히 그대로 동작한다(완료 조건, 규칙 8).
+- `.env.example` 신설(`RESEND_API_KEY`·`RESEND_AUDIENCE_ID`·`NEXT_PUBLIC_SITE_URL`), `.gitignore`에 `!.env.example` 예외 추가.
+- **부수 수정**: P6에서 `app/sitemap.ts`에 `/tools/{cost,pack,timeline}`이 누락돼 있던 걸 발견해 추가(규칙 7 위반이었음). `/privacy`도 함께 추가.
+
+**검증**: tsc·eslint clean, vitest 30/30, `npm run build` → **181 정적 페이지**(178 + privacy·헬스체크·구독 API). `next start`로 직접 확인: `/api/health` 200, `/privacy` 200, 환경변수 없을 때 `EmailCapture` 미노출·`/api/subscribe` 503, 환경변수 있을 때(`RESEND_API_KEY=fake_key`) `EmailCapture` 노출.
+
+⚠️ 빌드 1차 시도가 `fonts.gstatic.com` 연결 실패(간헐적 네트워크 이슈, 코드와 무관)로 깨졌다 — 재시도로 통과. 이 프로젝트 코드와는 상관없는 환경 이슈이니 다음에 똑같이 재현되면 재시도부터 해본다.
+
+---
+
 ## 2026-07-25 (11) — 문서 동기화 (구현 반영)
 
 이번 세션 변경(EU-DEM 고도·Next16/Tailwind v4·source 라벨·크림 디자인·파이썬 파이프라인)에 맞춰 기획 문서를 정리.
