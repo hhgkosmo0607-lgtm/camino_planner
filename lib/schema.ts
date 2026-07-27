@@ -69,17 +69,18 @@ export interface RouteVariant {
   nameKo: string
   nameEs: string
   isMain: boolean               // 공식·주 경로 여부
-  townIds: string[]             // 경유 마을 순서
-  distanceKm: number
-  ascent: number
-  descent: number
+  townIds: string[]             // 경유 마을 순서. towns.ts에 없는 변형 전용 마을은 highlightsKo에 이름만 남긴다(규칙 1 — 좌표 없이 town 레코드를 지어내지 않는다)
+  distanceKm: number | null     // null = 실측 전. 메인 루트처럼 OSM+EU-DEM으로 직접 계산하기 전엔 채우지 않는다(규칙 3)
+  ascent: number | null         // null = 실측 전
+  descent: number | null        // null = 실측 전
   closedFrom: string | null     // MM-DD. 계절 폐쇄 (예: 나폴레옹 '11-01')
   closedTo: string | null       // (예: 나폴레옹 '03-31')
-  roadShareRatio: number        // 차도 병행 비율 0~1
+  roadShareRatio: number | null  // 차도 병행 비율 0~1. null = 실측 전(가이드북 서술로는 정밀 비율을 알 수 없다 — traits의 ROAD_HEAVY/QUIET로 정성적 신호만 표시)
   hasShelter: boolean            // 중간에 대피할 마을이 있는가
   traits: VariantTrait[]
   highlightsKo: string[]
   cautionKo: string | null
+  source: 'FIELD' | 'GUIDEBOOK' | 'ESTIMATED'  // FIELD=실측 도보로 직접 확인, GUIDEBOOK=공개 가이드북·포럼 근거(출처 표시 필수, 아직 미실측), ESTIMATED=근거 없는 추정(사용 금지에 가까움)
 }
 
 export interface RouteFork {
