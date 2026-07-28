@@ -23,17 +23,34 @@
 //   여러 건 있었다(예: 수비리 Río Arga Ibaia — 도미토리 3개를 침대 3개로 오독할 뻔함,
 //   실제는 20개). 이상치로 보이는 값은 "Precios y plazas" 원문을 다시 확인해 고쳤다.
 //
-// ⚠️ reservation·contact·openFrom/openTo·hasKitchen 등 세부 필드는 이번 조사
-//   범위 밖이라 전부 UNKNOWN/null이다. 이것도 "확인 안 됨"이지 "없음"이 아니다.
+// ⚠️ reservation: 2026-07-28 3차 갱신. MUNICIPAL/XUNTA/DONATIVO 44곳은 CLAUDE.md
+//   "숙소 자주 틀림" 표에 이미 있는 도메인 사실(이 세 유형은 "불가"라고 "대부분"
+//   같은 단서 없이 명시돼 있다 — 지자체·Xunta 공립은 선착순, 도네이티보는 예약 자체가
+//   구조상 없음)을 근거로 일괄 'NONE'을 채웠다. 개별 알베르게 하나하나를 다시
+//   Gronze에서 재확인한 것은 아니다 — 정책이 바뀌면(규칙 2, 예: 성수기 예약 허용
+//   논의) 이 값도 같이 갱신해야 한다. PARISH·MONASTERY(33곳)는 "대부분 불가"일
+//   뿐 예외가 실재해(예: 론세스바예스는 PARISH지만 대형 순례자 알베르게로 선착순)
+//   일괄 적용하지 않고 Gronze 개별 페이지로 실제 조사했다. PRIVATE(206곳)도
+//   방식(전화/WhatsApp/온라인)이 제각각이라 개별 조사했다. contact·openFrom/openTo·
+//   hasKitchen 등 나머지 세부 필드는 여전히 이번 조사 범위 밖 — UNKNOWN/null.
 //
 // 출처(이름·유형·요금, 1차): https://www.gronze.com/camino-frances (구간별 33개 페이지, 2026-07)
 // 출처(beds, 2차): https://www.gronze.com 개별 알베르게 상세 페이지 280개 (2026-07)
-import type { Albergue, AlbergueType } from '../lib/schema'
+// 출처(reservation, 3차): PARISH·MONASTERY·PRIVATE 239곳은 https://www.gronze.com 개별
+//   알베르게 상세 페이지 "Precios y reservas" 절 (2026-07-28)
+import type { Albergue, AlbergueType, ReservationMethod } from '../lib/schema'
 
 const CHECKED_AT = '2026-07'
 
 const counters: Record<string, number> = {}
-function a(townId: string, name: string, type: AlbergueType, priceEur: number | null, beds: number | null = null): Albergue {
+function a(
+  townId: string,
+  name: string,
+  type: AlbergueType,
+  priceEur: number | null,
+  beds: number | null = null,
+  reservation: ReservationMethod = 'UNKNOWN',
+): Albergue {
   counters[townId] = (counters[townId] ?? 0) + 1
   return {
     id: `${townId}-${counters[townId]}`,
@@ -42,7 +59,7 @@ function a(townId: string, name: string, type: AlbergueType, priceEur: number | 
     type,
     beds,
     priceEur,
-    reservation: 'UNKNOWN',
+    reservation,
     contact: null,
     openFrom: null,
     openTo: null,
@@ -60,7 +77,7 @@ function a(townId: string, name: string, type: AlbergueType, priceEur: number | 
 
 export const albergues: Albergue[] = [
   // ── 생장피드포르 ──
-  a('saint-jean-pied-de-port', 'Ospitalia Refuge Municipal', 'MUNICIPAL', 16, 34),
+  a('saint-jean-pied-de-port', 'Ospitalia Refuge Municipal', 'MUNICIPAL', 16, 34, 'NONE'),
   a('saint-jean-pied-de-port', 'Refuge Accueil Paroissial Kaserna', 'PARISH', 25, 14),
   a('saint-jean-pied-de-port', "Gîte d'étape Beilari", 'PRIVATE', 47, 14),
   a('saint-jean-pied-de-port', "Gîte L'Auberge du Pèlerin", 'PRIVATE', 24, 24),
@@ -76,7 +93,7 @@ export const albergues: Albergue[] = [
   a('roncesvalles', 'Albergue de peregrinos de Roncesvalles', 'PARISH', 15, 183),
 
   // ── 수비리 ──
-  a('zubiri', 'Albergue municipal de Zubiri', 'MUNICIPAL', 16, 72),
+  a('zubiri', 'Albergue municipal de Zubiri', 'MUNICIPAL', 16, 72, 'NONE'),
   a('zubiri', 'Albergue-Pensión Zaldiko', 'PRIVATE', 15, 24),
   a('zubiri', 'Albergue El Palo de Avellano', 'PRIVATE', 19, 59),
   a('zubiri', 'Albergue Suseia', 'PRIVATE', 18, 6),
@@ -84,7 +101,7 @@ export const albergues: Albergue[] = [
   a('zubiri', 'Albergue Segunda Etapa', 'PRIVATE', 16, 12),
 
   // ── 라라소아냐 ──
-  a('larrasoana', 'Albergue de peregrinos de Larrasoaña', 'MUNICIPAL', 15, 32),
+  a('larrasoana', 'Albergue de peregrinos de Larrasoaña', 'MUNICIPAL', 15, 32, 'NONE'),
   a('larrasoana', 'Albergue San Nicolás', 'PRIVATE', 17, 38),
 
   // ── 팜플로나 ──
@@ -119,9 +136,9 @@ export const albergues: Albergue[] = [
   a('villatuerta', 'Albergue Etxeurdina', 'PRIVATE', 19, 8),
 
   // ── 에스테야 ──
-  a('estella', 'Albergue de peregrinos de Estella', 'MUNICIPAL', 8, 78),
+  a('estella', 'Albergue de peregrinos de Estella', 'MUNICIPAL', 8, 78, 'NONE'),
   a('estella', 'Albergue Capuchinos Rocamador', 'MONASTERY', 15, 20),
-  a('estella', 'Albergue de la Asociación ANFAS', 'DONATIVO', 12, 24),
+  a('estella', 'Albergue de la Asociación ANFAS', 'DONATIVO', 12, 24, 'NONE'),
 
   // ── 아예기 ──
   a('ayegui', 'Albergue Turístico San Cipriano', 'PRIVATE', 15, 42),
@@ -131,7 +148,7 @@ export const albergues: Albergue[] = [
   a('villamayor-de-monjardin', 'Albergue Villamayor de Monjardín', 'PRIVATE', 14, 20),
 
   // ── 로스 아르코스 ──
-  a('los-arcos', 'Albergue de peregrinos Isaac Santiago', 'MUNICIPAL', 8, 70),
+  a('los-arcos', 'Albergue de peregrinos Isaac Santiago', 'MUNICIPAL', 8, 70, 'NONE'),
   a('los-arcos', 'Albergue Casa Arqueña', 'PRIVATE', 18, 8),
   a('los-arcos', 'Albergue Los Arcos', 'PRIVATE', 22, 18),
   a('los-arcos', 'Albergue Casa Alberdi', 'PRIVATE', 15, 30),
@@ -144,18 +161,18 @@ export const albergues: Albergue[] = [
   a('torres-del-rio', 'Albergue-Hostal San Andrés', 'PRIVATE', 15, 20),
 
   // ── 비아나 ──
-  a('viana', 'Albergue de peregrinos Andrés Muñoz', 'MUNICIPAL', 9.5, 46),
+  a('viana', 'Albergue de peregrinos Andrés Muñoz', 'MUNICIPAL', 9.5, 46, 'NONE'),
   a('viana', 'Albergue Izar', 'PRIVATE', 15, 38),
 
   // ── 로그로뇨 ──
-  a('logrono', 'Albergue de peregrinos de Logroño', 'MUNICIPAL', 0, 68),
+  a('logrono', 'Albergue de peregrinos de Logroño', 'MUNICIPAL', 0, 68, 'NONE'),
   a('logrono', 'Albergue parroquial Santiago El Real', 'PARISH', 0, 30),
   a('logrono', 'Albergue Albas', 'PRIVATE', 18, 26),
   a('logrono', 'Albergue Santiago Apóstol', 'PRIVATE', 18, 68),
   a('logrono', 'Albergue San Nicolás', 'PRIVATE', 20, 20),
 
   // ── 나바레테 ──
-  a('navarrete', 'Albergue de peregrinos de Navarrete', 'MUNICIPAL', 10, 17),
+  a('navarrete', 'Albergue de peregrinos de Navarrete', 'MUNICIPAL', 10, 17, 'NONE'),
   a('navarrete', 'Albergue El Cántaro', 'PRIVATE', 15, 18),
   a('navarrete', 'Albergue La Casa del Peregrino Ángel', 'PRIVATE', 10, 26),
   a('navarrete', 'Albergue La Iglesia', 'PRIVATE', 15, 14),
@@ -166,7 +183,7 @@ export const albergues: Albergue[] = [
   a('ventosa', 'Albergue San Saturnino', 'PRIVATE', 14, 42),
 
   // ── 나헤라 ──
-  a('najera', 'Albergue de peregrinos de Nájera', 'MUNICIPAL', 7, 48),
+  a('najera', 'Albergue de peregrinos de Nájera', 'MUNICIPAL', 7, 48, 'NONE'),
   a('najera', 'Albergue Puerta de Nájera', 'PRIVATE', 15, 29),
   a('najera', 'Albergue Nido de Cigüeña', 'PRIVATE', 15, 15),
   a('najera', 'Albergue Las Peñas', 'PRIVATE', 15, 10),
@@ -174,7 +191,7 @@ export const albergues: Albergue[] = [
   a('najera', 'Albergue Sancho III - La Judería', 'PRIVATE', 13, 16),
 
   // ── 아소프라 ──
-  a('azofra', 'Albergue de peregrinos de Azofra', 'MUNICIPAL', 16, 60),
+  a('azofra', 'Albergue de peregrinos de Azofra', 'MUNICIPAL', 16, 60, 'NONE'),
 
   // ── 시루에냐 ──
   a('ciruena', 'Albergue Virgen de Guadalupe', 'PRIVATE', 20, 5),
@@ -189,7 +206,7 @@ export const albergues: Albergue[] = [
   a('granon', 'Albergue La Casa de las Sonrisas', 'PRIVATE', null, 15),
 
   // ── 레데시야 델 카미노 ──
-  a('redecilla-del-camino', 'Albergue de peregrinos San Lázaro', 'MUNICIPAL', 7, 52),
+  a('redecilla-del-camino', 'Albergue de peregrinos San Lázaro', 'MUNICIPAL', 7, 52, 'NONE'),
   a('redecilla-del-camino', 'Albergue Essentia', 'PRIVATE', 14, 10),
 
   // ── 벨로라도 ──
@@ -210,7 +227,7 @@ export const albergues: Albergue[] = [
   a('san-juan-de-ortega', 'Albergue La Cuadra de Luisito', 'PRIVATE', 15, 22),
 
   // ── 아헤스 ──
-  a('ages', 'Albergue municipal de Agés', 'MUNICIPAL', 15, 36),
+  a('ages', 'Albergue municipal de Agés', 'MUNICIPAL', 15, 36, 'NONE'),
   a('ages', 'Albergue Fagus', 'PRIVATE', 16, 22),
 
   // ── 아타푸에르카 ──
@@ -219,15 +236,15 @@ export const albergues: Albergue[] = [
   a('atapuerca', 'Hostel Atapuerca INpulso', 'PRIVATE', 20, 13),
 
   // ── 부르고스 ──
-  a('burgos', 'Albergue de peregrinos Casa del Cubo y de los Lerma', 'MUNICIPAL', 10, 120),
+  a('burgos', 'Albergue de peregrinos Casa del Cubo y de los Lerma', 'MUNICIPAL', 10, 120, 'NONE'),
   a('burgos', 'Albergue Santiago y Santa Catalina', 'PARISH', 11, 16),
 
   // ── 타르다호스 ──
-  a('tardajos', 'Albergue de peregrinos de Tardajos', 'MUNICIPAL', 0, 18),
+  a('tardajos', 'Albergue de peregrinos de Tardajos', 'MUNICIPAL', 0, 18, 'NONE'),
   a('tardajos', 'Albergue La Fábrica', 'PRIVATE', 13, 14),
 
   // ── 오르니요스 델 카미노 ──
-  a('hornillos-del-camino', 'Albergue de peregrinos de Hornillos del Camino', 'MUNICIPAL', 15, 30),
+  a('hornillos-del-camino', 'Albergue de peregrinos de Hornillos del Camino', 'MUNICIPAL', 15, 30, 'NONE'),
   a('hornillos-del-camino', 'Albergue El Alfar de Rosalía', 'PRIVATE', 15, 24),
   a('hornillos-del-camino', 'Albergue Hornillos Meeting Point', 'PRIVATE', 15, 32),
 
@@ -237,7 +254,7 @@ export const albergues: Albergue[] = [
   a('hontanas', 'Albergue Santa Brígida', 'PRIVATE', 15, 42),
 
   // ── 카스트로헤리스 ──
-  a('castrojeriz', 'Albergue de peregrinos San Esteban', 'MUNICIPAL', 9, 35),
+  a('castrojeriz', 'Albergue de peregrinos San Esteban', 'MUNICIPAL', 9, 35, 'NONE'),
   a('castrojeriz', 'Albergue Ultreia', 'PRIVATE', 16, 26),
   a('castrojeriz', 'Albergue Rosalía', 'PRIVATE', 15, 30),
   a('castrojeriz', 'Albergue Orión', 'PRIVATE', 15, 22),
@@ -251,13 +268,13 @@ export const albergues: Albergue[] = [
   a('boadilla-del-camino', 'Juntos Albergue de Peregrinos', 'PRIVATE', 18, 10),
 
   // ── 프로미스타 ──
-  a('fromista', 'Albergue de peregrinos de Frómista', 'MUNICIPAL', 15, 56),
+  a('fromista', 'Albergue de peregrinos de Frómista', 'MUNICIPAL', 15, 56, 'NONE'),
   a('fromista', 'Albergue Estrella del Camino', 'PRIVATE', 15, 32),
   a('fromista', 'Acogida de invierno Betania', 'PARISH', null, 7),
   a('fromista', 'Albergue Luz de Frómista', 'PRIVATE', 15, 31),
 
   // ── 포블라시온 데 캄포스 ──
-  a('poblacion-de-campos', 'Albergue de peregrinos de Población de Campos', 'MUNICIPAL', 13, 18),
+  a('poblacion-de-campos', 'Albergue de peregrinos de Población de Campos', 'MUNICIPAL', 13, 18, 'NONE'),
 
   // ── 비얄카사르 데 시르가 ──
   a('villalcazar-de-sirga', 'Albergue de peregrinos Casa del Peregrino', 'PARISH', 10, 20),
@@ -269,7 +286,7 @@ export const albergues: Albergue[] = [
   a('carrion-de-los-condes', 'Albergue Espíritu Santo', 'PRIVATE', 10, 96),
 
   // ── 칼사딜야 데 라 쿠에사 ──
-  a('calzadilla-de-la-cueza', 'Albergue de peregrinos de Calzadilla de la Cueza', 'MUNICIPAL', 15, 34),
+  a('calzadilla-de-la-cueza', 'Albergue de peregrinos de Calzadilla de la Cueza', 'MUNICIPAL', 15, 34, 'NONE'),
   a('calzadilla-de-la-cueza', 'Albergue Los Canarios', 'PRIVATE', 18, 11),
   a('calzadilla-de-la-cueza', 'Albergue Camino Real', 'PRIVATE', 14, 30),
 
@@ -292,14 +309,14 @@ export const albergues: Albergue[] = [
   a('el-burgo-ranero', 'Albergue La Laguna', 'PRIVATE', 18, 20),
 
   // ── 렐리에고스 ──
-  a('reliegos', 'Albergue municipal de peregrinos de Reliegos - Don Gaiferos', 'MUNICIPAL', null, 44),
+  a('reliegos', 'Albergue municipal de peregrinos de Reliegos - Don Gaiferos', 'MUNICIPAL', null, 44, 'NONE'),
   a('reliegos', 'Albergue La Parada', 'PRIVATE', 14, 36),
   a('reliegos', 'Albergue Gil', 'PRIVATE', 15, 14),
   a('reliegos', 'Albergue Vive tu Camino', 'PRIVATE', 13, 20),
   a('reliegos', 'Albergue Las Hadas', 'PRIVATE', 16, 20),
 
   // ── 만시야 데 라스 물라스 ──
-  a('mansilla-de-las-mulas', 'Albergue de peregrinos de Mansilla de las Mulas', 'MUNICIPAL', 7, 28),
+  a('mansilla-de-las-mulas', 'Albergue de peregrinos de Mansilla de las Mulas', 'MUNICIPAL', 7, 28, 'NONE'),
   a('mansilla-de-las-mulas', 'Albergue Gaia', 'PRIVATE', 14, 16),
   a('mansilla-de-las-mulas', 'Albergue El Jardín del Camino', 'PRIVATE', 15, 44),
   a('mansilla-de-las-mulas', 'Albergue La Pingüina', 'PRIVATE', 28, 12),
@@ -312,11 +329,11 @@ export const albergues: Albergue[] = [
   a('leon', 'Albergue Muralla Leonesa', 'PRIVATE', 16, 60),
 
   // ── 비야당고스 델 파라모 ──
-  a('villadangos-del-paramo', 'Albergue de peregrinos de Villadangos del Páramo', 'MUNICIPAL', null, 48),
+  a('villadangos-del-paramo', 'Albergue de peregrinos de Villadangos del Páramo', 'MUNICIPAL', null, 48, 'NONE'),
   a('villadangos-del-paramo', 'Albergue La Santa Siesta', 'PRIVATE', 18, 26),
 
   // ── 산 마르틴 델 카미노 ──
-  a('san-martin-del-camino', 'Albergue de peregrinos de San Martín del Camino', 'MUNICIPAL', 10, 46),
+  a('san-martin-del-camino', 'Albergue de peregrinos de San Martín del Camino', 'MUNICIPAL', 10, 46, 'NONE'),
   a('san-martin-del-camino', 'Albergue Santa Ana', 'PRIVATE', 10, 40),
   a('san-martin-del-camino', 'Albergue La Casa Verde', 'PRIVATE', 14, 8),
   a('san-martin-del-camino', 'Albergue La Huella', 'PRIVATE', 18, 24),
@@ -334,13 +351,13 @@ export const albergues: Albergue[] = [
   a('santibanez-de-valdeiglesias', 'Albergue Camino Francés', 'PRIVATE', 16, 20),
 
   // ── 아스토르가 ──
-  a('astorga', 'Albergue de peregrinos Siervas de María', 'MUNICIPAL', 8, 156),
+  a('astorga', 'Albergue de peregrinos Siervas de María', 'MUNICIPAL', 8, 156, 'NONE'),
   a('astorga', 'Albergue franciscano Santa María de los Ángeles', 'MONASTERY', 10, 30),
   a('astorga', 'Albergue San Javier', 'PRIVATE', 12, 110),
   a('astorga', 'Albergue MyWay', 'PRIVATE', 15, 13),
 
   // ── 라바날 델 카미노 ──
-  a('rabanal-del-camino', 'Refugio Gaucelmo', 'DONATIVO', 0, 36),
+  a('rabanal-del-camino', 'Refugio Gaucelmo', 'DONATIVO', 0, 36, 'NONE'),
   a('rabanal-del-camino', 'Albergue Nuestra Señora del Pilar', 'PRIVATE', 10, 76),
   a('rabanal-del-camino', 'Albergue La Senda', 'PRIVATE', 15, 24),
 
@@ -370,12 +387,12 @@ export const albergues: Albergue[] = [
   a('ponferrada', 'Albergue El Templarín', 'PRIVATE', 15, 24),
 
   // ── 카카벨로스 ──
-  a('cacabelos', 'Albergue de peregrinos de Cacabelos', 'MUNICIPAL', null, 60),
+  a('cacabelos', 'Albergue de peregrinos de Cacabelos', 'MUNICIPAL', null, 60, 'NONE'),
   a('cacabelos', 'Albergue-Hostal La Gallega', 'PRIVATE', 19, 29),
   a('cacabelos', 'Albergue-Hostal Saint James Way', 'PRIVATE', 22),
 
   // ── 비야프랑카 델 비에르소 ──
-  a('villafranca-del-bierzo', 'Albergue de peregrinos de Villafranca del Bierzo', 'MUNICIPAL', 10, 60),
+  a('villafranca-del-bierzo', 'Albergue de peregrinos de Villafranca del Bierzo', 'MUNICIPAL', 10, 60, 'NONE'),
   a('villafranca-del-bierzo', 'Albergue Ave Fénix', 'PRIVATE', 10, 80),
   a('villafranca-del-bierzo', 'Albergue de la Piedra', 'PRIVATE', 15, 15),
   a('villafranca-del-bierzo', 'Albergue Leo', 'PRIVATE', 15, 7),
@@ -383,25 +400,25 @@ export const albergues: Albergue[] = [
   a('villafranca-del-bierzo', 'Albergue-Hospedería San Nicolás el Real', 'PRIVATE', 13, 75),
 
   // ── 트라바델로 ──
-  a('trabadelo', 'Albergue municipal de Trabadelo', 'MUNICIPAL', 10, 18),
+  a('trabadelo', 'Albergue municipal de Trabadelo', 'MUNICIPAL', 10, 18, 'NONE'),
   a('trabadelo', 'Albergue parroquial de Trabadelo', 'PARISH', 10, 22),
   a('trabadelo', 'Albergue Crispeta', 'PRIVATE', 12, 32),
   a('trabadelo', 'Albergue Camino y Leyenda', 'PRIVATE', 18),
   a('trabadelo', 'Albergue Casa Susi', 'PRIVATE', 15, 10),
 
   // ── 라 파바 ──
-  a('la-faba', 'Albergue de La Faba', 'DONATIVO', 8, 52),
+  a('la-faba', 'Albergue de La Faba', 'DONATIVO', 8, 52, 'NONE'),
   a('la-faba', 'Albergue El Rincón del Bierzo', 'PRIVATE', 13.5, 11),
 
   // ── 오 세브레이로 (갈리시아 — Xunta) ──
-  a('o-cebreiro', 'Albergue de peregrinos de O Cebreiro', 'XUNTA', 10, 104),
+  a('o-cebreiro', 'Albergue de peregrinos de O Cebreiro', 'XUNTA', 10, 104, 'NONE'),
   a('o-cebreiro', 'Albergue Casa Campelo', 'PRIVATE', 15, 10),
 
   // ── 폰프리아 (갈리시아) ──
   a('fonfria', 'Albergue-Pensión A Reboleira', 'PRIVATE', 14, 50),
 
   // ── 트리아카스텔라 (갈리시아) ──
-  a('triacastela', 'Albergue de peregrinos de Triacastela', 'XUNTA', 10, 14),
+  a('triacastela', 'Albergue de peregrinos de Triacastela', 'XUNTA', 10, 14, 'NONE'),
   a('triacastela', 'Albergue Aitzenea', 'PRIVATE', 13, 38),
   a('triacastela', 'Albergue Berce do Camiño', 'PRIVATE', 15, 27),
   a('triacastela', 'Albergue Refugio del Oribio', 'PRIVATE', 13, 27),
@@ -410,7 +427,7 @@ export const albergues: Albergue[] = [
   a('triacastela', 'Albergue Atrio', 'PRIVATE', 14, 20),
 
   // ── 사리아 (갈리시아) ──
-  a('sarria', 'Albergue de peregrinos de Sarria', 'XUNTA', 10, 40),
+  a('sarria', 'Albergue de peregrinos de Sarria', 'XUNTA', 10, 40, 'NONE'),
   a('sarria', 'Albergue Monasterio de la Magdalena', 'MONASTERY', 12, 110),
   a('sarria', 'Albergue-Pensión Don Álvaro', 'PRIVATE', 15, 40),
   a('sarria', 'Albergue O Durmiñento', 'PRIVATE', 12, 38),
@@ -425,11 +442,11 @@ export const albergues: Albergue[] = [
   a('barbadelo', 'Albergue O Pombal', 'PRIVATE', 15, 12),
 
   // ── 페레이로스 (갈리시아 — Xunta) ──
-  a('ferreiros', 'Albergue de peregrinos de Ferreiros', 'XUNTA', 10, 20),
+  a('ferreiros', 'Albergue de peregrinos de Ferreiros', 'XUNTA', 10, 20, 'NONE'),
   a('ferreiros', 'Albergue Casa Cruceiro de Ferreiros', 'PRIVATE', 16, 24),
 
   // ── 포르토마린 (갈리시아 — Xunta) ──
-  a('portomarin', 'Albergue de peregrinos de Portomarín', 'XUNTA', 10, 86),
+  a('portomarin', 'Albergue de peregrinos de Portomarín', 'XUNTA', 10, 86, 'NONE'),
   a('portomarin', 'Albergue Ferramenteiro', 'PRIVATE', 15, 130),
   a('portomarin', 'Albergue-Pensión PortoSantiago', 'PRIVATE', 15, 7),
   a('portomarin', 'Albergue-Pensión Ultreia', 'PRIVATE', 16, 14),
@@ -439,7 +456,7 @@ export const albergues: Albergue[] = [
   a('portomarin', 'Albergue-Pensión Pons Minea', 'PRIVATE', 16, 24),
 
   // ── 곤사르 (갈리시아 — Xunta) ──
-  a('gonzar', 'Albergue de peregrinos de Gonzar', 'XUNTA', 10, 28),
+  a('gonzar', 'Albergue de peregrinos de Gonzar', 'XUNTA', 10, 28, 'NONE'),
   a('gonzar', 'Albergue-Hostería de Gonzar', 'PRIVATE', 15, 20),
 
   // ── 벤타스 데 나론 (갈리시아) ──
@@ -447,8 +464,8 @@ export const albergues: Albergue[] = [
   a('ventas-de-naron', 'Albergue-Pensión O Cruceiro', 'PRIVATE', 15, 26),
 
   // ── 팔라스 데 레이 (갈리시아 — Xunta) ──
-  a('palas-de-rei', 'Albergue de peregrinos Os Chacotes', 'XUNTA', 10, 112),
-  a('palas-de-rei', 'Albergue de peregrinos de Palas de Rei', 'XUNTA', 10, 24),
+  a('palas-de-rei', 'Albergue de peregrinos Os Chacotes', 'XUNTA', 10, 112, 'NONE'),
+  a('palas-de-rei', 'Albergue de peregrinos de Palas de Rei', 'XUNTA', 10, 24, 'NONE'),
   a('palas-de-rei', 'Albergue San Marcos', 'PRIVATE', 15, 10),
   a('palas-de-rei', 'Albergue Outeiro', 'PRIVATE', 16, 64),
   a('palas-de-rei', 'Albergue Buen Camino', 'PRIVATE', 15, 35),
@@ -457,7 +474,7 @@ export const albergues: Albergue[] = [
   a('palas-de-rei', 'Albergue A Casiña di Marcello', 'PRIVATE', 17, 17),
 
   // ── 멜리데 (갈리시아 — Xunta) ──
-  a('melide', 'Albergue de peregrinos de Melide', 'XUNTA', 10, 140),
+  a('melide', 'Albergue de peregrinos de Melide', 'XUNTA', 10, 140, 'NONE'),
   a('melide', 'Albergue O Apalpador', 'PRIVATE', 13, 10),
   a('melide', 'Albergue O Cruceiro', 'PRIVATE', 13, 88),
   a('melide', 'Albergue Pereiro', 'PRIVATE', 13, 40),
@@ -467,13 +484,13 @@ export const albergues: Albergue[] = [
   a('melide', 'Albergue Arraigos', 'PRIVATE', 15, 20),
 
   // ── 리바디소 (갈리시아 — Xunta) ──
-  a('ribadiso', 'Albergue de peregrinos de Ribadiso de Baixo', 'XUNTA', 10, 60),
+  a('ribadiso', 'Albergue de peregrinos de Ribadiso de Baixo', 'XUNTA', 10, 60, 'NONE'),
   a('ribadiso', 'Albergue-Pensión Los Caminantes I', 'PRIVATE', 13, 68),
   a('ribadiso', 'Albergue Milpés', 'PRIVATE', 15, 25),
   a('ribadiso', 'Albergue Miraiso', 'PRIVATE', 15, 12),
 
   // ── 아르수아 (갈리시아 — Xunta) ──
-  a('arzua', 'Albergue de peregrinos de Arzúa', 'XUNTA', 10, 56),
+  a('arzua', 'Albergue de peregrinos de Arzúa', 'XUNTA', 10, 56, 'NONE'),
   a('arzua', 'Albergue de Camino', 'PRIVATE', 16, 46),
   a('arzua', 'Albergue Don Quijote', 'PRIVATE', 16, 50),
   a('arzua', 'Albergue Vía Láctea', 'PRIVATE', 16, 130),
@@ -487,18 +504,18 @@ export const albergues: Albergue[] = [
   a('salceda', 'Albergue La Corona', 'PRIVATE', 18, 6),
 
   // ── 오 페드로우소 (갈리시아 — Xunta) ──
-  a('o-pedrouzo', 'Albergue de peregrinos de Arca - O Pino', 'XUNTA', 10, 150),
+  a('o-pedrouzo', 'Albergue de peregrinos de Arca - O Pino', 'XUNTA', 10, 150, 'NONE'),
   a('o-pedrouzo', 'Albergue Mirador de Pedrouzo', 'PRIVATE', 15, 62),
   a('o-pedrouzo', 'Albergue Otero', 'PRIVATE', 14, 34),
   a('o-pedrouzo', 'Albergue O Trisquel', 'PRIVATE', 14, 78),
   a('o-pedrouzo', 'Albergue Porta de Santiago', 'PRIVATE', 14, 54),
 
   // ── 몬테 도 고소 (갈리시아 — Xunta) ──
-  a('monte-do-gozo', 'Albergue de peregrinos del Monte do Gozo', 'XUNTA', 10, 500),
+  a('monte-do-gozo', 'Albergue de peregrinos del Monte do Gozo', 'XUNTA', 10, 500, 'NONE'),
   a('monte-do-gozo', 'Albergue Monte do Gozo', 'PRIVATE', 14, 620),
 
   // ── 산티아고 데 콤포스텔라 ──
-  a('santiago-de-compostela', 'Residencia de peregrinos San Lázaro', 'MUNICIPAL', 10, 80),
+  a('santiago-de-compostela', 'Residencia de peregrinos San Lázaro', 'MUNICIPAL', 10, 80, 'NONE'),
   a('santiago-de-compostela', 'Albergue Seminario Menor', 'PARISH', 20, 169),
   a('santiago-de-compostela', 'Albergue parroquial Fin del Camino', 'PARISH', 16, 112),
   a('santiago-de-compostela', 'Albergue Mundoalbergue', 'PRIVATE', 22, 34),

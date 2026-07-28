@@ -51,6 +51,9 @@ export interface SegmentProfile {
   descent: number              // 누적 하강 m. 무릎 부상의 주원인
   maxElevation: number         // 구간 최고점 (고개)
   maxGradient: number          // 최대 경사도 %
+  roadShareRatio: number | null  // 차도 병행 비율 0~1. scripts/pipeline/build_road_share.py가
+  // 캐시된 OSM way의 highway 태그(차도 vs 오솔길)로 계산 — 새 조회 없이 기존 지오메트리 재사용.
+  // null은 나온 적 없음(전 구간 계산됨). 임계치 이상이면 lib/planner/split.ts의 ROAD_WALKING hazard로 이어진다.
   source: 'OSM+MDT' | 'OSM+EUDEM' | 'ESTIMATED'
   // 'OSM+MDT'   : 경로 OSM + 고도 스페인 IGN MDT05(5m). 최종 목표 (아직 미사용)
   // 'OSM+EUDEM' : 경로 OSM + 고도 EU-DEM 25m(Open Topo Data). 현재 실측 데이터
@@ -80,7 +83,7 @@ export interface RouteVariant {
   traits: VariantTrait[]
   highlightsKo: string[]
   cautionKo: string | null
-  source: 'FIELD' | 'GUIDEBOOK' | 'ESTIMATED'  // FIELD=실측 도보로 직접 확인, GUIDEBOOK=공개 가이드북·포럼 근거(출처 표시 필수, 아직 미실측), ESTIMATED=근거 없는 추정(사용 금지에 가까움)
+  source: 'FIELD' | 'GUIDEBOOK' | 'OSM+EUDEM' | 'ESTIMATED'  // FIELD=실측 도보로 직접 확인, GUIDEBOOK=공개 가이드북·포럼 근거(출처 표시 필수, 아직 미실측), OSM+EUDEM=towns.ts/profiles.ts의 기존 실측 구간(메인 루트와 동일 경로)을 합산한 값 — 새 지오메트리 수집 없이도 실측치, ESTIMATED=근거 없는 추정(사용 금지에 가까움)
 }
 
 export interface RouteFork {

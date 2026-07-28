@@ -2,6 +2,8 @@
 // 경로: OpenStreetMap contributors (ODbL) · 고도: EU-DEM 25m (CC BY, Copernicus) via Open Topo Data
 // source: 'OSM+EUDEM' — 경로 OSM + 고도 EU-DEM 25m. IGN MDT05(5m)는 급경사에서
 //   경로 노이즈를 증폭해 오히려 부정확했다(DEVLOG 2026-07-25(2)). 현재는 EU-DEM 25m가 실용적 정답.
+// roadShareRatio: 2026-07-28 추가. scripts/pipeline/build_road_share.py가 캐시된 OSM way의
+//   highway 태그(차도 vs 오솔길)로 계산 — 새 Overpass 조회 없이 기존 지오메트리 재사용.
 import type { SegmentProfile } from '../lib/schema'
 
 export const profiles: SegmentProfile[] = [
@@ -13,6 +15,7 @@ export const profiles: SegmentProfile[] = [
     descent: 11,
     maxElevation: 839,
     maxGradient: 19.7,
+    roadShareRatio: 0.859,
     source: 'OSM+EUDEM',
   },
   {
@@ -23,6 +26,7 @@ export const profiles: SegmentProfile[] = [
     descent: 563,
     maxElevation: 1429,
     maxGradient: 29.9,
+    roadShareRatio: 0.391,
     source: 'OSM+EUDEM',
   },
   {
@@ -33,6 +37,7 @@ export const profiles: SegmentProfile[] = [
     descent: 651,
     maxElevation: 946,
     maxGradient: 15.8,
+    roadShareRatio: 0.182,
     source: 'OSM+EUDEM',
   },
   {
@@ -43,6 +48,7 @@ export const profiles: SegmentProfile[] = [
     descent: 83,
     maxElevation: 569,
     maxGradient: 10.3,
+    roadShareRatio: 0.226,
     source: 'OSM+EUDEM',
   },
   {
@@ -53,6 +59,7 @@ export const profiles: SegmentProfile[] = [
     descent: 162,
     maxElevation: 520,
     maxGradient: 7.2,
+    roadShareRatio: 0.346,
     source: 'OSM+EUDEM',
   },
   {
@@ -63,6 +70,7 @@ export const profiles: SegmentProfile[] = [
     descent: 70,
     maxElevation: 467,
     maxGradient: 7.6,
+    roadShareRatio: 0.0,
     source: 'OSM+EUDEM',
   },
   {
@@ -73,6 +81,7 @@ export const profiles: SegmentProfile[] = [
     descent: 242,
     maxElevation: 745,
     maxGradient: 20.5,
+    roadShareRatio: 0.015,
     source: 'OSM+EUDEM',
   },
   {
@@ -83,6 +92,7 @@ export const profiles: SegmentProfile[] = [
     descent: 126,
     maxElevation: 508,
     maxGradient: 8.5,
+    roadShareRatio: 0.418,
     source: 'OSM+EUDEM',
   },
   {
@@ -93,6 +103,7 @@ export const profiles: SegmentProfile[] = [
     descent: 60,
     maxElevation: 402,
     maxGradient: 7.2,
+    roadShareRatio: 0.537,
     source: 'OSM+EUDEM',
   },
   {
@@ -103,6 +114,7 @@ export const profiles: SegmentProfile[] = [
     descent: 40,
     maxElevation: 478,
     maxGradient: 15.7,
+    roadShareRatio: 0.187,
     source: 'OSM+EUDEM',
   },
   {
@@ -113,6 +125,7 @@ export const profiles: SegmentProfile[] = [
     descent: 161,
     maxElevation: 490,
     maxGradient: 7.7,
+    roadShareRatio: 0.134,
     source: 'OSM+EUDEM',
   },
   {
@@ -123,6 +136,7 @@ export const profiles: SegmentProfile[] = [
     descent: 35,
     maxElevation: 450,
     maxGradient: 7.4,
+    roadShareRatio: 0.502,
     source: 'OSM+EUDEM',
   },
   {
@@ -133,6 +147,7 @@ export const profiles: SegmentProfile[] = [
     descent: 8,
     maxElevation: 557,
     maxGradient: 7.3,
+    roadShareRatio: 0.647,
     source: 'OSM+EUDEM',
   },
   {
@@ -143,6 +158,7 @@ export const profiles: SegmentProfile[] = [
     descent: 120,
     maxElevation: 676,
     maxGradient: 11.2,
+    roadShareRatio: 0.174,
     source: 'OSM+EUDEM',
   },
   {
@@ -153,6 +169,7 @@ export const profiles: SegmentProfile[] = [
     descent: 170,
     maxElevation: 587,
     maxGradient: 7.6,
+    roadShareRatio: 0.068,
     source: 'OSM+EUDEM',
   },
   {
@@ -163,6 +180,7 @@ export const profiles: SegmentProfile[] = [
     descent: 55,
     maxElevation: 498,
     maxGradient: 9.0,
+    roadShareRatio: 0.276,
     source: 'OSM+EUDEM',
   },
   {
@@ -173,6 +191,7 @@ export const profiles: SegmentProfile[] = [
     descent: 226,
     maxElevation: 576,
     maxGradient: 12.1,
+    roadShareRatio: 0.162,
     source: 'OSM+EUDEM',
   },
   {
@@ -183,6 +202,7 @@ export const profiles: SegmentProfile[] = [
     descent: 114,
     maxElevation: 433,
     maxGradient: 7.7,
+    roadShareRatio: 0.202,
     source: 'OSM+EUDEM',
   },
   {
@@ -193,6 +213,7 @@ export const profiles: SegmentProfile[] = [
     descent: 54,
     maxElevation: 519,
     maxGradient: 7.3,
+    roadShareRatio: 0.009,
     source: 'OSM+EUDEM',
   },
   {
@@ -203,6 +224,7 @@ export const profiles: SegmentProfile[] = [
     descent: 23,
     maxElevation: 586,
     maxGradient: 8.2,
+    roadShareRatio: 0.279,
     source: 'OSM+EUDEM',
   },
   {
@@ -213,6 +235,7 @@ export const profiles: SegmentProfile[] = [
     descent: 170,
     maxElevation: 665,
     maxGradient: 8.1,
+    roadShareRatio: 0.136,
     source: 'OSM+EUDEM',
   },
   {
@@ -223,6 +246,7 @@ export const profiles: SegmentProfile[] = [
     descent: 42,
     maxElevation: 557,
     maxGradient: 7.8,
+    roadShareRatio: 0.185,
     source: 'OSM+EUDEM',
   },
   {
@@ -233,6 +257,7 @@ export const profiles: SegmentProfile[] = [
     descent: 28,
     maxElevation: 734,
     maxGradient: 9.0,
+    roadShareRatio: 0.129,
     source: 'OSM+EUDEM',
   },
   {
@@ -243,6 +268,7 @@ export const profiles: SegmentProfile[] = [
     descent: 119,
     maxElevation: 745,
     maxGradient: 9.6,
+    roadShareRatio: 0.234,
     source: 'OSM+EUDEM',
   },
   {
@@ -253,6 +279,7 @@ export const profiles: SegmentProfile[] = [
     descent: 23,
     maxElevation: 722,
     maxGradient: 6.1,
+    roadShareRatio: 0.245,
     source: 'OSM+EUDEM',
   },
   {
@@ -263,6 +290,7 @@ export const profiles: SegmentProfile[] = [
     descent: 49,
     maxElevation: 738,
     maxGradient: 8.4,
+    roadShareRatio: 0.14,
     source: 'OSM+EUDEM',
   },
   {
@@ -273,6 +301,7 @@ export const profiles: SegmentProfile[] = [
     descent: 112,
     maxElevation: 827,
     maxGradient: 6.7,
+    roadShareRatio: 0.28,
     source: 'OSM+EUDEM',
   },
   {
@@ -283,6 +312,7 @@ export const profiles: SegmentProfile[] = [
     descent: 5,
     maxElevation: 825,
     maxGradient: 2.9,
+    roadShareRatio: 0.265,
     source: 'OSM+EUDEM',
   },
   {
@@ -293,6 +323,7 @@ export const profiles: SegmentProfile[] = [
     descent: 19,
     maxElevation: 946,
     maxGradient: 6.7,
+    roadShareRatio: 0.073,
     source: 'OSM+EUDEM',
   },
   {
@@ -303,6 +334,7 @@ export const profiles: SegmentProfile[] = [
     descent: 185,
     maxElevation: 1164,
     maxGradient: 11.4,
+    roadShareRatio: 0.048,
     source: 'OSM+EUDEM',
   },
   {
@@ -313,6 +345,7 @@ export const profiles: SegmentProfile[] = [
     descent: 52,
     maxElevation: 1015,
     maxGradient: 5.3,
+    roadShareRatio: 0.122,
     source: 'OSM+EUDEM',
   },
   {
@@ -323,6 +356,7 @@ export const profiles: SegmentProfile[] = [
     descent: 4,
     maxElevation: 955,
     maxGradient: 1.5,
+    roadShareRatio: 0.994,
     source: 'OSM+EUDEM',
   },
   {
@@ -333,6 +367,7 @@ export const profiles: SegmentProfile[] = [
     descent: 211,
     maxElevation: 1074,
     maxGradient: 11.2,
+    roadShareRatio: 0.382,
     source: 'OSM+EUDEM',
   },
   {
@@ -343,6 +378,7 @@ export const profiles: SegmentProfile[] = [
     descent: 51,
     maxElevation: 882,
     maxGradient: 5.4,
+    roadShareRatio: 0.15,
     source: 'OSM+EUDEM',
   },
   {
@@ -353,6 +389,7 @@ export const profiles: SegmentProfile[] = [
     descent: 106,
     maxElevation: 922,
     maxGradient: 11.9,
+    roadShareRatio: 0.34,
     source: 'OSM+EUDEM',
   },
   {
@@ -363,6 +400,7 @@ export const profiles: SegmentProfile[] = [
     descent: 72,
     maxElevation: 935,
     maxGradient: 6.6,
+    roadShareRatio: 0.03,
     source: 'OSM+EUDEM',
   },
   {
@@ -373,6 +411,7 @@ export const profiles: SegmentProfile[] = [
     descent: 102,
     maxElevation: 888,
     maxGradient: 7.0,
+    roadShareRatio: 0.628,
     source: 'OSM+EUDEM',
   },
   {
@@ -383,6 +422,7 @@ export const profiles: SegmentProfile[] = [
     descent: 236,
     maxElevation: 911,
     maxGradient: 14.0,
+    roadShareRatio: 0.148,
     source: 'OSM+EUDEM',
   },
   {
@@ -393,6 +433,7 @@ export const profiles: SegmentProfile[] = [
     descent: 7,
     maxElevation: 790,
     maxGradient: 2.1,
+    roadShareRatio: 0.178,
     source: 'OSM+EUDEM',
   },
   {
@@ -403,6 +444,7 @@ export const profiles: SegmentProfile[] = [
     descent: 12,
     maxElevation: 782,
     maxGradient: 1.5,
+    roadShareRatio: 0.204,
     source: 'OSM+EUDEM',
   },
   {
@@ -413,6 +455,7 @@ export const profiles: SegmentProfile[] = [
     descent: 5,
     maxElevation: 810,
     maxGradient: 1.5,
+    roadShareRatio: 0.085,
     source: 'OSM+EUDEM',
   },
   {
@@ -423,6 +466,7 @@ export const profiles: SegmentProfile[] = [
     descent: 38,
     maxElevation: 848,
     maxGradient: 3.6,
+    roadShareRatio: 0.211,
     source: 'OSM+EUDEM',
   },
   {
@@ -433,6 +477,7 @@ export const profiles: SegmentProfile[] = [
     descent: 22,
     maxElevation: 872,
     maxGradient: 3.1,
+    roadShareRatio: 0.987,
     source: 'OSM+EUDEM',
   },
   {
@@ -443,6 +488,7 @@ export const profiles: SegmentProfile[] = [
     descent: 62,
     maxElevation: 902,
     maxGradient: 4.5,
+    roadShareRatio: 0.137,
     source: 'OSM+EUDEM',
   },
   {
@@ -453,6 +499,7 @@ export const profiles: SegmentProfile[] = [
     descent: 120,
     maxElevation: 876,
     maxGradient: 3.5,
+    roadShareRatio: 0.191,
     source: 'OSM+EUDEM',
   },
   {
@@ -463,6 +510,7 @@ export const profiles: SegmentProfile[] = [
     descent: 3,
     maxElevation: 855,
     maxGradient: 3.2,
+    roadShareRatio: 0.963,
     source: 'OSM+EUDEM',
   },
   {
@@ -473,6 +521,7 @@ export const profiles: SegmentProfile[] = [
     descent: 12,
     maxElevation: 879,
     maxGradient: 2.0,
+    roadShareRatio: 1.0,
     source: 'OSM+EUDEM',
   },
   {
@@ -483,6 +532,7 @@ export const profiles: SegmentProfile[] = [
     descent: 57,
     maxElevation: 879,
     maxGradient: 2.9,
+    roadShareRatio: 1.0,
     source: 'OSM+EUDEM',
   },
   {
@@ -493,6 +543,7 @@ export const profiles: SegmentProfile[] = [
     descent: 40,
     maxElevation: 835,
     maxGradient: 2.6,
+    roadShareRatio: 0.966,
     source: 'OSM+EUDEM',
   },
   {
@@ -503,6 +554,7 @@ export const profiles: SegmentProfile[] = [
     descent: 86,
     maxElevation: 901,
     maxGradient: 6.5,
+    roadShareRatio: 0.439,
     source: 'OSM+EUDEM',
   },
   {
@@ -513,6 +565,7 @@ export const profiles: SegmentProfile[] = [
     descent: 96,
     maxElevation: 919,
     maxGradient: 5.8,
+    roadShareRatio: 0.184,
     source: 'OSM+EUDEM',
   },
   {
@@ -523,6 +576,7 @@ export const profiles: SegmentProfile[] = [
     descent: 32,
     maxElevation: 899,
     maxGradient: 4.0,
+    roadShareRatio: 0.266,
     source: 'OSM+EUDEM',
   },
   {
@@ -533,6 +587,7 @@ export const profiles: SegmentProfile[] = [
     descent: 39,
     maxElevation: 868,
     maxGradient: 3.4,
+    roadShareRatio: 0.08,
     source: 'OSM+EUDEM',
   },
   {
@@ -543,6 +598,7 @@ export const profiles: SegmentProfile[] = [
     descent: 10,
     maxElevation: 828,
     maxGradient: 1.5,
+    roadShareRatio: 0.213,
     source: 'OSM+EUDEM',
   },
   {
@@ -553,6 +609,7 @@ export const profiles: SegmentProfile[] = [
     descent: 104,
     maxElevation: 915,
     maxGradient: 9.6,
+    roadShareRatio: 0.248,
     source: 'OSM+EUDEM',
   },
   {
@@ -563,6 +620,7 @@ export const profiles: SegmentProfile[] = [
     descent: 26,
     maxElevation: 1105,
     maxGradient: 7.0,
+    roadShareRatio: 0.216,
     source: 'OSM+EUDEM',
   },
   {
@@ -573,6 +631,7 @@ export const profiles: SegmentProfile[] = [
     descent: 0,
     maxElevation: 1439,
     maxGradient: 9.2,
+    roadShareRatio: 0.16,
     source: 'OSM+EUDEM',
   },
   {
@@ -583,6 +642,7 @@ export const profiles: SegmentProfile[] = [
     descent: 169,
     maxElevation: 1510,
     maxGradient: 10.7,
+    roadShareRatio: 0.048,
     source: 'OSM+EUDEM',
   },
   {
@@ -593,6 +653,7 @@ export const profiles: SegmentProfile[] = [
     descent: 541,
     maxElevation: 1394,
     maxGradient: 17.5,
+    roadShareRatio: 0.166,
     source: 'OSM+EUDEM',
   },
   {
@@ -603,6 +664,7 @@ export const profiles: SegmentProfile[] = [
     descent: 379,
     maxElevation: 843,
     maxGradient: 12.3,
+    roadShareRatio: 0.284,
     source: 'OSM+EUDEM',
   },
   {
@@ -613,6 +675,7 @@ export const profiles: SegmentProfile[] = [
     descent: 136,
     maxElevation: 545,
     maxGradient: 6.1,
+    roadShareRatio: 0.651,
     source: 'OSM+EUDEM',
   },
   {
@@ -623,6 +686,7 @@ export const profiles: SegmentProfile[] = [
     descent: 127,
     maxElevation: 581,
     maxGradient: 7.5,
+    roadShareRatio: 0.439,
     source: 'OSM+EUDEM',
   },
   {
@@ -633,6 +697,7 @@ export const profiles: SegmentProfile[] = [
     descent: 34,
     maxElevation: 592,
     maxGradient: 5.1,
+    roadShareRatio: 0.377,
     source: 'OSM+EUDEM',
   },
   {
@@ -643,6 +708,7 @@ export const profiles: SegmentProfile[] = [
     descent: 30,
     maxElevation: 695,
     maxGradient: 5.9,
+    roadShareRatio: 0.548,
     source: 'OSM+EUDEM',
   },
   {
@@ -653,6 +719,7 @@ export const profiles: SegmentProfile[] = [
     descent: 6,
     maxElevation: 1342,
     maxGradient: 15.6,
+    roadShareRatio: 0.192,
     source: 'OSM+EUDEM',
   },
   {
@@ -663,6 +730,7 @@ export const profiles: SegmentProfile[] = [
     descent: 194,
     maxElevation: 1344,
     maxGradient: 11.7,
+    roadShareRatio: 0.353,
     source: 'OSM+EUDEM',
   },
   {
@@ -673,6 +741,7 @@ export const profiles: SegmentProfile[] = [
     descent: 652,
     maxElevation: 1313,
     maxGradient: 13.6,
+    roadShareRatio: 0.271,
     source: 'OSM+EUDEM',
   },
   {
@@ -683,6 +752,7 @@ export const profiles: SegmentProfile[] = [
     descent: 528,
     maxElevation: 896,
     maxGradient: 18.8,
+    roadShareRatio: 0.44,
     source: 'OSM+EUDEM',
   },
   {
@@ -693,6 +763,7 @@ export const profiles: SegmentProfile[] = [
     descent: 0,
     maxElevation: 629,
     maxGradient: 10.9,
+    roadShareRatio: 0.52,
     source: 'OSM+EUDEM',
   },
   {
@@ -703,6 +774,7 @@ export const profiles: SegmentProfile[] = [
     descent: 61,
     maxElevation: 665,
     maxGradient: 6.6,
+    roadShareRatio: 0.408,
     source: 'OSM+EUDEM',
   },
   {
@@ -713,6 +785,7 @@ export const profiles: SegmentProfile[] = [
     descent: 377,
     maxElevation: 663,
     maxGradient: 13.2,
+    roadShareRatio: 0.449,
     source: 'OSM+EUDEM',
   },
   {
@@ -723,6 +796,7 @@ export const profiles: SegmentProfile[] = [
     descent: 11,
     maxElevation: 599,
     maxGradient: 8.3,
+    roadShareRatio: 0.053,
     source: 'OSM+EUDEM',
   },
   {
@@ -733,6 +807,7 @@ export const profiles: SegmentProfile[] = [
     descent: 10,
     maxElevation: 717,
     maxGradient: 11.4,
+    roadShareRatio: 0.269,
     source: 'OSM+EUDEM',
   },
   {
@@ -743,6 +818,7 @@ export const profiles: SegmentProfile[] = [
     descent: 311,
     maxElevation: 727,
     maxGradient: 10.8,
+    roadShareRatio: 0.21,
     source: 'OSM+EUDEM',
   },
   {
@@ -753,6 +829,7 @@ export const profiles: SegmentProfile[] = [
     descent: 266,
     maxElevation: 542,
     maxGradient: 8.6,
+    roadShareRatio: 0.298,
     source: 'OSM+EUDEM',
   },
   {
@@ -763,6 +840,7 @@ export const profiles: SegmentProfile[] = [
     descent: 298,
     maxElevation: 466,
     maxGradient: 12.8,
+    roadShareRatio: 0.593,
     source: 'OSM+EUDEM',
   },
   {
@@ -773,6 +851,7 @@ export const profiles: SegmentProfile[] = [
     descent: 22,
     maxElevation: 397,
     maxGradient: 6.7,
+    roadShareRatio: 0.243,
     source: 'OSM+EUDEM',
   },
   {
@@ -783,6 +862,7 @@ export const profiles: SegmentProfile[] = [
     descent: 147,
     maxElevation: 406,
     maxGradient: 7.4,
+    roadShareRatio: 0.197,
     source: 'OSM+EUDEM',
   },
   {
@@ -793,6 +873,7 @@ export const profiles: SegmentProfile[] = [
     descent: 202,
     maxElevation: 422,
     maxGradient: 8.7,
+    roadShareRatio: 0.209,
     source: 'OSM+EUDEM',
   },
   {
@@ -803,6 +884,7 @@ export const profiles: SegmentProfile[] = [
     descent: 184,
     maxElevation: 391,
     maxGradient: 8.5,
+    roadShareRatio: 0.516,
     source: 'OSM+EUDEM',
   },
   {
@@ -813,6 +895,7 @@ export const profiles: SegmentProfile[] = [
     descent: 103,
     maxElevation: 360,
     maxGradient: 10.7,
+    roadShareRatio: 0.081,
     source: 'OSM+EUDEM',
   },
 ]

@@ -1,11 +1,25 @@
 // data/forks.ts — 프랑스 길 갈림길 11곳 (CLAUDE.md 절대 규칙 4)
 //
 // ⚠️ 출처: 공개 가이드북·순례자 포럼 (Gronze.com 포럼, epiccamino.com "A Guide to
-//   Alternative Routes on the Camino Francés", 2026-07 조사). 개인 실측 도보 아님.
-//   그래서 모든 variant의 source는 'GUIDEBOOK'이고, distanceKm/ascent/descent/
-//   roadShareRatio는 전부 null이다 — 메인 루트(data/profiles.ts)처럼 OSM+EU-DEM
-//   파이프라인으로 직접 계산하기 전엔 "정확한 숫자"를 지어내지 않는다(규칙 1·3).
-//   실측 도보(2026-10~11 예정) 때 이 11곳의 GPX를 확보하면 그 값으로 채운다.
+//   Alternative Routes on the Camino Francés", 2026-07 조사).
+//
+// 2026-07-28 갱신 (2단계):
+//   1) isMain(공식 표지 경로) variant 9곳은 towns.ts의 기존 마을 순서와 완전히
+//      같은 구간이라, data/profiles.ts에 이미 계산돼 있는 OSM+EU-DEM 실측
+//      구간값을 그대로 합산해 채웠다(source: 'OSM+EUDEM') — 새로 지어낸 숫자가
+//      아니라 이미 검증된 값의 산술 합이다. Overpass로 재확인한 결과 isMain이
+//      아닌 대안 경로는 최소 7곳이 OSM에 전용 relation이 없고, 범용 도보 라우팅
+//      (OSRM)으로 재구성해봐도 가이드북 거리와 20%+ 오차가 나 신뢰할 수
+//      없었다(2026-07-28 테스트) — 그래서 대안 경로는 OSM 재구성이 아니라
+//      아래 2)의 가이드북 리서치로 채웠다.
+//   2) 대안 경로 10곳을 가이드북·순례자 사이트(Gronze 등) 리서치로 조사.
+//      distanceKm을 채운 것(발카를로스·비야르 데 마사리페·프라델라·드라곤테·
+//      사모스·아르가 강변길·비야비에코, 전부 source: 'GUIDEBOOK', 신뢰도는 각
+//      항목 주석 참조)과, 출처가 상충하거나(부르고스 강변길·발투이예) 시작·
+//      합류가 같은 마을이라 "본선 대비 거리" 자체가 애매하거나(에우나테·
+//      몬테후라·gamonal) 전 구간을 명시한 출처가 없어서(비아 트라야나) 여전히
+//      null로 남긴 것이 있다 — 항목별 주석에 이유를 남겼다. 채우는 방법은
+//      더 이상 "실측 도보 필수"로 못박지 않는다(CLAUDE.md Phase 2 조건 참조).
 //
 // ⚠️ towns.ts에 없는 변형 전용 마을(발카를로스·비야르 데 마사리페 등)은 Town
 //   레코드를 새로 만들지 않았다 — 좌표를 지오코딩으로 지어내는 대신, 이름만
@@ -15,6 +29,10 @@
 // 출처 목록:
 //   - https://www.gronze.com/foros/camino-frances/consulta-al-foro-variantes-camino-frances
 //   - https://epiccamino.com/a-guide-to-alternative-routes-on-the-camino-frances/
+//   - https://www.gronze.com/etapa/saint-jean-pied-port/valcarlos/roncesvalles/recorrido (발카를로스)
+//   - https://www.gronze.com/etapa/leon/villar-mazarife/recorrido ,
+//     https://www.gronze.com/etapa/villar-mazarife/astorga/recorrido (비야르 데 마사리페)
+//   - https://www.gronze.com/etapa/villafranca-bierzo/cebreiro/recorrido (프라델라)
 import type { RouteFork } from '../lib/schema'
 
 export const forks: RouteFork[] = [
@@ -30,9 +48,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta Napoleón',
         isMain: true,
         townIds: ['saint-jean-pied-de-port', 'orisson', 'roncesvalles'],
-        distanceKm: null,
-        ascent: null,
-        descent: null,
+        distanceKm: 25.5,
+        ascent: 1308,
+        descent: 574,
         closedFrom: '11-01',
         closedTo: '03-31',
         roadShareRatio: null,
@@ -41,7 +59,7 @@ export const forks: RouteFork[] = [
         highlightsKo: ['피레네 고지 경관', '오리송 대피소(유일한 중간 지점)'],
         cautionKo:
           '겨울철(11/1~3/31) 폐쇄. 오리송 위로는 대피소가 없어 악천후 시 위험 — 당일 안전 판단은 생장 순례자 사무소를 따른다.',
-        source: 'GUIDEBOOK',
+        source: 'OSM+EUDEM',
       },
       {
         id: 'valcarlos',
@@ -50,7 +68,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta por Valcarlos',
         isMain: false,
         townIds: ['saint-jean-pied-de-port', 'roncesvalles'],
-        distanceKm: null,
+        // Gronze 구간 페이지 기준 23.4km(2026-07-28 조사). 타 출처는 24~25km대로
+        // 약간의 편차가 있다 — 정밀 OSM+EU-DEM 계산은 아니고 가이드북 인용치다.
+        distanceKm: 23.4,
         ascent: null,
         descent: null,
         closedFrom: null,
@@ -76,9 +96,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta por Villava y Burlada',
         isMain: true,
         townIds: ['zubiri', 'pamplona'],
-        distanceKm: null,
-        ascent: null,
-        descent: null,
+        distanceKm: 20.3,
+        ascent: 153,
+        descent: 245,
         closedFrom: null,
         closedTo: null,
         roadShareRatio: null,
@@ -86,7 +106,7 @@ export const forks: RouteFork[] = [
         traits: ['ROAD_HEAVY'],
         highlightsKo: [],
         cautionKo: null,
-        source: 'GUIDEBOOK',
+        source: 'OSM+EUDEM',
       },
       {
         id: 'arga-riverside',
@@ -95,7 +115,10 @@ export const forks: RouteFork[] = [
         nameEs: 'Variante del paseo fluvial del río Arga',
         isMain: false,
         townIds: ['zubiri', 'pamplona'],
-        distanceKm: null,
+        // 본선(zubiri-main 20.3km) 대비 마지막 구간(트리니다드 데 아레→팜플로나)이
+        // 약 1.5km 더 길다는 가이드 서술 종합(2026-07-28 조사, 원출처 URL 불명확 —
+        // 신뢰도 중간). 20.3 + 1.5 ≈ 21.8km.
+        distanceKm: 21.8,
         ascent: null,
         descent: null,
         closedFrom: null,
@@ -140,6 +163,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Variante por la Ermita de Eunate',
         isMain: false,
         townIds: ['obanos'],
+        // 시작/합류가 같은 마을(obanos)이라 "본선 대비 거리"라는 개념 자체가
+        // 애매하다 — distanceKm을 강제로 채우지 않는다. 참고로 2026-07-28 조사에서
+        // 발견한 범위: 출처마다 "+2km 편도"·"+3.2km"·"+4km" 등으로 서로 다름.
         distanceKm: null,
         ascent: null,
         descent: null,
@@ -166,9 +192,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta por Estella',
         isMain: true,
         townIds: ['villatuerta', 'estella'],
-        distanceKm: null,
-        ascent: null,
-        descent: null,
+        distanceKm: 5.3,
+        ascent: 47,
+        descent: 35,
         closedFrom: null,
         closedTo: null,
         roadShareRatio: null,
@@ -176,7 +202,7 @@ export const forks: RouteFork[] = [
         traits: ['HISTORIC'],
         highlightsKo: ['에스테야 구시가지·수도원'],
         cautionKo: null,
-        source: 'GUIDEBOOK',
+        source: 'OSM+EUDEM',
       },
       {
         id: 'montejurra',
@@ -185,6 +211,10 @@ export const forks: RouteFork[] = [
         nameEs: 'Variante de Montejurra',
         isMain: false,
         townIds: ['villatuerta'],
+        // 시작/합류가 같은 마을(villatuerta)이고 실제 합류 지점이 로스 아르코스
+        // 방면이라 estella-main과 endpoint가 달라 직접 비교가 안 된다 —
+        // distanceKm을 강제로 채우지 않는다. 2026-07-28 조사: 순례 전용 사이트가
+        // 아닌 일반 하이킹 사이트 기준 총 약 14.6km라는 단일(신뢰도 중간) 수치 있음.
         distanceKm: null,
         ascent: null,
         descent: null,
@@ -230,6 +260,8 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta fluvial por Villafría',
         isMain: false,
         townIds: ['burgos'],
+        // 시작/합류가 같은 마을(burgos)이고, 2026-07-28 조사에서 출처 두 곳이
+        // "강변길이 더 짧다"/"더 길다"로 방향 자체가 상충 — distanceKm 보류.
         distanceKm: null,
         ascent: null,
         descent: null,
@@ -256,9 +288,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta oficial',
         isMain: true,
         townIds: ['fromista', 'villalcazar-de-sirga'],
-        distanceKm: null,
-        ascent: null,
-        descent: null,
+        distanceKm: 13.3,
+        ascent: 43,
+        descent: 17,
         closedFrom: null,
         closedTo: null,
         roadShareRatio: null,
@@ -266,7 +298,7 @@ export const forks: RouteFork[] = [
         traits: ['ROAD_HEAVY'],
         highlightsKo: [],
         cautionKo: null,
-        source: 'GUIDEBOOK',
+        source: 'OSM+EUDEM',
       },
       {
         id: 'villovieco',
@@ -275,7 +307,10 @@ export const forks: RouteFork[] = [
         nameEs: 'Variante por Villoviedo',
         isMain: false,
         townIds: ['fromista', 'villalcazar-de-sirga'],
-        distanceKm: null,
+        // 본선(fromista-main 13.3km) 대비 약 +1~1.3km라는 가이드 서술 종합
+        // (2026-07-28 조사, 변형 총거리를 명시한 단일 출처 없음 — 신뢰도 낮음).
+        // 중간값으로 14.4km ≈ 13.3 + 1.1.
+        distanceKm: 14.4,
         ascent: null,
         descent: null,
         closedFrom: null,
@@ -301,9 +336,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta por Bercianos del Real Camino',
         isMain: true,
         townIds: ['sahagun', 'reliegos'],
-        distanceKm: null,
-        ascent: null,
-        descent: null,
+        distanceKm: 29.4,
+        ascent: 109,
+        descent: 72,
         closedFrom: null,
         closedTo: null,
         roadShareRatio: null,
@@ -311,7 +346,7 @@ export const forks: RouteFork[] = [
         traits: [],
         highlightsKo: [],
         cautionKo: null,
-        source: 'GUIDEBOOK',
+        source: 'OSM+EUDEM',
       },
       {
         id: 'via-trajana',
@@ -320,6 +355,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Vía Trajana / Calzada Romana',
         isMain: false,
         townIds: ['sahagun', 'reliegos'],
+        // 2026-07-28 조사: "사아군→렐리에고스" 전 구간을 직접 명시한 단일 출처가
+        // 없어 조각 구간을 이어붙인 추정(약 31~32km, 본선 29.4km보다 조금 김)만
+        // 나왔다 — 신뢰도가 낮아 distanceKm을 채우지 않는다.
         distanceKm: null,
         ascent: null,
         descent: null,
@@ -346,9 +384,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta por Villadangos del Páramo',
         isMain: true,
         townIds: ['leon', 'villadangos-del-paramo', 'hospital-de-orbigo'],
-        distanceKm: null,
-        ascent: null,
-        descent: null,
+        distanceKm: 31.0,
+        ascent: 152,
+        descent: 167,
         closedFrom: null,
         closedTo: null,
         roadShareRatio: null,
@@ -356,7 +394,7 @@ export const forks: RouteFork[] = [
         traits: ['ROAD_HEAVY', 'SHORTER'],
         highlightsKo: [],
         cautionKo: '국도(N-120) 병행 구간이 길다.',
-        source: 'GUIDEBOOK',
+        source: 'OSM+EUDEM',
       },
       {
         id: 'villar-de-mazarife',
@@ -365,7 +403,10 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta por Villar de Mazarife',
         isMain: false,
         townIds: ['leon', 'hospital-de-orbigo'],
-        distanceKm: null,
+        // Gronze 구간 두 개(레온→비야르 21.1km + 비야르→오스피탈 구간) 합산 약
+        // 36.0km(2026-07-28 조사). 독립 출처의 "+4.2km" 서술과 오차 0.8km로 대체로
+        // 일치하나, 두 페이지를 이어붙인 값이라 본선만큼 정밀하지 않다.
+        distanceKm: 36.0,
         ascent: null,
         descent: null,
         closedFrom: null,
@@ -391,9 +432,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta por el valle del Valcarce',
         isMain: true,
         townIds: ['villafranca-del-bierzo', 'o-cebreiro'],
-        distanceKm: null,
-        ascent: null,
-        descent: null,
+        distanceKm: 28.1,
+        ascent: 890,
+        descent: 70,
         closedFrom: null,
         closedTo: null,
         roadShareRatio: null,
@@ -401,7 +442,7 @@ export const forks: RouteFork[] = [
         traits: [],
         highlightsKo: ['트라바델로·베가 데 발카르세 경유'],
         cautionKo: null,
-        source: 'GUIDEBOOK',
+        source: 'OSM+EUDEM',
       },
       {
         id: 'pradela',
@@ -410,7 +451,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Variante de Pradela',
         isMain: false,
         townIds: ['villafranca-del-bierzo'],
-        distanceKm: null,
+        // 발카르세 계곡 본선(28.1km) 대비 Gronze 서술 기준 약 +1.5km(2026-07-28 조사).
+        // ascent/descent는 본선과 변형 구간이 뒤섞인 출처라 특정하지 못해 null로 남긴다.
+        distanceKm: 29.6,
         ascent: null,
         descent: null,
         closedFrom: null,
@@ -429,7 +472,7 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta de Dragonte',
         isMain: false,
         townIds: ['villafranca-del-bierzo'],
-        distanceKm: null,
+        distanceKm: 26,
         ascent: null,
         descent: null,
         closedFrom: null,
@@ -455,9 +498,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta por San Xil',
         isMain: true,
         townIds: ['triacastela', 'sarria'],
-        distanceKm: null,
-        ascent: null,
-        descent: null,
+        distanceKm: 18.3,
+        ascent: 294,
+        descent: 528,
         closedFrom: null,
         closedTo: null,
         roadShareRatio: null,
@@ -465,7 +508,7 @@ export const forks: RouteFork[] = [
         traits: ['SHORTER'],
         highlightsKo: ['숲길, 산 실 마을 경유(현재 towns.ts 미등록)'],
         cautionKo: null,
-        source: 'GUIDEBOOK',
+        source: 'OSM+EUDEM',
       },
       {
         id: 'samos',
@@ -474,7 +517,7 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta por Samos',
         isMain: false,
         townIds: ['triacastela', 'sarria'],
-        distanceKm: null,
+        distanceKm: 24.3,
         ascent: null,
         descent: null,
         closedFrom: null,
@@ -500,9 +543,9 @@ export const forks: RouteFork[] = [
         nameEs: 'Ruta directa (N-VI)',
         isMain: true,
         townIds: ['cacabelos', 'villafranca-del-bierzo'],
-        distanceKm: null,
-        ascent: null,
-        descent: null,
+        distanceKm: 8.2,
+        ascent: 155,
+        descent: 127,
         closedFrom: null,
         closedTo: null,
         roadShareRatio: null,
@@ -510,7 +553,7 @@ export const forks: RouteFork[] = [
         traits: ['ROAD_HEAVY'],
         highlightsKo: [],
         cautionKo: null,
-        source: 'GUIDEBOOK',
+        source: 'OSM+EUDEM',
       },
       {
         id: 'valtuille',
@@ -519,6 +562,8 @@ export const forks: RouteFork[] = [
         nameEs: 'Variante por Valtuille de Arriba',
         isMain: false,
         townIds: ['cacabelos', 'villafranca-del-bierzo'],
+        // 2026-07-28 조사: 출처마다 "본선보다 조금 김(+0.4km 수준)"과 "+3km"가
+        // 상충하고 변형 총거리를 명시한 출처가 없어 distanceKm을 채우지 않는다.
         distanceKm: null,
         ascent: null,
         descent: null,

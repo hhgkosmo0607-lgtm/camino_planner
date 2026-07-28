@@ -38,6 +38,9 @@ const CLIMB_ADJUST = 0.85 // 다음 구간 상승 600m 초과 시 ×0.85
 const RECOVERY_ADJUST = 0.85 // 힘든 날 다음 날 ×0.85
 const CLIMB_THRESHOLD = 600 // STEEP_CLIMB / 회복 트리거
 const DESCENT_THRESHOLD = 500 // STEEP_DESCENT / 회복 트리거
+const ROAD_SHARE_THRESHOLD = 0.5 // ROAD_WALKING — profiles.ts roadShareRatio 절반 이상이면 차도 병행 구간으로 표시
+const WINTER_RISK_ELEVATION_M = 1300 // WINTER_RISK — 실제 프로파일 상 고개 7곳(피레네·폰세바돈·오 세브레이로 등)이 이 위, 그다음 구간은 1164m 이하로 뚝 떨어짐(2026-07-28 profiles.ts 실측 분포 확인)
+const WINTER_RISK_MONTHS = new Set([11, 12, 1, 2, 3]) // 11~3월
 const LONG_DISTANCE = 28
 const FEW_BEDS = 30
 const NO_SERVICE_GAP = 10 // 물·식당 없는 거리 km
@@ -161,6 +164,19 @@ function buildWaypoints(fromIdx: number, toIdx: number, totalMinutes: number): W
     }
   }
 
+  // STAMP: 마을별 정확한 도장 위치는 조사하지 않는다(숙소·성당·바 어디서나 거의 다
+  // 찍어줘서 마을마다 특정 위치를 못박을 실익이 적다) — 일반 안내만 덧붙인다.
+  // ARRIVE보다 앞에 둔다 — "걷는 날은 ARRIVE로 끝난다" 불변식을 유지하기 위해서다.
+  waypoints.push({
+    kind: 'STAMP',
+    townId: to.id,
+    km: round1(totalKm),
+    etaMinutes: totalMinutes,
+    labelKo: `${to.nameKo} · 세요(도장)`,
+    noteKo: '묵는 알베르게·성당·시청·바 어디서든 대부분 찍어줍니다. 크레덴시알을 잊지 마세요.',
+    opensAt: null,
+  })
+
   waypoints.push({
     kind: 'ARRIVE',
     townId: to.id,
@@ -173,7 +189,7 @@ function buildWaypoints(fromIdx: number, toIdx: number, totalMinutes: number): W
   return waypoints
 }
 
-/** 구간 [fromIdx, toIdx]의 위험 구간. 실제 보유 데이터(고도·서비스)로만 판정 — road/그늘/통신 등은 데이터가 없어 표시하지 않는다. */
+/** 구간 [fromIdx, toIdx]의 위험 구간. 실제 보유 데이터(고도·서비스·차도 비율)로만 판정 — 그늘·통신은 데이터가 없어 표시하지 않는다. */
 function buildHazards(fromIdx: number, toIdx: number): Hazard[] {
   const from = ALL_TOWNS[fromIdx]
   const hazards: Hazard[] = []
@@ -189,6 +205,36 @@ function buildHazards(fromIdx: number, toIdx: number): Hazard[] {
       fromKm: round1(a.km - from.km),
       toKm: round1(b.km - from.km),
       noteKo: `${a.nameKo}→${b.nameKo} 급경사 내리막 −${Math.round(p.descent)}m. 무릎 부담 큼 — 스틱 사용·보폭 축소 권장.`,
+    })
+  }
+
+  // ROAD_WALKING: 마을쌍 프로파일의 차도 병행 비율(roadShareRatio)이 임계치를 넘는 구간
+  for (let i = fromIdx; i < toIdx; i++) {
+    const a = ALL_TOWNS[i]
+    const b = ALL_TOWNS[i + 1]
+    const p = PROFILE_INDEX.get(`${a.id}->${b.id}`)
+    if (!p || p.roadShareRatio === null || p.roadShareRatio < ROAD_SHARE_THRESHOLD) continue
+    hazards.push({
+      type: 'ROAD_WALKING',
+      fromKm: round1(a.km - from.km),
+      toKm: round1(b.km - from.km),
+      noteKo: `${a.nameKo}→${b.nameKo} 구간의 약 ${Math.round(p.roadShareRatio * 100)}%가 차도 병행. 갓길·역광 주의, 가능하면 반사 조끼 착용.`,
+    })
+  }
+
+  // WINTER_RISK: 마을쌍 프로파일의 최고점이 임계 고도를 넘는 구간. 이 시점엔 실제 여행 날짜를
+  // 아직 모른다(dayNo가 휴식일 삽입으로 재조정되기 전) — 그래서 "이번 여행이 겨울철이다"라고
+  // 단정하지 않고, 고지대라는 사실 자체와 11~3월 일반 위험만 안내하는 문구로 둔다.
+  for (let i = fromIdx; i < toIdx; i++) {
+    const a = ALL_TOWNS[i]
+    const b = ALL_TOWNS[i + 1]
+    const p = PROFILE_INDEX.get(`${a.id}->${b.id}`)
+    if (!p || p.maxElevation < WINTER_RISK_ELEVATION_M) continue
+    hazards.push({
+      type: 'WINTER_RISK',
+      fromKm: round1(a.km - from.km),
+      toKm: round1(b.km - from.km),
+      noteKo: `${a.nameKo}→${b.nameKo} 구간 최고점 약 ${Math.round(p.maxElevation)}m. 11~3월에는 결빙·적설 위험 — 방한장비 필수, 당일 현지(순례자 사무소·알베르게) 안내를 따른다.`,
     })
   }
 
