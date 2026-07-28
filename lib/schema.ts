@@ -135,7 +135,9 @@ export interface Albergue {
   acceptsBagTransfer: boolean | null   // 공립은 대부분 false. 마을 단위(Service)와 별개
   wheelchairAccessible: boolean | null // 계단 유무 등. 확인 전까지 null 유지
   verifiedAt: string | null       // YYYY-MM. UI에 노출
-  source: 'FIELD' | 'PARTNER' | 'USER_REPORT' | 'PLACEHOLDER'
+  source: 'FIELD' | 'GUIDEBOOK' | 'PARTNER' | 'USER_REPORT' | 'PLACEHOLDER'
+  // FIELD=실측 도보 직접 확인, GUIDEBOOK=공개 가이드북·순례자 커뮤니티 출처(RouteVariant·AccessRoute와 같은 패턴),
+  // PARTNER=제휴처 제공, USER_REPORT=사용자 제보, PLACEHOLDER=샘플(화면에도 샘플임을 노출해야 함, 규칙 1)
 }
 
 // ────────────────────────────────────────────────────────────
@@ -180,6 +182,26 @@ export interface PlannedTransport {
 export interface SupportVehicle {
   enabled: boolean
   meetPoints: { stageDay: number; townId: string; noteKo: string }[]
+}
+
+/**
+ * F-26용 실제 국내(스페인) 버스·기차 노선 데이터. PlannedTransport는 "이 구간을
+ * 이동수단으로 건너뛴다"는 계획 자체를, TransitOption은 "그 구간에 실제로 어떤
+ * 교통편이 있고 얼마인가"라는 조사된 사실을 담는다 — 후자로 전자를 채운다.
+ */
+export interface TransitOption {
+  id: string
+  fromTownId: string
+  toTownId: string
+  mode: TransportMode
+  operator: string
+  durationMin: number
+  costEurLow: number
+  costEurHigh: number
+  frequencyNote: string           // "하루 4편 이상" 등
+  bookingUrl: string | null
+  source: 'FIELD' | 'GUIDEBOOK' | 'ESTIMATED'
+  checkedAt: string                // YYYY-MM
 }
 
 // ────────────────────────────────────────────────────────────
@@ -267,6 +289,22 @@ export interface Waypoint {
   opensAt: string | null          // 첫 바 개점 시각 등
 }
 
+/**
+ * F-02 혼잡 추정. 03 문서 원안의 "예상 수요 = 기준 순례자 수 × 계절계수 × 요일계수 ×
+ * 구간계수 × 특수일계수" 정밀 공식은 구현하지 않았다 — 하루 단위 기준 순례자 수 같은
+ * 실측 데이터가 없어 계수를 지어내야 했기 때문(규칙 1). 대신 실제로 확인 가능한
+ * 요소(마을 총 침대 수, 사리아 이후 구간, 성수기/성 야고보 축일 등 실제 날짜)만
+ * 골라 3단계로만 판정한다 — "정확도를 과장하지 않는다"는 F-02 원안 자체의 경고와도
+ * 맞다. lib/planner/congestion.ts 참고.
+ */
+export type CongestionLevel = 'LOW' | 'HURRY' | 'HIGH'
+
+export interface CongestionInfo {
+  level: CongestionLevel
+  totalBeds: number | null   // 마을 알베르게 실측 침대 수 합계. 데이터 없으면 null
+  reasonsKo: string[]        // 판정에 실제로 반영된 근거만(지어내지 않음)
+}
+
 export interface Stage {
   dayNo: number
   date: string | null
@@ -285,6 +323,7 @@ export interface Stage {
   transport: PlannedTransport | null  // 이 구간이 계획된 이동수단인 경우만
   warnings: StageWarning[]
   isRestDay: boolean
+  congestion: CongestionInfo | null   // 도보 구간만. 휴식일·이동수단 구간은 null
 }
 
 export interface Plan {

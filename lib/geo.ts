@@ -7,7 +7,9 @@
 
 import { towns } from '../data/towns'
 import { profiles } from '../data/profiles'
-import type { Town, SegmentProfile, Service } from './schema'
+import { albergues } from '../data/albergues'
+import { transitOptions } from '../data/transit'
+import type { Town, SegmentProfile, Service, Albergue, AlbergueType, TransitOption } from './schema'
 
 export const SANTIAGO_ID = 'santiago-de-compostela'
 export const TOTAL_KM = 773.1
@@ -23,8 +25,42 @@ export const SERVICE_LABEL: Record<Service, string> = {
   MASS: '순례자 미사',
 }
 
+export const ALBERGUE_TYPE_LABEL: Record<AlbergueType, string> = {
+  MUNICIPAL: '지자체 공립',
+  XUNTA: 'Xunta 공립',
+  PARISH: '본당',
+  MONASTERY: '수도원',
+  PRIVATE: '사립',
+  DONATIVO: '기부제',
+}
+
 export function getTown(slug: string): Town | undefined {
   return towns.find((t) => t.id === slug)
+}
+
+/** 마을의 알베르게 목록. 없으면 빈 배열(화면이 "정보 확인 중"으로 표시, 규칙 1). */
+export function getAlbergues(townId: string): Albergue[] {
+  return albergues.filter((a) => a.townId === townId)
+}
+
+/**
+ * 마을의 실측 침대 수 합계(F-02). beds가 확인된 알베르게만 더한다 — 알베르게
+ * 자체가 없거나(마을 정보 없음) 전부 beds:null이면 null(지어내지 않음, 규칙 1).
+ * 일부만 beds가 확인된 마을은 확인된 것만 더한 "최소치"라 실제보다 적을 수 있다.
+ */
+export function totalBedsForTown(townId: string): number | null {
+  const known = getAlbergues(townId).filter((a) => a.beds != null)
+  if (known.length === 0) return null
+  return known.reduce((sum, a) => sum + (a.beds ?? 0), 0)
+}
+
+/**
+ * 두 마을 사이 실제 버스·기차 노선(F-26). 조사해둔 구간(현재 부르고스~레온,
+ * 사아군~레온)만 찾고, 없으면 빈 배열 — 지어내지 않고 일정 화면이 일반 문구로
+ * 폴백하게 둔다.
+ */
+export function findTransitOptions(fromTownId: string, toTownId: string): TransitOption[] {
+  return transitOptions.filter((t) => t.fromTownId === fromTownId && t.toTownId === toTownId)
 }
 
 /** km 오름차순에서 이전/다음 마을. */

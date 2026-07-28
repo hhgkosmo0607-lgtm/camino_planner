@@ -10,7 +10,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { towns } from '@/data/towns'
-import { getTown, townNeighbors, remainingKm, SERVICE_LABEL } from '@/lib/geo'
+import { getTown, townNeighbors, remainingKm, SERVICE_LABEL, getAlbergues, ALBERGUE_TYPE_LABEL } from '@/lib/geo'
 import { CalculatorCTA } from '@/components/CalculatorCTA'
 import { Track } from '@/components/Track'
 
@@ -36,6 +36,7 @@ export default async function TownPage({ params }: { params: Params }) {
   const t = getTown(slug)
   if (!t) notFound()
   const { prev, next } = townNeighbors(slug)
+  const townAlbergues = getAlbergues(t.id)
 
   const planHref = `/plan?start=${t.id}`
 
@@ -82,14 +83,40 @@ export default async function TownPage({ params }: { params: Params }) {
           <h2 className="mb-2 font-display text-lg text-text">
             알베르게 <span className="text-[13px] text-muted">Albergue</span>
           </h2>
-          <p className="text-[17px] text-muted">
-            {t.beds > 0
-              ? `이 마을에는 약 ${t.beds}개의 침대가 있는 것으로 파악됩니다. 개별 알베르게의 요금·예약·개방 기간은 정보 확인 중입니다.`
-              : '확인된 숙소 정보가 없습니다.'}
-          </p>
-          <p className="mt-2 text-[13px] text-muted">
-            ※ 실측 검증 전까지 요금·전화번호·예약 가능 여부를 추정으로 채우지 않습니다.
-          </p>
+
+          {townAlbergues.length > 0 ? (
+            <>
+              <ul className="space-y-2.5">
+                {townAlbergues.map((a) => (
+                  <li key={a.id} className="rounded-md border border-stone px-3 py-2.5">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                      <div className="text-[17px] font-semibold text-text">{a.name}</div>
+                      <div className="font-mono text-[15px] tabular-nums text-muted">
+                        {a.priceEur == null ? '요금 미확인' : a.priceEur === 0 ? '기부제' : `약 €${a.priceEur}~`}
+                      </div>
+                    </div>
+                    <div className="mt-0.5 text-[13px] text-muted">{ALBERGUE_TYPE_LABEL[a.type]}</div>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-[13px] text-muted">
+                ※ 공개 가이드북·순례자 커뮤니티 출처({townAlbergues[0].verifiedAt} 확인), 개인 실측 아님. 요금은
+                도미토리 1인 기준 최저가 참고치이며 예약 방법·전화번호·개방 기간은 아직 확인 전입니다.
+                예약 전 최신 정보를 다시 확인하세요.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-[17px] text-muted">
+                {t.beds > 0
+                  ? `이 마을에는 약 ${t.beds}개의 침대가 있는 것으로 파악됩니다. 개별 알베르게 정보는 확인 중입니다.`
+                  : '확인된 숙소 정보가 없습니다.'}
+              </p>
+              <p className="mt-2 text-[13px] text-muted">
+                ※ 실측 검증 전까지 요금·전화번호·예약 가능 여부를 추정으로 채우지 않습니다.
+              </p>
+            </>
+          )}
         </section>
 
         {/* 이전/다음 마을 */}

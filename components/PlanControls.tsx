@@ -21,9 +21,16 @@ interface Props {
   totalDays: number
   fitness: 'low' | 'normal' | 'high'
   restDays: number
-  skipMeseta: boolean
+  skip: '' | 'sahagun~leon' | 'burgos~leon'
   startDate?: string
 }
+
+// F-26: 실제 조사한 노선(data/transit.ts) 요약. 값이 바뀌면 여기도 같이 확인할 것.
+const MESETA_SKIPS = [
+  { value: '', ko: '전부 걷기', sub: null },
+  { value: 'sahagun~leon', ko: '사아군→레온만 버스', sub: '약 55분 · €6~9 · 약 51km 단축' },
+  { value: 'burgos~leon', ko: '부르고스→레온 전체 버스', sub: '약 1시간 40분 · €15~35 · 약 158km 단축' },
+] as const
 
 const STARTS = [
   { id: 'saint-jean-pied-de-port', ko: '생장 전 구간', sub: '773km' },
@@ -177,33 +184,48 @@ export function PlanControls(props: Props) {
         </div>
       </fieldset>
 
-      {/* 휴식일 + 메세타 버스 */}
-      <div className="flex flex-wrap items-end gap-6">
-        <div>
-          <label htmlFor="rest" className="mb-1 block text-[13px] font-medium tracking-wide text-muted">
-            휴식일
-          </label>
-          <input
-            id="rest"
-            type="number"
-            name="rest"
-            min={0}
-            max={10}
-            defaultValue={props.restDays}
-            className="h-11 w-20 rounded-md border border-stone px-3 text-[17px] tabular-nums"
-          />
-        </div>
-        <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[15px]">
-          <input
-            type="checkbox"
-            name="skip"
-            value="burgos~leon"
-            defaultChecked={props.skipMeseta}
-            className="h-5 w-5 accent-ink"
-          />
-          메세타(부르고스→레온) 버스로 건너뛰기
+      {/* 휴식일 */}
+      <div>
+        <label htmlFor="rest" className="mb-1 block text-[13px] font-medium tracking-wide text-muted">
+          휴식일
         </label>
+        <input
+          id="rest"
+          type="number"
+          name="rest"
+          min={0}
+          max={10}
+          defaultValue={props.restDays}
+          className="h-11 w-20 rounded-md border border-stone px-3 text-[17px] tabular-nums"
+        />
       </div>
+
+      {/* 메세타 건너뛰기 — 어느 쪽도 권하지 않는다. 실제 노선·요금·단축 거리만 보여주고 판단은 사용자가 한다. */}
+      <fieldset>
+        <legend className="mb-2 text-[13px] font-medium tracking-wide text-muted">
+          메세타 구간 <span className="font-normal">(부르고스~레온, 가장 평평하고 단조로운 구간 — 버스로 건너뛰는 순례자가 많습니다)</span>
+        </legend>
+        <div className="space-y-2">
+          {MESETA_SKIPS.map((m) => (
+            <label
+              key={m.value}
+              className="flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-md border border-stone px-3 py-2 text-[15px] has-[:checked]:border-ink has-[:checked]:bg-ink/5"
+            >
+              <span className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="skip"
+                  value={m.value}
+                  defaultChecked={props.skip === m.value}
+                  className="h-5 w-5 accent-ink"
+                />
+                {m.ko}
+              </span>
+              {m.sub && <span className="font-mono text-[13px] tabular-nums text-muted">{m.sub}</span>}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       {/* 출발일 (선택) — 인쇄 일정표의 날짜 계산에 쓰인다 */}
       <div>

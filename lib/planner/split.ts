@@ -17,9 +17,15 @@ import type {
   Plan,
   StageWarning,
   TravelMode,
+  Waypoint,
+  WaypointKind,
+  Hazard,
+  Service,
 } from '../schema'
 import type { AccumulatedProfile } from './types'
 import { injuryRiskScore, riskDataQuality, riskAdvice } from './risk'
+import { assessCongestion } from './congestion'
+import { totalBedsForTown } from '../geo'
 import { towns as ALL_TOWNS } from '../../data/towns'
 import { profiles as ALL_PROFILES } from '../../data/profiles'
 
@@ -108,6 +114,112 @@ function maxServiceGapKm(fromIdx: number, toIdx: number): number {
   }
   gap = Math.max(gap, ALL_TOWNS[toIdx].km - lastServiceKm)
   return gap
+}
+
+// ── 일자별 상세: 거점(F-20) ───────────────────────────────────
+// Service → WaypointKind로 직접 대응되는 것만 표시한다(SHOP/MEDICAL/MASS는
+// 대응되는 WaypointKind가 없어 지어내지 않고 뺀다).
+const SERVICE_TO_WAYPOINT: Partial<Record<Service, WaypointKind>> = {
+  WATER: 'WATER',
+  PHARMACY: 'PHARMACY',
+  ATM: 'ATM',
+  BAG_TRANSFER: 'BAG_DROP',
+}
+const WAYPOINT_LABEL: Partial<Record<WaypointKind, string>> = {
+  WATER: '식수',
+  PHARMACY: '약국',
+  ATM: 'ATM',
+  BAG_DROP: '짐 배송 접수',
+}
+
+/** 구간 [fromIdx, toIdx]의 거점 목록. 시작·도착 + 중간 마을의 서비스(WATER/PHARMACY/ATM/BAG_TRANSFER)만. */
+function buildWaypoints(fromIdx: number, toIdx: number, totalMinutes: number): Waypoint[] {
+  const from = ALL_TOWNS[fromIdx]
+  const to = ALL_TOWNS[toIdx]
+  const totalKm = to.km - from.km
+  const etaAt = (km: number) => (totalKm > 0 ? Math.round((km / totalKm) * totalMinutes) : 0)
+
+  const waypoints: Waypoint[] = [
+    { kind: 'START', townId: from.id, km: 0, etaMinutes: 0, labelKo: `${from.nameKo} 출발`, noteKo: null, opensAt: null },
+  ]
+
+  for (let i = fromIdx + 1; i < toIdx; i++) {
+    const t = ALL_TOWNS[i]
+    const relKm = round1(t.km - from.km)
+    for (const service of t.services) {
+      const kind = SERVICE_TO_WAYPOINT[service]
+      if (!kind) continue
+      waypoints.push({
+        kind,
+        townId: t.id,
+        km: relKm,
+        etaMinutes: etaAt(relKm),
+        labelKo: `${t.nameKo} · ${WAYPOINT_LABEL[kind]}`,
+        noteKo: null,
+        opensAt: null,
+      })
+    }
+  }
+
+  waypoints.push({
+    kind: 'ARRIVE',
+    townId: to.id,
+    km: round1(totalKm),
+    etaMinutes: totalMinutes,
+    labelKo: `${to.nameKo} 도착`,
+    noteKo: null,
+    opensAt: null,
+  })
+  return waypoints
+}
+
+/** 구간 [fromIdx, toIdx]의 위험 구간. 실제 보유 데이터(고도·서비스)로만 판정 — road/그늘/통신 등은 데이터가 없어 표시하지 않는다. */
+function buildHazards(fromIdx: number, toIdx: number): Hazard[] {
+  const from = ALL_TOWNS[fromIdx]
+  const hazards: Hazard[] = []
+
+  // STEEP_DESCENT: 마을쌍 프로파일의 하강이 임계치를 넘는 구간
+  for (let i = fromIdx; i < toIdx; i++) {
+    const a = ALL_TOWNS[i]
+    const b = ALL_TOWNS[i + 1]
+    const p = PROFILE_INDEX.get(`${a.id}->${b.id}`)
+    if (!p || p.descent <= DESCENT_THRESHOLD) continue
+    hazards.push({
+      type: 'STEEP_DESCENT',
+      fromKm: round1(a.km - from.km),
+      toKm: round1(b.km - from.km),
+      noteKo: `${a.nameKo}→${b.nameKo} 급경사 내리막 −${Math.round(p.descent)}m. 무릎 부담 큼 — 스틱 사용·보폭 축소 권장.`,
+    })
+  }
+
+  // NO_WATER: 물/바가 있는 마을 사이 간격이 임계치를 넘는 구간
+  let lastServiceKm = from.km
+  for (let i = fromIdx; i <= toIdx; i++) {
+    const t = ALL_TOWNS[i]
+    const hasService = t.services.includes('WATER') || t.services.includes('BAR')
+    if (!hasService) continue
+    const gap = t.km - lastServiceKm
+    if (gap > NO_SERVICE_GAP) {
+      hazards.push({
+        type: 'NO_WATER',
+        fromKm: round1(lastServiceKm - from.km),
+        toKm: round1(t.km - from.km),
+        noteKo: `약 ${round1(gap)}km 구간에 물·식당이 없습니다. 출발 전 미리 채우세요.`,
+      })
+    }
+    lastServiceKm = t.km
+  }
+  const finalGap = ALL_TOWNS[toIdx].km - lastServiceKm
+  if (finalGap > NO_SERVICE_GAP) {
+    hazards.push({
+      type: 'NO_WATER',
+      fromKm: round1(lastServiceKm - from.km),
+      toKm: round1(ALL_TOWNS[toIdx].km - from.km),
+      noteKo: `약 ${round1(finalGap)}km 구간에 물·식당이 없습니다. 출발 전 미리 채우세요.`,
+    })
+  }
+
+  return hazards.sort((x, y) => x.fromKm - y.fromKm)
 }
 
 // ── 목표 지점에 가장 가까운 '숙소 있는' 마을 찾기 ──────────────
@@ -298,12 +410,14 @@ export function buildPlan(input: PlanInput): Plan {
         transport: r.transport,
         warnings: [],
         isRestDay: false,
+        congestion: null,
       })
       continue
     }
 
     const prof = accumulateProfile(r.fromIdx, r.toIdx)
     allSources.push(prof.source)
+    const dayMinutes = estimatedMinutes(distanceKm, prof.ascent, prof.descent)
     stages.push({
       dayNo,
       date: null,
@@ -314,19 +428,22 @@ export function buildPlan(input: PlanInput): Plan {
       ascent: prof.ascent,
       descent: prof.descent,
       maxElevation: prof.maxElevation,
-      estimatedMinutes: estimatedMinutes(distanceKm, prof.ascent, prof.descent),
+      estimatedMinutes: dayMinutes,
       suggestedStartTime: prof.ascent > CLIMB_THRESHOLD ? '06:30' : '07:00',
-      waypoints: [],
-      hazards: [],
+      waypoints: buildWaypoints(r.fromIdx, r.toIdx, dayMinutes),
+      hazards: buildHazards(r.fromIdx, r.toIdx),
       lodgingId: null,
       transport: null,
       warnings: warningsFor(dayNo, r.fromIdx, r.toIdx, distanceKm, prof, base),
       isRestDay: false,
+      congestion: null,
     })
   }
 
   // (d) 휴식일 배치 — beds >= 150 인 큰 도시 도착일 뒤에 삽입
   insertRestDays(stages, input.restDays)
+  // dayNo가 최종 확정된 뒤에만 날짜·혼잡도를 계산할 수 있다(F-02)
+  finalizeDatesAndCongestion(stages, input.startDate)
 
   // 거리 집계
   const walkedKm = round1(
@@ -417,7 +534,36 @@ function insertRestDays(stages: Stage[], restDays: number): void {
       transport: null,
       warnings: [],
       isRestDay: true,
+      congestion: null,
     })
   }
   stages.forEach((s, i) => (s.dayNo = i + 1))
+}
+
+/** "YYYY-MM-DD" + dayNo(1부터) → 그 날짜의 UTC 자정 Date. startDate 없으면 null. */
+function dateForDayNo(startDate: string | undefined, dayNo: number): Date | null {
+  if (!startDate) return null
+  const d = new Date(startDate + 'T00:00:00Z')
+  if (Number.isNaN(d.getTime())) return null
+  d.setUTCDate(d.getUTCDate() + (dayNo - 1))
+  return d
+}
+
+/**
+ * dayNo 확정(휴식일 삽입으로 재부여됨) 이후에만 호출할 수 있다 — date가
+ * dayNo에 의존하기 때문. 도보 구간만 congestion을 채운다.
+ */
+function finalizeDatesAndCongestion(stages: Stage[], startDate: string | undefined): void {
+  for (const s of stages) {
+    const d = dateForDayNo(startDate, s.dayNo)
+    s.date = d ? d.toISOString().slice(0, 10) : null
+    if (s.isRestDay || s.transport) continue
+    const toIdx = TOWN_INDEX.get(s.toTownId)
+    const townKm = toIdx !== undefined ? ALL_TOWNS[toIdx].km : 0
+    s.congestion = assessCongestion({
+      townKm,
+      totalBeds: totalBedsForTown(s.toTownId),
+      date: d,
+    })
+  }
 }
