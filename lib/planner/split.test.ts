@@ -247,6 +247,129 @@ describe('계획된 이동수단 (메세타 버스)', () => {
   })
 })
 
+describe('일자별 상세 — 거점(waypoints)', () => {
+  it('걷는 날은 START(km 0)로 시작해 ARRIVE(km=distanceKm)로 끝난다', () => {
+    const p = buildPlan(input())
+    for (const s of walkingStages(p)) {
+      expect(s.waypoints[0].kind).toBe('START')
+      expect(s.waypoints[0].km).toBe(0)
+      const last = s.waypoints[s.waypoints.length - 1]
+      expect(last.kind).toBe('ARRIVE')
+      expect(last.km).toBe(s.distanceKm)
+    }
+  })
+
+  it('거점의 km은 항상 0~distanceKm 범위 안이고 오름차순이다', () => {
+    const p = buildPlan(input())
+    for (const s of walkingStages(p)) {
+      for (const w of s.waypoints) {
+        expect(w.km).toBeGreaterThanOrEqual(0)
+        expect(w.km).toBeLessThanOrEqual(s.distanceKm)
+      }
+      for (let i = 1; i < s.waypoints.length; i++) {
+        expect(s.waypoints[i].km).toBeGreaterThanOrEqual(s.waypoints[i - 1].km)
+      }
+    }
+  })
+
+  it('이동수단(버스) 구간은 거점이 없다', () => {
+    const p = buildPlan(
+      input({
+        plannedTransport: [
+          { fromTownId: 'burgos', toTownId: 'leon', mode: 'BUS', reasonKo: '메세타 건너뛰기', skippedKm: 180, costEur: 25 },
+        ],
+      }),
+    )
+    const bus = p.stages.find((s) => s.transport)
+    expect(bus!.waypoints).toEqual([])
+  })
+})
+
+describe('일자별 상세 — 위험 구간(hazards)', () => {
+  it('엘 아세보 → 몰리나세카 급하강 구간에 STEEP_DESCENT hazard가 있다', () => {
+    const p = buildPlan(input())
+    const aceboKm = kmOf('el-acebo')
+    const molinaKm = kmOf('molinaseca')
+    const stage = p.stages.find(
+      (s) => kmOf(s.fromTownId) <= aceboKm && kmOf(s.toTownId) >= molinaKm,
+    )
+    expect(stage).toBeDefined()
+    expect(stage!.hazards.some((h) => h.type === 'STEEP_DESCENT')).toBe(true)
+  })
+
+  it('hazard의 fromKm/toKm은 항상 0~distanceKm 범위 안이고 fromKm < toKm', () => {
+    const p = buildPlan(input())
+    for (const s of walkingStages(p)) {
+      for (const h of s.hazards) {
+        expect(h.fromKm).toBeGreaterThanOrEqual(0)
+        expect(h.toKm).toBeLessThanOrEqual(s.distanceKm)
+        expect(h.fromKm).toBeLessThan(h.toKm)
+      }
+    }
+  })
+
+  it('이동수단(버스) 구간은 위험 구간이 없다', () => {
+    const p = buildPlan(
+      input({
+        plannedTransport: [
+          { fromTownId: 'burgos', toTownId: 'leon', mode: 'BUS', reasonKo: '메세타 건너뛰기', skippedKm: 180, costEur: 25 },
+        ],
+      }),
+    )
+    const bus = p.stages.find((s) => s.transport)
+    expect(bus!.hazards).toEqual([])
+  })
+})
+
+describe('F-02 혼잡 추정 — Stage.congestion/date 배치', () => {
+  it('출발일 없으면 모든 date가 null', () => {
+    const p = buildPlan(input())
+    expect(p.stages.every((s) => s.date === null)).toBe(true)
+  })
+
+  it('출발일이 있으면 dayNo에 맞게 date가 채워진다(1일차 = 출발일)', () => {
+    const p = buildPlan(input({ startDate: '2026-09-01' }))
+    expect(p.stages[0].date).toBe('2026-09-01')
+  })
+
+  it('휴식일이 있어도 dayNo 재부여 이후 값으로 date가 맞다(경계 회귀 방지)', () => {
+    const p = buildPlan(input({ startDate: '2026-09-01', restDays: 2 }))
+    for (let i = 0; i < p.stages.length; i++) {
+      expect(p.stages[i].dayNo).toBe(i + 1)
+      const expected = new Date('2026-09-01T00:00:00Z')
+      expected.setUTCDate(expected.getUTCDate() + i)
+      expect(p.stages[i].date).toBe(expected.toISOString().slice(0, 10))
+    }
+  })
+
+  it('도보 구간은 congestion이 항상 채워진다(null 아님)', () => {
+    const p = buildPlan(input())
+    for (const s of walkingStages(p)) {
+      expect(s.congestion).not.toBeNull()
+      expect(['LOW', 'HURRY', 'HIGH']).toContain(s.congestion!.level)
+    }
+  })
+
+  it('휴식일·이동수단 구간은 congestion이 null', () => {
+    const p = buildPlan(
+      input({
+        restDays: 1,
+        plannedTransport: [
+          { fromTownId: 'burgos', toTownId: 'leon', mode: 'BUS', reasonKo: '메세타 건너뛰기', skippedKm: 180, costEur: 25 },
+        ],
+      }),
+    )
+    for (const s of p.stages) {
+      if (s.isRestDay || s.transport) expect(s.congestion).toBeNull()
+    }
+  })
+
+  it('사리아 출발(짧은 일정)도 congestion 계산이 죽지 않는다', () => {
+    const p = buildPlan(input({ startTownId: 'sarria', startDate: '2026-07-25' }))
+    expect(walkingStages(p).every((s) => s.congestion !== null)).toBe(true)
+  })
+})
+
 describe('규칙 3 경계 — 고도는 profiles 만 경유', () => {
   it('split.ts / risk.ts 어디에도 towns.elevation 을 직접 빼는 코드가 없다', () => {
     const stripComments = (s: string) =>

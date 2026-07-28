@@ -16,7 +16,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: p === '' ? 1 : 0.9,
   }))
 
-  const toolPages = ['/tools/cost', '/tools/pack', '/tools/timeline', '/tools/access'].map((p) => ({
+  const toolPages = [
+    '/tools/cost',
+    '/tools/pack',
+    '/tools/timeline',
+    '/tools/access',
+    '/tools/phrases',
+    '/tools/luggage',
+  ].map((p) => ({
     url: `${BASE_URL}${p}`,
     changeFrequency: 'monthly' as const,
     priority: 0.7,

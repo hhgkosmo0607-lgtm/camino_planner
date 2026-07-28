@@ -55,9 +55,13 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
   const mode: 'km' | 'days' = input.totalDays != null ? 'days' : 'km'
   const walking = plan.stages.filter((s) => !s.isRestDay && !s.transport)
   const avgKm = walking.length > 0 ? plan.walkedKm / walking.length : 0
-  const skipMeseta = input.plannedTransport.some(
+  const skip: '' | 'sahagun~leon' | 'burgos~leon' = input.plannedTransport.some(
     (t) => t.fromTownId === 'burgos' && t.toTownId === 'leon',
   )
+    ? 'burgos~leon'
+    : input.plannedTransport.some((t) => t.fromTownId === 'sahagun' && t.toTownId === 'leon')
+      ? 'sahagun~leon'
+      : ''
   const marks = walking.map((s) => townKm(s.toTownId))
   const startKm = townKm(input.startTownId)
 
@@ -88,7 +92,7 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
           totalDays={input.totalDays ?? 34}
           fitness={input.fitness}
           restDays={input.restDays}
-          skipMeseta={skipMeseta}
+          skip={skip}
           startDate={input.startDate}
         />
 

@@ -1,5 +1,5 @@
 /**
- * ToolNav.tsx — 무료 도구 3종 + 일정 계산기 상호 링크.
+ * ToolNav.tsx — 무료 도구 6종 + 일정 계산기 상호 링크.
  * 각 도구가 서로, 그리고 /plan 과 연결된다 (P6 요건).
  */
 
@@ -11,6 +11,8 @@ const ITEMS = [
   { href: '/tools/pack', ko: '배낭 무게' },
   { href: '/tools/timeline', ko: '준비 타임라인' },
   { href: '/tools/access', ko: '접근 교통' },
+  { href: '/tools/phrases', ko: '예약 문장' },
+  { href: '/tools/luggage', ko: '짐배송 비용' },
 ]
 
 export function ToolNav({ current }: { current?: string }) {

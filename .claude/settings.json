@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node \"C:\\\\Users\\\\KOSMO\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--02Workspaces-camino-planner\\\\29f8f0c3-f99a-4cff-98cc-7139d8b2dafd\\\\scratchpad\\\\compare_beds.js\")",
+      "Bash(node -e ' *)",
+      "Bash(node \"C:\\\\Users\\\\KOSMO\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--02Workspaces-camino-planner\\\\29f8f0c3-f99a-4cff-98cc-7139d8b2dafd\\\\scratchpad\\\\compare_beds2.js\")",
+      "Bash(node \"C:\\\\Users\\\\KOSMO\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--02Workspaces-camino-planner\\\\29f8f0c3-f99a-4cff-98cc-7139d8b2dafd\\\\scratchpad\\\\update_town_beds.js\")",
+      "Bash(curl -s \"http://localhost:3000/plan?start=sarria&mode=km&d=24&f=normal&rest=0&sd=2026-09-01\")",
+      "Bash(curl -s -o /tmp/plan_sarria.html -w \"%{http_code}\\\\n\" \"http://localhost:3000/plan?start=sarria&mode=km&d=24&f=normal&rest=0&sd=2026-09-01\")",
+      "Read(//tmp/**)",
+      "Bash(cat /tmp/server4.log 2>&1 | tail -40)",
+      "Bash(taskkill //PID 17172 //F)",
+      "Bash(taskkill //PID 24796 //F)",
+      "WebFetch(domain:gronze.com)",
+      "WebFetch(domain:alberguelacuadra.com)",
+      "WebFetch(domain:www.hotelsanantonabad.com)"
+    ]
+  }
+}

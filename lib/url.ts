@@ -4,13 +4,28 @@
  * ★ URL이 진실의 원천이다 (CLAUDE.md 규칙 8). localStorage/DB 없음.
  *   사용자가 계획을 링크로 공유하면 그게 그대로 유입 경로가 된다.
  *
- * 순수 함수. fetch/window 참조 없음 (정적 towns 만 import). 잘못된 값은 기본값 폴백.
+ * 순수 함수. fetch/window 참조 없음 (정적 towns/transit 만 import). 잘못된 값은 기본값 폴백.
  *
  * 쿼리 예시: "start=leon&mode=km&d=24&f=normal&rest=1&skip=burgos~leon"
  */
 
-import type { PlanInput, MobilityProfile, PlannedTransport } from './schema'
+import type { PlanInput, MobilityProfile, PlannedTransport, TransportMode } from './schema'
 import { towns } from '../data/towns'
+import { findTransitOptions } from './geo'
+
+const MODE_KO: Record<TransportMode, string> = {
+  BUS: '버스',
+  TRAIN: '기차',
+  TAXI: '택시',
+  SUPPORT_VEHICLE: '지원 차량',
+}
+
+function fmtDurationKo(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  if (h === 0) return `${m}분`
+  return m === 0 ? `${h}시간` : `${h}시간 ${m}분`
+}
 
 const DEFAULT_START = 'saint-jean-pied-de-port'
 const DEFAULT_DAILY = 24
@@ -58,13 +73,20 @@ function parseSkips(raw: string | null): PlannedTransport[] {
     if (!from || !to || !townExists(from) || !townExists(to)) continue
     const skippedKm = Math.round((kmOf(to) - kmOf(from)) * 10) / 10
     if (skippedKm <= 0) continue // 앞으로 가는 이동만
+
+    // 조사해둔 실제 노선(data/transit.ts)이 있으면 그걸로 채운다(버스 우선).
+    // 없으면 지어내지 않고 일반 문구 + costEur null 로 남긴다.
+    const options = findTransitOptions(from, to)
+    const opt = options.find((o) => o.mode === 'BUS') ?? options[0]
     out.push({
       fromTownId: from,
       toTownId: to,
-      mode: 'BUS',
-      reasonKo: '이동수단으로 건너뜀',
+      mode: opt?.mode ?? 'BUS',
+      reasonKo: opt
+        ? `${opt.operator} ${MODE_KO[opt.mode]} 약 ${fmtDurationKo(opt.durationMin)} · 메세타 건너뛰기`
+        : '이동수단으로 건너뜀',
       skippedKm,
-      costEur: null,
+      costEur: opt ? Math.round((opt.costEurLow + opt.costEurHigh) / 2) : null,
     })
   }
   return out

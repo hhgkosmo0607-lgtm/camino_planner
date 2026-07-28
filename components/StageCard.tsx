@@ -10,7 +10,7 @@
  * ※ Plan B 접힘(F-21)은 Phase 3. 여기선 카드 표시까지만.
  */
 
-import type { Stage, StageWarning } from '@/lib/schema'
+import type { Stage, StageWarning, WaypointKind, HazardType, CongestionInfo, CongestionLevel } from '@/lib/schema'
 import { towns } from '@/data/towns'
 
 const TRANSPORT_LABEL: Record<string, string> = {
@@ -18,6 +18,26 @@ const TRANSPORT_LABEL: Record<string, string> = {
   TRAIN: '기차',
   TAXI: '택시',
   SUPPORT_VEHICLE: '지원 차량',
+}
+
+const WAYPOINT_ICON: Partial<Record<WaypointKind, string>> = {
+  START: '출발',
+  ARRIVE: '도착',
+  WATER: '식수',
+  PHARMACY: '약국',
+  ATM: 'ATM',
+  BAG_DROP: '짐배송',
+}
+
+const HAZARD_ICON: Partial<Record<HazardType, string>> = {
+  STEEP_DESCENT: '급내리막',
+  NO_WATER: '물 없음',
+}
+
+const CONGESTION_LABEL: Record<CongestionLevel, string> = {
+  LOW: '여유',
+  HURRY: '서두르세요',
+  HIGH: '만실 가능성 높음',
 }
 
 const WARNING_META: Record<StageWarning, { ko: string; severity: 'danger' | 'warn' }> = {
@@ -45,6 +65,27 @@ function Badge({ warning }: { warning: StageWarning }) {
     >
       {meta.ko}
     </span>
+  )
+}
+
+/**
+ * F-02 혼잡 추정. "정확도를 과장하지 않는다"(03 문서 F-02 원안) — 등급과 실제로
+ * 반영된 근거만 보여준다. reasonsKo가 비어 있으면(=아무 요소도 안 걸림) 표시하지
+ * 않는다(빈 카드로 겁주지 않기 위함).
+ */
+function CongestionNote({ c }: { c: CongestionInfo }) {
+  if (c.reasonsKo.length === 0) return null
+  const style =
+    c.level === 'HIGH'
+      ? 'border-vino/40 bg-vino/5 text-vino'
+      : c.level === 'HURRY'
+        ? 'border-stone bg-stone/20 text-ink'
+        : 'border-moss/40 bg-moss/5 text-moss'
+  return (
+    <div className={`mt-3 rounded-md border px-3 py-2 text-[15px] leading-relaxed ${style}`}>
+      <b>{CONGESTION_LABEL[c.level]}</b>
+      <div className="mt-1 text-[13px] opacity-90">{c.reasonsKo.join(' · ')}</div>
+    </div>
   )
 }
 
@@ -140,12 +181,55 @@ export function StageCard({ stage }: { stage: Stage }) {
         {to && to.beds > 0 && <Metric label="침대" value={`약 ${fmt(to.beds)}`} />}
       </div>
 
+      {stage.congestion && <CongestionNote c={stage.congestion} />}
+
       {stage.warnings.length > 0 && (
         <div className="mt-3 flex flex-wrap gap-2">
           {stage.warnings.map((w) => (
             <Badge key={w} warning={w} />
           ))}
         </div>
+      )}
+
+      {(stage.waypoints.length > 0 || stage.hazards.length > 0) && (
+        <details className="mt-3 border-t border-stone pt-3">
+          <summary className="min-h-11 cursor-pointer list-none text-[15px] font-medium text-ink underline-offset-2 marker:content-none hover:underline">
+            일자별 상세 보기 (거점 {stage.waypoints.length}곳
+            {stage.hazards.length > 0 ? ` · 주의 ${stage.hazards.length}곳` : ''})
+          </summary>
+
+          {stage.hazards.length > 0 && (
+            <ul className="mt-3 space-y-1.5">
+              {stage.hazards.map((h, i) => (
+                <li key={i} className="rounded-md bg-vino/5 px-3 py-2 text-[15px] leading-relaxed text-text">
+                  <span className="mr-1.5 font-medium text-vino">
+                    [{HAZARD_ICON[h.type] ?? h.type}]
+                  </span>
+                  <span className="font-mono text-[13px] tabular-nums text-muted">
+                    {h.fromKm.toFixed(1)}~{h.toKm.toFixed(1)}km
+                  </span>{' '}
+                  {h.noteKo}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {stage.waypoints.length > 0 && (
+            <ol className="mt-3 space-y-1.5">
+              {stage.waypoints.map((w, i) => (
+                <li key={i} className="flex items-baseline justify-between gap-3 text-[15px] text-text">
+                  <span>
+                    <span className="mr-1.5 text-[13px] text-muted">[{WAYPOINT_ICON[w.kind] ?? w.kind}]</span>
+                    {w.labelKo}
+                  </span>
+                  <span className="flex-none font-mono text-[13px] tabular-nums text-muted">
+                    {w.km.toFixed(1)}km
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </details>
       )}
     </article>
   )

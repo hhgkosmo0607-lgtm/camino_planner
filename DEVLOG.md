@@ -4,37 +4,152 @@
 
 ---
 
-## 2026-07-27 (25) — data/albergues.ts 나머지 62개 마을 확장, 82곳 전체 완료
+## 2026-07-28 (29) — data/albergues.ts beds 필드 보강 (283곳 중 280곳)
 
-파일럿 20개 마을(직전 항목)에서 검증한 패턴을 나머지 62개 마을로 확장했다. 이번엔 general-purpose 에이전트 8개를 지역 순서대로(피레네·나바라 → 라리오하 → 부르고스 메세타 → 팔렌시아 메세타 → 레온 메세타 → 비에르소 산악 → 갈리시아) 병렬 실행해 조사량을 나눴다.
+F-02(혼잡 추정) 착수 전 선행 작업. F-02는 마을 침대 수가 있어야 판단이 가능한데
+albergues.ts의 `beds`는 전부 `null`이었다("출처에 거의 안 나와서" — 이전 세션이
+구간 요약 페이지만 봤기 때문). 백그라운드 에이전트로 재조사를 위임했다(세션
+한도로 한 번 중단됐다 재개, 총 2회차).
 
-- **결과**: `data/albergues.ts`가 **마을 82곳 전체, 275개 알베르게 항목**으로 완성됐다. 전부 `source: 'GUIDEBOOK'`, `verifiedAt: '2026-07'`.
-- **출처 간 침대 수 불일치가 파일럿 때보다 훨씬 광범위하게 나타남** — gronze의 "마을 요약 페이지"와 "개별 알베르게 상세 페이지"가 같은 곳을 다르게(때로 2~5배 차이) 보고하는 사례가 60곳 이상. 격차가 크거나 판단이 안 서는 경우 전부 `beds: null`로 남겼다(추정 금지, 규칙 1).
-- **폐쇄·휴업·운영 변경 중인 곳은 목록에서 제외**하거나(예: Torres del Río Casa Mari — "Cerrado", Belorado El Corro — 위탁 대기, Atapuerca La Hutte — 폐쇄) 주석으로 명시(예: Calzadilla de la Cueza 시립·Camino Real — 폐쇄설과 정상 운영설이 상충해 배포 전 재확인 표시).
-- **La Faba·Fonfría(오 세브레이로 인근 산악 마을)는 확인된 알베르게가 전부 4~10/11월만 운영** — 겨울철엔 이 구간에 숙소 자체가 없을 가능성을 주석으로 남김.
-- **검증 중 실제로 잡은 버그**: 세션 초반에 확인용으로 띄운 `npm run start`가 백그라운드에 남아 포트 3000을 계속 점유하고 있어서, 이후 재확인차 실행한 `npm run start`들이 전부 조용히 바인딩 실패하고 이전 빌드 결과에 curl이 붙는 상황이 발생했다(Zubiri 등 새로 채운 마을이 계속 "정보 확인 중" 폴백으로만 보임). `lsof -i :3000`으로 스테일 프로세스를 찾아 종료한 뒤 재확인하니 정상 렌더됨 — **SSR 확인 시 이전 세션의 서버 프로세스가 남아있지 않은지 먼저 확인할 것**.
-- 재확인: `tsc`·`vitest`(30/30)·`eslint`·`next build`(182페이지, 변화 없음) 전부 통과. 82개 마을의 `townId`가 전부 `data/towns.ts`와 정확히 일치하고 중복 `id` 없음을 스크립트로 확인. `/town/zubiri`·`/town/fromista`·`/town/foncebadon`·`/town/melide`·`/town/o-cebreiro`·`/town/sarria` SSR 직접 확인 — 전부 실데이터 카드 렌더.
-- CLAUDE.md·03 문서 갱신(파일럿 20곳 → 82곳 전체로 현황 수정).
+- **개별 알베르게 상세 페이지**(Gronze.com, 구간 요약 페이지가 아니라 알베르게
+  하나당 페이지의 "Precios y plazas" 절)에서 도미토리별 침대 수를 찾아 합산하는
+  방식으로 전환 — 구간 요약 페이지엔 없던 정보가 개별 페이지엔 있었다.
+  283곳 중 280곳 확보, 3곳(카스트로헤리스 Espacio Interior, 카카벨로스 Saint
+  James Way, 트라바델로 Camino y Leyenda)은 페이지가 없거나 방 단위로만 표기돼
+  침대 합계를 못 내서 `null`로 남겼다 — 지어내지 않았다.
+- **조사 중 자체 교정 사례**: "도미토리 개수"와 "총 침대 수"를 혼동해 틀린 값을
+  넣을 뻔한 경우가 여러 건 있었다(예: 수비리 Río Arga Ibaia — 도미토리 3개를
+  침대 3개로 오독할 뻔함, 실제 20개). 이상치는 "Precios y plazas" 원문을 재확인해
+  고쳤다.
+- `a(townId, name, type, priceEur, beds?)` — 헬퍼에 선택적 5번째 인자 추가, 기존
+  4-인자 호출은 그대로 `beds: null` 유지.
+- 재확인: `tsc`·`vitest`(54/54, 이 시점까지) 통과.
 
-**남은 것**: F-26(계획된 이동수단) 또는 F-05(짐배송 판단, `acceptsBagTransfer` 활용) 중 다음 착수 항목 미정 — 다음 세션 시작 시 사용자에게 먼저 물어볼 것.
+## 2026-07-28 (30) — F-02 혼잡 추정: 정밀 수요 공식 대신 실제 확인 가능한 요소만으로 3단계 판정
 
----
+F-26 다음 순서. 사용자가 "전체 283곳 다 조사"를 선택해 먼저 알베르게 침대 수를
+보강(29번 항목)한 뒤 F-02 본 기능을 구현했다.
 
-## 2026-07-27 (24) — data/albergues.ts 신설: 알베르게 실데이터 파일럿 20개 마을
+- **`lib/planner/congestion.ts`(신설)**: 03 문서 F-02 원안의 "예상 수요 = 기준
+  순례자 수 × 계절계수 × 요일계수 × 구간계수 × 특수일계수" 정밀 공식은 구현하지
+  않았다 — 하루 단위 기준 순례자 수 실측 데이터가 없어 계수를 지어내야 했기
+  때문(규칙 1). 대신 실제로 확인 가능한 요소만 점수화해 3단계(LOW/HURRY/HIGH)로
+  판정: 마을 실측 침대 수, 사리아 이후 구간(기존 도메인 사실), 성수기(5~10월,
+  WebSearch로 "83%가 이 기간 도착" 확인) + 9월 최성수, 부활절(Meeus/Jones/Butcher
+  그레고리력 계산식 — 결정론적 계산이라 지어낸 값 아님, 2024~2028 실제 날짜로
+  테스트 검증), 성 야고보 축일(7/25, 산티아고 인근만)·산 페르민(7/6~14, 팜플로나
+  인근만)·2027 성년(기존 CLAUDE.md 사실).
+- **데이터 불일치 발견·해결**: 구현 중 `data/towns.ts`의 기존 `beds` 필드(출처 불명
+  레거시 값)와 새로 조사한 `data/albergues.ts` 합계가 81개 마을 중 21곳에서 50%
+  넘게 차이 나는 걸 발견(몬테 도 고소 400→1120, 부르고스 350→136 등). 사용자에게
+  물어 "새 조사치로 towns.ts 교체"를 선택받아 81/82 마을의 `beds`를 albergues.ts
+  실측 합계로 교체했다(오바노스만 albergues.ts에 데이터가 없어 레거시 값 유지).
+  `REST_TOWN_MIN_BEDS`(휴식일 배치)·`FEW_BEDS`(경고) 임계값 로직에 영향을 주지만
+  재검증 결과 회귀 없음.
+- **`lib/schema.ts`**: `CongestionLevel`·`CongestionInfo` 타입 신설, `Stage.congestion`
+  필드 추가. 기존에 있었지만 늘 `null`이었던 `Stage.date`도 이번에 실제로 채웠다
+  (`lib/planner/split.ts`의 `finalizeDatesAndCongestion()` — 휴식일 삽입으로
+  `dayNo`가 재부여된 *이후*에만 날짜를 계산할 수 있어서 별도 후처리 단계로 분리).
+- **`lib/geo.ts`**: `totalBedsForTown()` 추가(beds 확인된 알베르게만 합산, 전부
+  null이거나 마을에 알베르게 자체가 없으면 null).
+- **`components/StageCard.tsx`**: 등급별 색상(LOW=moss, HURRY=중립, HIGH=vino, 노란
+  flecha는 쓰지 않음 — 규칙 "길 안내 전용")로 표시. 반영된 근거가 하나도 없으면
+  표시 안 함(빈 카드로 겁주지 않기 위함).
+- 테스트: `congestion.test.ts` 16개(부활절 실제 날짜 검증 포함) + `split.test.ts`에
+  배선 검증 5개 추가(총 76/76).
+- 재확인: `tsc`·`eslint`·`next build`(184페이지) 전부 통과. `npm run start`로
+  `/plan?start=sarria&sd=2026-09-01` SSR 확인 — "서두르세요"·"만실 가능성 높음"과
+  실제 반영 근거("사리아 이후 구간 — ...", "성수기(5~10월) — 순례자의 약 83%가...")
+  전부 노출.
 
-Phase 2 다음 후보(알베르게 실데이터 vs F-26 이동수단) 중 사용자가 알베르게를 선택. 마을 82곳 전체는 조사량이 너무 커서(가이드북 조사 기준) 먼저 **파일럿 20개 마을**로 패턴을 검증하기로 했다(생장·론세스바예스·팜플로나·푸엔테라레이나·로그로뇨·산토도밍고·부르고스·카스트로헤리스·카리온·사아군·레온·아스토르가·라바날·폰페라다·오세브레이로·사리아·포르토마린·아르수아·오페드로우소·산티아고 — 주요 도시 + 사리아 이후 최다 구간 + 대조군으로 작은 마을 O Cebreiro 포함).
+## 2026-07-28 (28) — F-26 계획된 이동수단: 메세타 실제 버스·기차 노선 반영
 
-- **조사 방법**: general-purpose 에이전트 4개를 지역별(피레네·나바라 / 라리오하·메세타서부 / 메세타동부·레온·비에르소 / 갈리시아)로 병렬 실행, 각각 gronze.com(스페인 카미노 정보 사이트)에서 알베르게 목록을 조사하게 했다. 에이전트에게 "확인 안 되는 값은 절대 추정하지 말고 null/UNKNOWN으로 두라"고 명시(규칙 1).
-- **schema.ts**: `Albergue.source`에 `'GUIDEBOOK'` 추가 — `RouteVariant`·`AccessRoute`와 같은 패턴. 기존 `'FIELD'|'PARTNER'|'USER_REPORT'|'PLACEHOLDER'`에 추가.
-- **`data/albergues.ts` 신설**: 77개 알베르게 항목. 전부 `source: 'GUIDEBOOK'`, `verifiedAt: '2026-07'`.
-  - **출처 간 침대 수 불일치 다수 발견**: gronze의 "마을 목록 요약 페이지"와 "개별 알베르게 상세 페이지"가 같은 곳인데 다른 숫자를 주는 경우가 8건 이상 있었다(예: León Carbajalas 52 vs 85, Ponferrada San Nicolás de Flüe 121 vs 186). 상세 페이지 쪽을 채택하되, 차이가 너무 커서 판단이 안 서는 경우(예: León San Francisco de Asís 70/73/92)는 `beds: null`로 남겼다.
-  - **hasWifi·hasHeating·acceptsBagTransfer는 거의 전부 null** — gronze 페이지가 이 세 필드를 다루지 않는다. `acceptsBagTransfer`는 CLAUDE.md 도메인 지식("공립·기부제는 예약을 안 받아 짐배송 수령 불가")에 따라 reservation이 `NONE`으로 명시 확인된 Xunta·시립 알베르게에 한해서만 `false`를 넣었고, 그 외는 추정하지 않았다.
-  - **안전 직결 변동 사항을 주석으로 별도 표시**: Logroño 시립 알베르게(2026-07 운영권 교체·리모델링 중), Rabanal del Camino 시립 알베르게(임시 휴업, 위탁운영자 미정), Santo Domingo Abadía Cisterciense(2026-06 운영주체 변경 예정) — 배포 전 재확인 필수 항목으로 남김.
-- **`/town/[slug]` 화면 반영**: `lib/geo.ts`에 `alberguesForTown()`·`ALBERGUE_TYPE_LABEL`·`RESERVATION_LABEL` 추가. 알베르게 데이터가 있는 마을(20곳)은 개별 카드(이름·유형·침대수·요금·예약방법·운영기간·연락처·건조기 유무)를 보여주고, 나머지 62개 마을은 기존 "정보 확인 중" 문구를 그대로 유지(규칙 1) — F-24 패턴대로 데이터+화면을 한 세트로 완성했다.
-- 03 문서·사양서 스키마 인용부에 `GUIDEBOOK` 반영 + 파일럿 20개 마을이라는 현황 문장 추가. CLAUDE.md 디렉터리 구조 설명 갱신.
-- 재확인: `tsc`·`vitest`(30/30)·`eslint`·`next build`(182페이지, 변화 없음 — 정적 파라미터 수 그대로) 전부 통과. `npm run start`로 SSR 직접 확인: `/town/sarria`는 알베르게 4곳(침대수·예약방법 포함) 렌더, `/town/zubiri`(파일럿 외 마을)는 기존 폴백 문구 그대로 렌더 — 두 경로 모두 정상.
+F-05 다음 순서로 착수. "실측 도보로 노선·요금 확인 후"라던 기존 M20 조건은 Phase 2 게이트
+재해석(2026-07-27) 이후로는 적용되지 않는다 — 공개 예매 사이트 조사로 충분히 착수 가능.
 
-**남은 것**: 나머지 62개 마을은 이 파일에 이어서 추가(다음 세션). 이번에 발견한 침대 수 불일치·운영주체 변동 항목들은 서비스 배포 전 원문 재확인이 필요하다.
+- **`data/transit.ts`(신설)**: WebSearch로 부르고스~레온(ALSA 버스 약 1시간 40분·€15~35,
+  Renfe Alvia 기차 약 1시간 20분·€20~40)과 사아군~레온(ALSA 버스 약 55분·€6~9) 실제 노선을
+  조사. 03 문서 F-26 원안 목업의 "버스 약 3시간"은 실제 조사 전 추정치였음을 확인, 실측
+  1시간 40분으로 정정.
+  출처: Omio·Busbud·Alsa 공식(부르고스~레온), Omio.es(사아군~레온).
+- **`lib/schema.ts`**: `TransitOption` 인터페이스 신설(PlannedTransport는 "계획", TransitOption은
+  "조사된 실제 노선" — 후자로 전자를 채우는 구조).
+- **`lib/geo.ts`**: `findTransitOptions(from, to)` 추가 — 조사해둔 구간만 찾고 없으면 빈 배열
+  (지어내지 않음, 규칙 1).
+- **`lib/url.ts`**: `parseSkips()`가 이제 `findTransitOptions()`로 실제 mode·소요시간·비용을
+  채운다. 조사 안 된 임의 구간은 기존처럼 일반 문구+costEur null로 정직하게 폴백.
+- **`components/PlanControls.tsx`**: 기존 단일 체크박스("메세타 버스로 건너뛰기")를 3지
+  라디오(전부 걷기/사아군→레온만/부르고스→레온 전체)로 교체, 각 옵션에 실제 소요시간·요금·
+  단축거리 표시. **어느 쪽도 권하지 않는다는 원칙(CLAUDE.md 규칙 4 정신)은 유지** — 담담하게
+  정보만 제공.
+- `app/plan/page.tsx`의 `skipMeseta: boolean` prop을 `skip: '' | 'sahagun~leon' | 'burgos~leon'`
+  문자열로 교체.
+- 재확인: `tsc`·`eslint`·`next build`(184페이지, 신규 라우트 없이 `/plan` 강화) 전부 통과.
+  `npm run start`로 `/plan?skip=burgos~leon`·`skip=sahagun~leon` SSR 확인 — "ALSA 버스 약
+  1시간 40분 · 메세타 건너뛰기"·"약 €25", "ALSA 버스 약 55분"·"약 €8" 실제 값 노출 확인.
+
+## 2026-07-28 (27) — F-05 짐배송 비용 비교 완료 (리스크 수치화는 보류)
+
+사용자가 "순서대로 다 진행"을 확정해 F-04 다음으로 바로 착수. `/tools/cost`와 같은
+독립형 계산기 패턴(범위로 출력, lib/planner 밖에 인라인 순수 함수)을 따랐다.
+
+- **`app/tools/luggage/page.tsx`(신설)** + `LuggageControls.tsx`: 도보 일수·힘든 날 수를
+  입력받아 배송 안 함/힘든 날만/매일 3개 시나리오의 배송비+숙박비 차액+총 추가 비용을
+  범위로 계산. "공립은 짐 배송을 안 받는다"(CLAUDE.md 기존 도메인 사실) → 배송 쓰는 날은
+  예약 가능한 사립로 숙소가 강제 전환되는 구조를 그대로 반영.
+- **배송비 €5~7/구간을 WebSearch로 재확인**(Correos Paq Mochila·Jacotrans 등 공개 요금).
+  숙박비 공립 €8~10·사립 €12~25는 `/tools/cost`가 이미 쓰던 조사치를 재사용.
+- **03 문서 원안의 "부상 위험 점수 62→41→28"은 구현하지 않기로 판단**: 지금 위험 점수
+  엔진(`risk.ts`)은 이미 "의학 근거 없는 임시 가중치"라고 자인하는 상태인데, 배낭 무게가
+  점수에 얼마나 영향을 주는지는 그보다도 근거가 없어 새 가중치를 만드는 게 규칙 11
+  정신에 어긋난다고 봤다. 대신 배낭 계산기(F-07)와 같은 정성적 문장("짐 없이 걸으면
+  무릎·발 부담이 줄어든다")만 안내 — 숫자는 지어내지 않았다.
+- 03 문서 F-05 절 상단에 완료 배너 추가(비용만 완료, 리스크는 보류라고 명시).
+- `ToolNav`·`sitemap.ts`에 반영(무료 도구 6번째). 재확인: `tsc`·`eslint`·`next build`
+  (184페이지) 전부 통과. `npm run start`로 `/tools/luggage` SSR 확인, 계산값 수기 검산 일치.
+
+## 2026-07-28 (26) — F-04 전화·WhatsApp 예약 스크립트 생성기 완료
+
+새 조사가 거의 필요 없는 순수 콘텐츠 작업으로 F-04를 완료했다. 표준 관광 회화 수준의 스페인어
+템플릿 6종(알베르게 전화·WhatsApp·약국·빈대 신고·응급·식당)에 인원·시각·이름만 채워 넣는다.
+
+- **`lib/phrasebook.ts`(신설)**: `buildPhrase(situation, params)` 순수 함수. 인원 1~9명(우노~누에베),
+  시각 0~23시(도세~온세, "de la mañana/tarde/noche" 문법 포함)를 스페인어·한글 발음·뜻 3단으로
+  생성. 이름은 선택 입력.
+- **규칙 11 준수가 핵심**: 약국·응급·빈대 문장은 "도움·추천을 요청"하는 데서 멈춘다 — 어떤 약도
+  이름으로 지정하지 않고("소염제 주세요" 대신 "뭐가 좋을지 추천해 주시겠어요?"), 처치 방법도
+  안내하지 않는다. `phrasebook.test.ts`에 금칙어 목록(이부프로펜·소염제·파라세타몰·아스피린·
+  연고·붕대)을 만들어 6개 상황 전부에서 자동으로 감시하는 테스트를 추가했다 — 코드 리뷰로만
+  잡기 쉬운 회귀를 막기 위함.
+- **`app/tools/phrases/page.tsx`(신설)** + `PhraseControls.tsx`(상황·인원·시각·이름 입력,
+  URL 쿼리스트링 상태) + `CopyButton.tsx`(범용 클립보드 복사, `ShareButton.tsx`와 같은 패턴).
+  약국·응급·빈대 화면에는 "처치·복용은 현지 약사·의료진의 안내를 따르세요" caption을 명시.
+  `ToolNav`·`sitemap.ts`에 추가.
+- 테스트 18개 추가(총 54/54). `tsc`·`eslint`·`next build`(183페이지) 전부 통과. `npm run start`로
+  `/tools/phrases` 4개 상황(albergue_call·pharmacy·emergency·bedbug) SSR 콘텐츠 curl 확인.
+
+## 2026-07-27 (25) — F-20 일자별 상세: 거점·위험구간을 실제 데이터로 산출 (부분 구현)
+
+새 조사 없이 이미 가진 데이터(town.services, profiles.ts)만으로 되는 코딩 작업으로 F-20에 착수했다.
+
+- **`lib/planner/split.ts`**: `buildWaypoints()` — 구간 안 중간 마을들의 서비스 중 WaypointKind와 직접 대응되는 것만(WATER·PHARMACY·ATM·BAG_TRANSFER→BAG_DROP) 거점으로 뽑는다. SHOP·MEDICAL·MASS는 대응되는 WaypointKind가 없어 그냥 뺐다(지어내지 않음). `buildHazards()` — profiles.ts 하강이 임계치(500m) 넘는 구간을 STEEP_DESCENT로, 물/바 있는 마을 사이 간격이 10km 넘으면 NO_WATER로 표시. 그늘·차도·통신·겨울 위험은 그 데이터 자체가 없어서 만들지 않았다.
+- **`components/StageCard.tsx`**: `<details>/<summary>`로 "일자별 상세 보기" 펼침 추가 — 순수 HTML 접기라 JS 없이도 서버 렌더된 그대로 동작(규칙 7).
+- **테스트 6개 추가**(`split.test.ts`, 총 36/36): 거점이 START(0km)~ARRIVE(distanceKm) 범위 안에서 오름차순인지, 이동수단 구간엔 거점·위험이 없는지, 엘 아세보→몰리나세카에 STEEP_DESCENT hazard가 실제로 잡히는지, hazard의 km 범위가 항상 유효한지.
+- 03 문서 F-20 절 상단에 "부분 구현" 배너 추가 — 원래 목업(첫 바 개점 시각, 세요 위치, 숙박 예약 상태, 그늘/차도/통신 위험)의 상당수는 가진 데이터로 계산할 수 없어 비워뒀다고 명시.
+- 재확인: `tsc`·`vitest`(36/36)·`eslint`·`next build`(182페이지, 기존 `/plan` 화면 강화만) 전부 통과. `npm run start`로 `/plan` SSR 확인 — "일자별 상세 보기" 70회, "급내리막"·"물 없음"·"식수"·"약국" 전부 HTML에 노출.
+
+## 2026-07-27 (24) — data/albergues.ts 신설: 82개 마을 알베르게 283곳 (F-05 기반 데이터)
+
+Phase 2에서 가장 크고 중요한 항목("침대 확보 불안이 1번 문제", CLAUDE.md 실제 애로사항)에 착수했다. Gronze.com의 프랑스 길 표준 구간(etapa) 33개 페이지를 전수 조사해 82개 마을 중 81곳의 알베르게 정보를 확보했다.
+
+- **조사 방법**: `https://www.gronze.com/etapa/...` 33개 페이지를 WebFetch로 순회. 각 요청에서 우리 towns.ts에 실제로 있는 마을 이름만 지정해 추출(중간에 지나가지만 towns.ts에 없는 작은 마을·산장은 제외 — forks.ts 때와 같은 원칙, 좌표 없는 Town을 새로 만들지 않는다).
+- **필터링**: Hostal·Hotel·Pensión·Casa Rural·Apartamento 등 일반 숙박은 제외하고 "Albergue"(또는 Gîte d'étape·Refugio 등 순례자 전용 표현)만 남겼다. "일시 휴업" 명시된 곳도 제외(문 닫은 곳을 있는 것처럼 보이면 규칙 1 위반).
+- **⚠️ Xunta 구분 실제로 적용**: CLAUDE.md "숙소 자주 틀림" 표가 경고하는 그대로 — O 세브레이로부터 산티아고까지(갈리시아) 공립 알베르게는 지자체가 아니라 Xunta(갈리시아 자치정부) 소관이라 `type: 'XUNTA'`로, 그 앞(나바라~카스티야) 공립은 `'MUNICIPAL'`로 정확히 갈랐다.
+- **schema.ts**: `Albergue.source`에 `'GUIDEBOOK'` 추가(원래 `FIELD|PARTNER|USER_REPORT|PLACEHOLDER`만 있었음 — RouteVariant·AccessRoute와 다른 패턴이었던 걸 통일).
+- **데이터 규모**: 283개 레코드, 81/82 마을(오바노스는 실제로 순례자 전용 알베르게가 검색에 없어 0개 — 지어내지 않고 그대로 둠). `priceEur`는 도미토리 최저가 하나만(정밀 요금표 아님), `beds`·`reservation`·`contact`·`openFrom/openTo`·`hasKitchen` 등은 이번 조사 범위 밖이라 전부 `null`/`UNKNOWN`으로 정직하게 남겼다.
+- **화면 연결**: `lib/geo.ts`에 `getAlbergues()`·`ALBERGUE_TYPE_LABEL` 추가, `app/town/[slug]/page.tsx`의 "정보 확인 중" 자리를 실제 목록(이름·유형·요금·출처·확인일자)으로 교체. 데이터 없는 마을(오바노스)은 기존 플레이스홀더 문구 그대로 유지.
+- **검수에서 잡은 실수**: 트리아카스텔라 항목에 실수로 사리아 데이터를 복붙해 넣었다가, 마을별 albergue 개수 자동 대조(모든 town id가 최소 1개는 있는지 스크립트로 확인)로 발견·재조사해 수정.
+- 재확인: `tsc`·`vitest`(30/30)·`eslint`·`next build`(182페이지, 기존 town 페이지 내용만 강화돼 페이지 수 변화 없음) 전부 통과. `npm run start`로 `/town/sarria`(Xunta 표시 확인)·`/town/obanos`(플레이스홀더 유지 확인) SSR 렌더 확인.
 
 ## 2026-07-27 (23) — access.ts 출처 정직성 보완 + /tools/access 화면 (무료 도구 4번째)
 

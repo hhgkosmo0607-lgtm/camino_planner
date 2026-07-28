@@ -10,15 +10,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { towns } from '@/data/towns'
-import {
-  getTown,
-  townNeighbors,
-  remainingKm,
-  SERVICE_LABEL,
-  alberguesForTown,
-  ALBERGUE_TYPE_LABEL,
-  RESERVATION_LABEL,
-} from '@/lib/geo'
+import { getTown, townNeighbors, remainingKm, SERVICE_LABEL, getAlbergues, ALBERGUE_TYPE_LABEL } from '@/lib/geo'
 import { CalculatorCTA } from '@/components/CalculatorCTA'
 import { Track } from '@/components/Track'
 
@@ -44,7 +36,7 @@ export default async function TownPage({ params }: { params: Params }) {
   const t = getTown(slug)
   if (!t) notFound()
   const { prev, next } = townNeighbors(slug)
-  const townAlbergues = alberguesForTown(t.id)
+  const townAlbergues = getAlbergues(t.id)
 
   const planHref = `/plan?start=${t.id}`
 
@@ -91,46 +83,33 @@ export default async function TownPage({ params }: { params: Params }) {
           <h2 className="mb-2 font-display text-lg text-text">
             알베르게 <span className="text-[13px] text-muted">Albergue</span>
           </h2>
+
           {townAlbergues.length > 0 ? (
             <>
-              <ul className="space-y-3">
+              <ul className="space-y-2.5">
                 {townAlbergues.map((a) => (
-                  <li key={a.id} className="rounded border border-stone px-3 py-3">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                      <span className="text-[17px] font-semibold text-text">{a.name}</span>
-                      <span className="text-[13px] text-muted">{ALBERGUE_TYPE_LABEL[a.type]}</span>
+                  <li key={a.id} className="rounded-md border border-stone px-3 py-2.5">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+                      <div className="text-[17px] font-semibold text-text">{a.name}</div>
+                      <div className="font-mono text-[15px] tabular-nums text-muted">
+                        {a.priceEur == null ? '요금 미확인' : a.priceEur === 0 ? '기부제' : `약 €${a.priceEur}~`}
+                      </div>
                     </div>
-                    <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[15px] tabular-nums text-muted">
-                      <span>{a.beds != null ? `침대 ${a.beds}개` : '침대 수 확인 중'}</span>
-                      <span>
-                        {a.priceEur != null ? (a.priceEur === 0 ? '기부제' : `${a.priceEur}유로`) : '요금 확인 중'}
-                      </span>
-                      <span>{RESERVATION_LABEL[a.reservation]}</span>
-                    </div>
-                    {(a.openFrom || a.openTo) && (
-                      <p className="mt-1 text-[13px] text-muted">
-                        운영 기간: {a.openFrom ?? '확인 중'} ~ {a.openTo ?? '확인 중'}
-                      </p>
-                    )}
-                    {a.contact && <p className="mt-1 text-[15px] text-text">연락처: {a.contact}</p>}
-                    {a.hasDryer != null && (
-                      <p className="mt-1 text-[13px] text-muted">
-                        건조기 {a.hasDryer ? '있음' : '없음(빈대 대응 확인 필요)'}
-                      </p>
-                    )}
+                    <div className="mt-0.5 text-[13px] text-muted">{ALBERGUE_TYPE_LABEL[a.type]}</div>
                   </li>
                 ))}
               </ul>
               <p className="mt-3 text-[13px] text-muted">
-                ※ 가이드북(gronze.com) 출처, 2026-07 확인. 예약 전 반드시 직접 재확인하세요. 이 마을 외 정보는
-                아직 확인 중입니다.
+                ※ 공개 가이드북·순례자 커뮤니티 출처({townAlbergues[0].verifiedAt} 확인), 개인 실측 아님. 요금은
+                도미토리 1인 기준 최저가 참고치이며 예약 방법·전화번호·개방 기간은 아직 확인 전입니다.
+                예약 전 최신 정보를 다시 확인하세요.
               </p>
             </>
           ) : (
             <>
               <p className="text-[17px] text-muted">
                 {t.beds > 0
-                  ? `이 마을에는 약 ${t.beds}개의 침대가 있는 것으로 파악됩니다. 개별 알베르게의 요금·예약·개방 기간은 정보 확인 중입니다.`
+                  ? `이 마을에는 약 ${t.beds}개의 침대가 있는 것으로 파악됩니다. 개별 알베르게 정보는 확인 중입니다.`
                   : '확인된 숙소 정보가 없습니다.'}
               </p>
               <p className="mt-2 text-[13px] text-muted">
