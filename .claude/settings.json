@@ -13,7 +13,20 @@
       "Bash(taskkill //PID 24796 //F)",
       "WebFetch(domain:gronze.com)",
       "WebFetch(domain:alberguelacuadra.com)",
-      "WebFetch(domain:www.hotelsanantonabad.com)"
+      "WebFetch(domain:www.hotelsanantonabad.com)",
+      "Bash(npx tsc *)",
+      "Bash(npm test *)",
+      "Bash(npm run *)",
+      "Bash(python scripts/regen_docs.py)",
+      "Bash(grep -n \"^  //\" \"c:\\\\02Workspaces\\\\camino_planner\\\\data\\\\albergues.ts\")",
+      "WebFetch(domain:www.gronze.com)",
+      "WebSearch",
+      "Bash(powershell -Command \"if \\(Test-Path 'C:\\\\Users\\\\KOSMO\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--02Workspaces-camino-planner\\\\43a9226b-a10d-4507-910a-941596625700\\\\tasks\\\\ae825db9acc960538.output'\\) { Get-Item 'C:\\\\Users\\\\KOSMO\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--02Workspaces-camino-planner\\\\43a9226b-a10d-4507-910a-941596625700\\\\tasks\\\\ae825db9acc960538.output' | Select-Object Length,LastWriteTime } else { 'not found' }\")",
+      "Bash(node \"C:/Users/KOSMO/AppData/Local/Temp/claude/c--02Workspaces-camino-planner/43a9226b-a10d-4507-910a-941596625700/scratchpad/apply.js\")",
+      "Bash(cp \"/c/02Workspaces/camino_planner/.claude/worktrees/agent-ae825db9acc960538/data/albergues.ts\" \"/c/02Workspaces/camino_planner/data/albergues.ts\" && diff \"/c/02Workspaces/camino_planner/.claude/worktrees/agent-ae825db9acc960538/data/albergues.ts\" \"/c/02Workspaces/camino_planner/data/albergues.ts\" && echo \"RESTORED OK - files now identical\")"
+    ],
+    "additionalDirectories": [
+      "C:\\02Workspaces\\camino_planner\\.claude\\worktrees\\agent-ae825db9acc960538\\data"
     ]
   }
 }
