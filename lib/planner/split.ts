@@ -28,6 +28,7 @@ import { assessCongestion } from './congestion'
 import { totalBedsForTown } from '../geo'
 import { towns as ALL_TOWNS } from '../../data/towns'
 import { profiles as ALL_PROFILES } from '../../data/profiles'
+import { exposedStretches, type ExposedStretch } from '../../data/exposed_stretches'
 
 // ── 튜닝 파라미터 ─────────────────────────────────────────────
 const DEFAULT_DAILY_KM = 24
@@ -68,6 +69,20 @@ function townIdx(id: string): number {
   if (i === undefined) throw new Error(`알 수 없는 마을 id: ${id}`)
   return i
 }
+
+// EXPOSED(그늘 없음) — data/exposed_stretches.ts(Gronze.com Al Loro 근거, GUIDEBOOK)를
+// km 범위로 미리 변환해둔다. 마을쌍 프로파일이 아니라 공식 구간 단위 데이터라
+// ROAD_WALKING/WINTER_RISK와 달리 km 겹침으로 판정한다.
+interface ExposedRange {
+  fromKm: number
+  toKm: number
+  stretch: ExposedStretch
+}
+const EXPOSED_RANGES: ExposedRange[] = exposedStretches.map((s) => ({
+  fromKm: ALL_TOWNS[townIdx(s.fromTownId)].km,
+  toKm: ALL_TOWNS[townIdx(s.toTownId)].km,
+  stretch: s,
+}))
 
 /**
  * 마을 구간 [fromIdx, toIdx] 의 누적 고도. profiles(연속 마을쌍)를 이어 합산한다.
@@ -189,7 +204,7 @@ function buildWaypoints(fromIdx: number, toIdx: number, totalMinutes: number): W
   return waypoints
 }
 
-/** 구간 [fromIdx, toIdx]의 위험 구간. 실제 보유 데이터(고도·서비스·차도 비율)로만 판정 — 그늘·통신은 데이터가 없어 표시하지 않는다. */
+/** 구간 [fromIdx, toIdx]의 위험 구간. 실제 보유 데이터(고도·서비스·차도 비율·Gronze Al Loro 그늘 서술)로만 판정 — 통신 두절은 프랑스 길 체계적 자료가 없어 표시하지 않는다. */
 function buildHazards(fromIdx: number, toIdx: number): Hazard[] {
   const from = ALL_TOWNS[fromIdx]
   const hazards: Hazard[] = []
@@ -235,6 +250,24 @@ function buildHazards(fromIdx: number, toIdx: number): Hazard[] {
       fromKm: round1(a.km - from.km),
       toKm: round1(b.km - from.km),
       noteKo: `${a.nameKo}→${b.nameKo} 구간 최고점 약 ${Math.round(p.maxElevation)}m. 11~3월에는 결빙·적설 위험 — 방한장비 필수, 당일 현지(순례자 사무소·알베르게) 안내를 따른다.`,
+    })
+  }
+
+  // EXPOSED: 그늘 없음이 확인된 공식 구간(data/exposed_stretches.ts, Gronze.com Al Loro
+  // 근거)과 오늘 걷는 구간이 겹치는 부분. 공식 33구간 단위 데이터라 마을쌍 프로파일이
+  // 아니라 km 범위 겹침으로 판정한다(ROAD_WALKING/WINTER_RISK와 다른 이유).
+  const toKmTotal = ALL_TOWNS[toIdx].km
+  for (const range of EXPOSED_RANGES) {
+    const overlapFromKm = Math.max(from.km, range.fromKm)
+    const overlapToKm = Math.min(toKmTotal, range.toKm)
+    if (overlapFromKm >= overlapToKm) continue
+    const stretchFrom = ALL_TOWNS[townIdx(range.stretch.fromTownId)]
+    const stretchTo = ALL_TOWNS[townIdx(range.stretch.toTownId)]
+    hazards.push({
+      type: 'EXPOSED',
+      fromKm: round1(overlapFromKm - from.km),
+      toKm: round1(overlapToKm - from.km),
+      noteKo: `${stretchFrom.nameKo}→${stretchTo.nameKo} 구간은 그늘이 거의 없다고 알려져 있습니다. 여름엔 아침 일찍 출발하고 물을 충분히 챙기세요.`,
     })
   }
 

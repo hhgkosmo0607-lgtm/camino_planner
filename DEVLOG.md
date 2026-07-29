@@ -4,6 +4,44 @@
 
 ---
 
+## 2026-07-29 (32) — F-20 위험구간 8종 중 마지막 EXPOSED(그늘 없음) 구현
+
+**배경**: `lib/schema.ts`의 `HazardType`에는 이미 `EXPOSED`가 정의돼 있었지만
+`lib/planner/split.ts`의 `buildHazards()`는 만들지 않고 있었다. CLAUDE.md 위험
+유형 8종 중 유일하게 남아 있던 것("그늘 없음"). 같은 파일에 이미 실제 데이터로
+구현돼 있던 `ROAD_WALKING`(차도 병행)·`WINTER_RISK`(겨울 결빙)와 같은 방식으로
+"확인된 것만 채운다"(규칙 1)를 따랐다.
+
+- **방법**: Gronze.com 공식 프랑스 길 33구간 페이지의 "Al Loro"(실용팁) 서브페이지를
+  전부(변형 구간 3개 제외, 메인 루트만) WebFetch로 열어 "그늘이 없다/노출된다"는
+  명시적 서술(sin sombra, apenas sombra, escasez de sombra, expuesto/a al sol, a
+  pleno sol 등)이 있는지 확인했다. "그늘이 있다"는 반대 서술(프로미스타→카리온
+  데 로스 콘데스, 베르시아노스→만시야 구간의 "áreas de descanso con sombra")과,
+  그늘과 무관한 일반 기후 서술(로그로뇨→나헤라의 "en verano, el calor es
+  intenso")은 애매하다고 보고 넣지 않았다.
+- **결과**: 33구간 중 7구간에서 명시적 근거를 찾아 채웠다 — 에스테야→로스
+  아르코스(정확히는 하위 구간 비야마요르 데 몬하르딘→로스 아르코스 12.2km),
+  나헤라→산토 도밍고 데 라 칼사다, 부르고스→오르니요스 델 카미노, 오르니요스
+  델 카미노→카스트로헤리스, 카스트로헤리스→프로미스타, 카리온 데 로스
+  콘데스→테라디요스 데 로스 템플라리오스, 폰페라다→비야프랑카 델 비에르소.
+  새 파일 `data/exposed_stretches.ts`(`source: 'GUIDEBOOK'`, 각 항목에 원문
+  인용·출처 URL 포함)에 담고, `lib/planner/split.ts`의 `buildHazards()`에
+  세 번째 블록으로 판정 로직을 추가했다. ROAD_WALKING/WINTER_RISK는 마을쌍
+  프로파일(연속 두 마을) 단위로 판정하지만, exposed_stretches.ts는 공식 33구간
+  (여러 마을을 아우름) 단위 데이터라 km 범위 겹침으로 판정하는 점이 다르다 —
+  에스테야→로스 아르코스처럼 공식 구간의 일부만 근거가 있는 경우도 정확히
+  반영하기 위해서다.
+- **함께 검토했으나 구현하지 않은 것**:
+  - **통신 두절(NO_SIGNAL)**: 프랑스 길에 대한 체계적 자료가 없다 — 포럼에
+    나오는 통신 두절 얘기는 대부분 다른 루트(Camino Olvidado·Picos de
+    Europa)였다. 지어내지 않고 보류.
+  - **바 개점 시각(`Waypoint.opensAt`)**: 소도시 바 영업시간은 계절마다 바뀌고
+    안정적 출처가 없다. 정적 데이터로 박아두면 오히려 틀린 정보를 안내하게
+    되므로 구현하지 않았다.
+- `lib/planner/split.test.ts`에 EXPOSED 테스트 2건 추가(부르고스→오르니요스
+  구간, 비야마요르 데 몬하르딘→로스 아르코스 하위 구간).
+- `tsc --noEmit`·`vitest`·`next build` 전부 통과 확인.
+
 ## 2026-07-29 (31) — data/albergues.ts reservation 필드 실제 조사 완료 (239곳 중 235곳)
 
 **배경**: `2026-07-28 (29)` 항목(beds 보강) 직후, `reservation` 필드도 같은 방식으로

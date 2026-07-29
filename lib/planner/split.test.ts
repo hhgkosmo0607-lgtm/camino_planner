@@ -319,6 +319,28 @@ describe('일자별 상세 — 위험 구간(hazards)', () => {
     const bus = p.stages.find((s) => s.transport)
     expect(bus!.hazards).toEqual([])
   })
+
+  it('부르고스 → 오르니요스 델 카미노 구간에 EXPOSED hazard가 있다 (Gronze Al Loro 근거)', () => {
+    const p = buildPlan(input())
+    const burgosKm = kmOf('burgos')
+    const hornillosKm = kmOf('hornillos-del-camino')
+    const stage = p.stages.find(
+      (s) => kmOf(s.fromTownId) <= burgosKm && kmOf(s.toTownId) >= hornillosKm,
+    )
+    expect(stage).toBeDefined()
+    expect(stage!.hazards.some((h) => h.type === 'EXPOSED')).toBe(true)
+  })
+
+  it('비야마요르 데 몬하르딘 → 로스 아르코스 하위 구간에 EXPOSED hazard가 있다', () => {
+    const p = buildPlan(input())
+    const villamayorKm = kmOf('villamayor-de-monjardin')
+    const losArcosKm = kmOf('los-arcos')
+    const stage = p.stages.find(
+      (s) => kmOf(s.fromTownId) <= villamayorKm && kmOf(s.toTownId) >= losArcosKm,
+    )
+    expect(stage).toBeDefined()
+    expect(stage!.hazards.some((h) => h.type === 'EXPOSED')).toBe(true)
+  })
 })
 
 describe('F-02 혼잡 추정 — Stage.congestion/date 배치', () => {
