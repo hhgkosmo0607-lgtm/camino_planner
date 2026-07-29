@@ -4,6 +4,52 @@
 
 ---
 
+## 2026-07-29 (31) — data/albergues.ts reservation 필드 실제 조사 완료 (239곳 중 235곳)
+
+**배경**: `2026-07-28 (29)` 항목(beds 보강) 직후, `reservation` 필드도 같은 방식으로
+채웠다는 주석이 파일 상단에 있었으나 실제로는 조사가 전혀 실행되지 않았다 —
+호출부에 `reservation` 인자 자체가 없어 전부 기본값 `UNKNOWN`으로 남아 있었다.
+이전 세션이 토큰 부족으로 계획만 적어놓고 실행을 못 한 채 종료한 것으로 추정된다
+(직전 커밋 "토큰 없다 ㅜ"). 이번 세션이 실제로 조사해 채웠다.
+
+- **방법**: MUNICIPAL·XUNTA·DONATIVO 44곳은 이미 CLAUDE.md 도메인 사실로 일괄
+  `NONE` 처리돼 있어 그대로 뒀다. PARISH·MONASTERY·PRIVATE 239곳을 Gronze.com
+  개별 알베르게 상세 페이지의 "Admite reserva" 필드 + 연락처 절(전화/이메일/
+  자체 홈페이지/Booking.com 등)을 WebSearch로 페이지를 찾고 WebFetch로 내용을
+  확인하는 방식으로 하나씩 조사했다.
+- **판정 기준**: Booking.com 등 온라인 예약 시스템이 명시되면 `ONLINE`. "por
+  WhatsApp"이 명시되면 `WHATSAPP`. 전화·이메일·자체 홈페이지만 있고 온라인
+  예약 시스템이 확인 안 되면 `PHONE`(보수적 판정 — 실제로는 이메일 예약도
+  가능할 수 있지만 전화가 항상 되는 공통분모라 대표값으로 채택). "Admite
+  reserva: No"가 명시되면 `NONE`. 페이지가 없거나 판정 근거가 전혀 없으면
+  인자를 추가하지 않고 `UNKNOWN` 기본값 그대로 뒀다 — 추측 금지(규칙 1).
+- **결과**: 239곳 중 235곳 확인 완료 — `PHONE` 81 · `WHATSAPP` 5 · `ONLINE` 132 ·
+  `NONE` 17. 4곳은 끝까지 확인 못해 `UNKNOWN`으로 남았다: 벨로라도 Albergue
+  parroquial de Belorado, 토산토스 Albergue parroquial San Francisco de Asís
+  (둘 다 Gronze 페이지에 "Admite reserva" 필드나 예약 관련 서술 자체가 없고
+  전화번호만 있어 판정 근거 부족), 카스트로헤리스 Espacio Interior·엘 부르고
+  라네로 Albergue de peregrinos Domenico Laffi(둘 다 beds 조사 때도 상세
+  페이지를 못 찾았던 곳과 동일 — 여전히 없음).
+- **작업 중 발견한 버그**: beds가 `null`로 남아 5-인자 호출이던 카카벨로스
+  Saint James Way·트라바델로 Camino y Leyenda 두 곳에 reservation을 그대로
+  6번째 자리에 추가했더니 헬퍼 `a(townId, name, type, priceEur, beds?, reservation?)`
+  시그니처상 5번째 자리(`beds: number | null`)에 문자열이 들어가 `tsc` 타입
+  에러가 났다. `beds` 자리에 `null`을 명시로 채우고 그 뒤에 reservation을
+  넣어 수정했다.
+- **작업 중 발견한 사고**: 이 리포는 워크트리 격리 에이전트로 실행 중이었는데
+  초반 작업을 실수로 공유 체크아웃 경로(`C:\02Workspaces\camino_planner\data\
+  albergues.ts`)에 했다 — 41건이 잘못된 위치에 적용됐다. 공유 체크아웃 파일을
+  워크트리 원본으로 복원(`cp`)하고, 같은 조사 결과를 워크트리 경로에 재적용해
+  바로잡았다. 이후 작업은 전부 워크트리 경로에서 진행했다.
+- 파일 상단 주석(reservation 3차 조사 단락)을 실제 결과(235/239, 4곳 목록,
+  판정 기준)로 정직하게 갱신 — 이전 주석의 "PARISH·MONASTERY(33곳)는 개별
+  조사, PRIVATE(206곳)도 개별 조사" 같은 과장(실제로는 실행 자체가 안 됐었음)을
+  제거했다.
+- 재확인: `tsc --noEmit`·`vitest`(76/76)·`next build`(184페이지) 전부 통과.
+- **남은 일**: contact·openFrom/openTo·hasKitchen 등 나머지 세부 필드는 여전히
+  이번 조사 범위 밖(UNKNOWN/null). 4곳 미확인은 향후 Gronze 페이지가 보강되거나
+  다른 출처가 확인되면 채울 수 있다.
+
 ## 2026-07-28 (29) — data/albergues.ts beds 필드 보강 (283곳 중 280곳)
 
 F-02(혼잡 추정) 착수 전 선행 작업. F-02는 마을 침대 수가 있어야 판단이 가능한데
