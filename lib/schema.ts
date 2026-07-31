@@ -385,6 +385,44 @@ export interface Completion {
 }
 
 // ────────────────────────────────────────────────────────────
+// 7. 보여주기 카드 (F-12)
+// ────────────────────────────────────────────────────────────
+/**
+ * 03문서 3부 "보여주기 카드"의 데이터 모델(5.4절 스케치)을 코드로 옮긴 것.
+ * 총 23장, 늘리지 않는다(03문서 5.3절). B(숙소 9)·C(이동·기타 6)는
+ * 03문서 5.4절의 다단계 흐름(B1/B7 GOTO_CARD 분기)을 이번엔 단일 스텝으로
+ * 단순화했다 — CardNext 타입 자체는 남겨 나중에 흐름형으로 늘릴 수 있게 했다.
+ * A(부상 8)는 규칙 11(의료 정보, 정형외과·스포츠의학 자문 검수 전 금지)에
+ * 걸려 steps가 항상 빈 배열이다 — blockedReasonKo로 이유를 밝힌다.
+ */
+export type CardCategory = 'BED' | 'INJURY' | 'TRANSPORT_ETC'
+
+export type CardNext =
+  | { type: 'END' } // 안내만 하고 종료 (지금은 전부 이 타입)
+  | { type: 'NEXT_STEP' } // 같은 카드 안의 다음 질문 (흐름형, 아직 미사용)
+  | { type: 'GOTO_CARD'; cardId: string } // 다른 카드로 자동 전환 (흐름형, 아직 미사용)
+
+export interface CardOption {
+  labelEs: string // 상대가 누르는 버튼 문구
+  labelKo: string // 결과로 순례자에게 뜨는 한국어
+  next: CardNext
+}
+
+export interface CardStep {
+  promptEs: string // 상대가 읽는 문장(스페인어)
+  promptKo: string // 순례자가 보는 작은 안내(한국어)
+  options: CardOption[]
+}
+
+export interface Card {
+  id: string // 'B1' 'A1' 'C1' 등. 03문서 5장 번호
+  category: CardCategory
+  titleKo: string // 카드 목록에 뜨는 이름
+  steps: CardStep[] // 빈 배열이면 아직 콘텐츠 없음(blockedReasonKo 확인)
+  blockedReasonKo: string | null
+}
+
+// ────────────────────────────────────────────────────────────
 // CHANGELOG — 통합 과정에서 해결한 충돌
 // ────────────────────────────────────────────────────────────
 /**

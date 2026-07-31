@@ -10,7 +10,7 @@ import { allStages, ROUTES } from '@/lib/geo'
 export const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://camino.example'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticPages = ['', '/plan', '/fog'].map((p) => ({
+  const staticPages = ['', '/plan', '/fog', '/cards'].map((p) => ({
     url: `${BASE_URL}${p}`,
     changeFrequency: 'weekly' as const,
     priority: p === '' ? 1 : 0.9,
