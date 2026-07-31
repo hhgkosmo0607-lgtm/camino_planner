@@ -17,6 +17,7 @@ import { Track } from '@/components/Track'
 import { EmailCapture } from '@/components/EmailCapture'
 import { AccessDay0 } from '@/components/AccessDay0'
 import { BudgetSummary } from '@/components/BudgetSummary'
+import { RouteMapLoader } from '@/components/RouteMapLoader'
 import { buildPlan } from '@/lib/planner/split'
 import { decodePlan } from '@/lib/url'
 import { accessRoutesTo, findAccessRoute } from '@/lib/geo'
@@ -131,6 +132,15 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
             카드 — 화면으로 대화하기 →
           </a>
         </div>
+
+        {/* 지도 */}
+        <section>
+          <h2 className="mb-2 font-display text-lg text-text">지도</h2>
+          <RouteMapLoader highlightTownIds={[input.startTownId, ...walking.map((s) => s.toTownId)]} />
+          <p className="mt-1 text-[12px] text-muted">
+            경로 © OpenStreetMap contributors (ODbL) · 타일 © OpenFreeMap
+          </p>
+        </section>
 
         {/* 고도 단면 */}
         <section>

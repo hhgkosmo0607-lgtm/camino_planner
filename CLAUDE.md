@@ -173,6 +173,7 @@ NFT(디지털 파일 하나하나에 고유한 소유권 기록을 붙이는 방
 | 테스트 | Vitest(자바스크립트 테스트 실행 도구) | 계산 로직 필수 |
 | 배포 | Vercel(이 프로젝트가 실제로 인터넷에 올라가는 호스팅 서비스) | |
 | 데이터 | 정적 TS 파일(서버에 저장된 게 아니라 코드 안에 그대로 들어있는 데이터 파일) | Phase 3에서 Postgres(데이터베이스 종류 중 하나)로 이관(옮김) |
+| 지도 렌더링 | **MapLibre GL**(오픈소스 지도 그리기 엔진) + **OpenFreeMap**(무료·무API키 타일) | 2026-07-31 신설. GraphHopper·Photon·PostGIS 백엔드는 안 씀(아래 참고) |
 
 **패키지 버전은 프로젝트 착수 시점(2026-07) 기준 최신 안정판을 그대로 쓴다.** 특정 버전에 고정해야 할 이유(예: 특정 기능의 호환성 문제)가 생기기 전까지는 매번 문서 버전을 최신으로 갱신한다 — 낡은 버전 번호를 그대로 베끼지 않는다.
 
@@ -243,6 +244,8 @@ apps/web/                   (Phase 1은 이게 저장소 루트나 다름없다)
     BudgetSummary.tsx          F-23 지출 합산 요약 (/plan 상단, 'use client', localStorage)
     FogMap.tsx                 F-15 안개 지도 "여기 도착했어요" 개방 ('use client', localStorage)
     CardBrowser.tsx             F-12 보여주기 카드 탭 인터랙션 ('use client', 저장 안 함)
+    RouteMap.tsx                ★ 실제 지도(MapLibre GL). 'use client', 서버 렌더 불가
+    RouteMapLoader.tsx           RouteMap을 ssr:false로 동적 로드하는 래퍼(서버 컴포넌트가 이걸 import)
     RiskGauge.tsx
     Shell.tsx                 조가비 표식
   /lib
@@ -269,10 +272,15 @@ apps/web/                   (Phase 1은 이게 저장소 루트나 다름없다)
     access.ts                 ★ 접근 교통(인천→생장) 4개 경로. 가이드북 출처, checkedAt 확인 후 사용
     transit.ts                 ★ 메세타 구간(부르고스~레온) 실제 버스·기차 노선 (F-26). 가이드북 출처
     routes.ts
-  /scripts/pipeline
-    build_geometry.py         ★ 일회성 배치(파이썬). towns.ts/profiles.ts 생성. 서비스 코드에서 import 금지
-    compare_dem.py            고도 데이터 비교 검증(IGN 5m vs EU-DEM)
-    verify_route.py           OSM 경로 정확도 검증
+  /public
+    /geo/camino-frances.geojson  ★ 지도 경로선(단순화됨, git 포함). build_geometry.py `geojson` 서브커맨드가 생성 — 정밀 계산엔 안 씀(그건 profiles.ts)
+    /maplibre/                    maplibre-gl 워커 스크립트 복사본. **gitignore 대상**, predev/prebuild가 매번 다시 만듦
+  /scripts
+    copy-maplibre-worker.mjs   ★ maplibre-gl 워커를 public/maplibre/로 복사(Next.js/Turbopack이 워커를 직접 번들링 못 해서 우회, package.json predev/prebuild가 자동 실행)
+    /pipeline
+      build_geometry.py         ★ 일회성 배치(파이썬). towns.ts/profiles.ts/지도용 geojson 생성. 서비스 코드에서 import 금지
+      compare_dem.py            고도 데이터 비교 검증(IGN 5m vs EU-DEM)
+      verify_route.py           OSM 경로 정확도 검증
 
 # 앱 트랙 착수 후 (React Native 추가, packages/ 승격)
 packages/schema/               ← lib/schema.ts 이동
@@ -449,6 +457,8 @@ pnpm-workspace.yaml
 | F-26 | **계획된 이동수단** | 2 | **✅ 2026-07 완료(부르고스~레온 구간)** — `data/transit.ts`(ALSA 버스·Renfe 기차·사아군~레온 부분구간, 실제 시간·요금 조사) + `/plan` 3지 선택(전부 걷기/사아군~레온만/부르고스~레온 전체). **메세타 건너뛰기는 Plan A일 수 있다.** 다른 임의 구간은 아직 조사 안 됨 — 없으면 일반 문구로 정직하게 폴백 |
 
 **웹 트랙 Phase 1(P0~P7)에서 실제로 만드는 것은 F-01뿐이다.** 나머지는 전부 Phase 2 이후다. F-19(갈림길)는 가이드북 출처로 구조를 먼저 채울 수 있었던 것처럼(`data/forks.ts`), **F-15(안개 지도)도 2026-07-31에 같은 방식으로 축소판을 완료했다** — `data/landmarks.ts` 19곳을 가이드북 출처(`source: 'GUIDEBOOK'`) 역사·유래 요약으로 채웠다. **원안의 "실측 도보에서 직접 보고 쓴 1인칭 이야기"는 여전히 누군가 실제로 걸어야 나온다** — 창업팀이든 필드 테스터든(05 문서 6.0절), 지금 채운 건 그 전 단계다. **F-12(보여주기 카드)도 2026-07-31에 "구조만" 완료했다** — 23장 중 의료 카드(A, 8장)를 뺀 15장(B 숙소·C 이동·기타)은 규칙 11과 무관해 실제 내용까지 채웠다. **A(부상) 8장은 여전히 손대지 않는다** — 핵심 콘텐츠(약국 카드 등)가 가이드북 출처로 바꿔도 규칙 11(의료 정보, 자문 검수 전 금지)에 걸린다. **F-21·F-15·F-12는 전부 예외로 먼저 완료했다** — Phase 3 분류였지만 각각 다른 이유(F-21은 실측 콘텐츠 자체가 불필요, F-15는 가이드북 출처로 대체 가능, F-12는 의료 카드만 빼면 나머지가 표준 회화 수준)로 판단, 매번 사용자 확인 후 진행했다.
+
+**지도 자체도 2026-07-31에 예외로 먼저 만들었다** — "지도·내비게이션 백엔드"(06문서, GraphHopper·Photon·PostGIS)는 여전히 착수 전이지만, 코드를 파보니 그건 "임의 장소 실시간 검색·내비게이션"을 위한 것이지 "계획한 경로를 웹에서 보여주는" 지금 문제와 다르다고 판단했다. 그래서 `components/RouteMap.tsx`(MapLibre GL + OpenFreeMap 무료 타일)로 실제 지도를 붙였다 — 백엔드 없이, `data/towns.ts`에 이미 있던 실측 좌표 + `public/geo/camino-frances.geojson`(단순화된 경로선)만으로. **GraphHopper·Photon·PostGIS 그래프 라우팅은 여전히 안 만들었다** — 진짜 오프라인 내비게이션이 필요한 Phase 3 앱 트랙에서 다시 설계한다.
 
 ## 메뉴 명칭
 

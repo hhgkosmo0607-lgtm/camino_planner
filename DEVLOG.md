@@ -4,6 +4,64 @@
 
 ---
 
+## 2026-07-31 (40) — 실제 지도(MapLibre GL) 추가 — 백엔드 없이
+
+**배경**: 사용자가 "지도 및 경로 UI는 어디에 있나" 물었고, 확인해보니 이 프로젝트엔
+지리적 지도 화면 자체가 아예 없었다(`Elevation.tsx`는 고도 꺾은선 그래프, `/fog`는
+목록형). 06문서에 이미 지도 백엔드 설계(MapLibre GL + PMTiles(S3/R2+CDN) +
+GraphHopper(Docker) + Photon + PostGIS 그래프 라우팅)가 있어서 사용자는 처음에
+"그 원안대로 전체"를 요청했다.
+
+**범위 재조정**: 코드를 파보니 GraphHopper(길찾기)·Photon(검색)·PostGIS(그래프
+라우팅)는 "임의 장소를 실시간으로 검색해 길을 찾는" 문제를 위한 것이었다 — 우리
+경로는 고정된 프랑스 길 하나 + 갈림길 11곳뿐이고, 하루 단위 일정 분할(거시
+라우팅)은 이미 `lib/planner/split.ts`가 순수 함수로 한다. 그 셋은 오프라인
+모바일 내비게이션이 필요한 Phase 3 앱 트랙의 문제지 지금 "웹에서 계획한 경로를
+보여주는" 문제와 다르다. 또 `data/towns.ts`에 이미 82개 마을의 실측 lat/lng이
+들어 있었다(이전 세션 산출물, 코드에 안 쓰이고 있었을 뿐). PMTiles 자체 호스팅
+없이도 **OpenFreeMap**(무료·무API키, ODbL 준수)을 타일 소스로 바로 쓸 수 있음을
+확인. 이 판단을 사용자에게 설명하고 GraphHopper·Photon·PostGIS는 빼는 데
+동의받아 **Plan 모드로 범위를 문서화한 뒤 진행**했다.
+
+- **`scripts/pipeline/build_geometry.py` 수정**: `overpass()`가 쓰던
+  `urllib.request`가 이 환경에서 Overpass API 상대로 타임아웃난다는 걸 실제로
+  재현 확인(과거 DEVLOG 메모와 일치) — `subprocess`로 `curl` 호출하게 교체.
+  `python build_geometry.py full`로 6개 구간 실제 재수집·스티칭(765.3km,
+  기준 773.1km 대비 99% — 레온 인근 경계에서 1.9km 간격 발견, 지도 시각화용
+  이라 문제없음, 정밀 계산은 여전히 검증된 `data/profiles.ts`가 함).
+- **`write_route_geojson()` 신설**: Douglas-Peucker 단순화(반복형, 재귀 한계
+  안 걸리게)로 32,264점 → 3,008점(허용오차 18m). `public/geo/camino-frances.geojson`
+  (76KB, git 포함)로 저장 — `python build_geometry.py geojson`.
+- **`maplibre-gl` 의존성 추가.** `components/RouteMap.tsx`(`'use client'`) —
+  OpenFreeMap `liberty` 스타일, 경로선(flecha 노란색 — "길 안내 전용" 규칙과
+  정확히 맞는 용도), `data/towns.ts` 마을 마커(숙소 있는 곳만), `highlightTownIds`
+  prop으로 현재 계획에 포함된 마을 강조. `components/RouteMapLoader.tsx`로
+  `next/dynamic({ ssr: false })` 래핑(서버 컴포넌트에서 `ssr:false`를 직접 못 써서
+  얇은 클라이언트 래퍼를 한 겹 둠). `app/plan/page.tsx`에 통합.
+- **⚠️ 실제 버그 발견·해결**: 처음 붙였을 때 지도 배경(래스터 hillshade)은 뜨는데
+  경로선·마을 마커가 영원히 안 뜨는 문제가 있었다 — `map.on('load', ...)`가
+  절대 안 불렸다(`error` 이벤트도 안 뜸, 조용히 멈춤). `page.workers().length`를
+  직접 확인해 원인을 찾았다: **Next.js(Turbopack)가 maplibre-gl의
+  `new Worker(new URL(...))` 패턴을 제대로 번들링 못 해서 타일 파싱 워커 자체가
+  안 만들어지고 있었다.** `maplibregl.setWorkerUrl()`로 워커 스크립트 경로를
+  직접 지정해 우회 — 워커 파일(+그게 import하는 shared 청크)을
+  `scripts/copy-maplibre-worker.mjs`로 `public/maplibre/`에 복사하고(git엔 안
+  넣음, node_modules 빌드 산출물이라), `package.json`의 `predev`/`prebuild`가
+  매번 자동으로 다시 복사하게 함(maplibre-gl 버전 올릴 때도 자동 대응).
+- **`eslint.config.mjs`에 `public/maplibre/**` 무시 추가** — 복사된 미니파이
+  번들을 우리 코드로 착각해 린트하려던 것(1076개 경고) 방지.
+- **검증**: `tsc`·`vitest`(126/126)·`eslint`·`next build`(186p, 새 라우트 없음—
+  `/plan`에 임베드) 통과. `next start` + Playwright로 지도가 실제로 그려지는지
+  스크린샷까지 확인(경로선·마을 마커·지명 라벨·OSM/OpenFreeMap 저작권 표시 전부
+  보임, `page.workers().length === 1` 확인). `e2e/accessibility.spec.ts`
+  15페이지(지도 포함 `/plan`) critical/serious 0건 재확인.
+- **범위 밖으로 명시적으로 남긴 것**: GraphHopper·Photon·PostGIS 그래프 라우팅
+  (Phase 3 앱 트랙), 갈림길 11곳의 변형 경로 선(마커만, 7/23 variant는
+  `distanceKm`도 아직 `null`이라 지어내지 않음), `/route`·`/town`·`/stage`
+  페이지 임베드, 오프라인 타일 번들링, 고도 기반 경로 색상.
+
+---
+
 ## 2026-07-31 (39) — F-12 보여주기 카드 "구조만" — 23장 중 15장 실제 내용
 
 **배경**: F-15를 마친 뒤 사용자가 F-12도 "일단 구조만 만들어놔"라고 요청했다.

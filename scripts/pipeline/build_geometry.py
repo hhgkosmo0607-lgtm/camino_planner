@@ -31,6 +31,7 @@ import json
 import math
 import os
 import re
+import subprocess
 import sys
 import time
 import unicodedata
@@ -79,14 +80,18 @@ def _key(pt, prec=5):
 # 1. Overpass에서 구간별 way 지오메트리 수집
 # ────────────────────────────────────────────────
 def overpass(query, tries=4):
-    data = urllib.parse.urlencode({"data": query}).encode("utf-8")
+    """★ 2026-07-31: 이 환경에서 python urllib.request는 Overpass 상대로 타임아웃난다
+    (TLS/헤더 지문 문제로 추정 — curl은 즉시 200을 받는다, 과거 DEVLOG 메모와 동일 현상).
+    그래서 urllib 대신 curl을 subprocess로 호출한다."""
     last = None
     for _ in range(tries):
         for mirror in OVERPASS_MIRRORS:
             try:
-                req = urllib.request.Request(mirror, data=data, method="POST")
-                with urllib.request.urlopen(req, timeout=180) as r:
-                    return json.loads(r.read())
+                result = subprocess.run(
+                    ["curl", "-s", "-X", "POST", mirror, "--data-urlencode", f"data={query}"],
+                    capture_output=True, timeout=180, check=True,
+                )
+                return json.loads(result.stdout)
             except Exception as e:
                 last = e
         time.sleep(6)
@@ -325,6 +330,92 @@ def build_full_route():
 
 
 
+# ────────────────────────────────────────────────
+# 4.5 지도용 GeoJSON — Douglas-Peucker 단순화 (2026-07-31 신설)
+# ────────────────────────────────────────────────
+# ⚠️ 이 GeoJSON은 "지도에 그리는 선"용이다. distanceKm/ascent/descent 같은 정밀
+#   계산에는 절대 쓰지 않는다 — 그건 이미 검증된 data/profiles.ts가 한다.
+#   단순화(허용오차 18m)로 점 개수를 줄여 배포 가능한 크기로 만든다.
+
+def _perp_dist_m(pt, a, b):
+    """점 pt와 직선 a-b 사이의 거리(m). lat/lng을 등장방형(equirectangular) 근사로
+    평면 좌표로 바꿔 계산한다 — 단순화 허용오차 판정용이라 이 정도 근사면 충분하다."""
+    lat0 = math.radians(a[0])
+    def to_xy(p):
+        return (math.radians(p[1]) * math.cos(lat0) * 6371000.0, math.radians(p[0]) * 6371000.0)
+    ax, ay = to_xy(a)
+    bx, by = to_xy(b)
+    px, py = to_xy(pt)
+    dx, dy = bx - ax, by - ay
+    if dx == 0 and dy == 0:
+        return math.hypot(px - ax, py - ay)
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    cx, cy = ax + t * dx, ay + t * dy
+    return math.hypot(px - cx, py - cy)
+
+
+def simplify_rdp(points, epsilon_m):
+    """Douglas-Peucker 단순화(반복형 — 점 3만 개대에서도 재귀 한계에 안 걸리게)."""
+    if len(points) < 3:
+        return points
+    keep = [False] * len(points)
+    keep[0] = keep[-1] = True
+    stack = [(0, len(points) - 1)]
+    while stack:
+        start, end = stack.pop()
+        if end <= start + 1:
+            continue
+        a, b = points[start], points[end]
+        dmax, idx = 0.0, -1
+        for i in range(start + 1, end):
+            d = _perp_dist_m(points[i], a, b)
+            if d > dmax:
+                dmax, idx = d, i
+        if idx != -1 and dmax > epsilon_m:
+            keep[idx] = True
+            stack.append((start, idx))
+            stack.append((idx, end))
+    return [p for p, k in zip(points, keep) if k]
+
+
+def write_route_geojson(epsilon_m=18.0):
+    """data/geometry/full_route.json(gitignore 대상, 수만 점) → public/geo/camino-frances.geojson
+    (git 포함, 단순화된 배포용). 지도(components/RouteMap.tsx)가 클라이언트에서 fetch 한다."""
+    route_path = os.path.join(OUT_DIR, "full_route.json")
+    if not os.path.exists(route_path):
+        raise RuntimeError("먼저 `python build_geometry.py full` 로 전체 경로를 만들어야 함")
+    with open(route_path, "r", encoding="utf-8") as f:
+        route = json.load(f)
+    full_path = [tuple(p) for p in route["path"]]
+    print(f"단순화 전: {len(full_path)}점")
+    simplified = simplify_rdp(full_path, epsilon_m)
+    print(f"단순화 후: {len(simplified)}점 (허용오차 {epsilon_m}m)")
+
+    geojson = {
+        "type": "FeatureCollection",
+        "features": [{
+            "type": "Feature",
+            "properties": {
+                "name": "Camino Francés",
+                "attribution": "© OpenStreetMap contributors (ODbL)",
+                "note": "지도 표시용으로 단순화된 선(Douglas-Peucker, 허용오차 18m). "
+                        "정밀 거리·고도 계산은 data/profiles.ts를 쓴다.",
+            },
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [[lon, lat] for lat, lon in simplified],  # GeoJSON은 [lng, lat] 순서
+            },
+        }],
+    }
+    out_dir = "public/geo"
+    os.makedirs(out_dir, exist_ok=True)
+    out_path = os.path.join(out_dir, "camino-frances.geojson")
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(geojson, f)
+    size_kb = os.path.getsize(out_path) / 1024
+    print(f"저장: {out_path} ({size_kb:.0f}KB)")
+
+
 # ════════════════════════════════════════════════════════════════
 # 5. 82개 마을 좌표 매핑 + 구간 프로파일 → data/towns.ts, data/profiles.ts
 # ════════════════════════════════════════════════════════════════
@@ -533,6 +624,8 @@ if __name__ == "__main__":
         build_full_route()
     elif len(sys.argv) > 1 and sys.argv[1] == "profiles":
         build_profiles_and_towns()
+    elif len(sys.argv) > 1 and sys.argv[1] == "geojson":
+        write_route_geojson()
     else:
         validate_day1()
 
