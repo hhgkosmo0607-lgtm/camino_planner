@@ -13,7 +13,9 @@
 import type { Stage, StageWarning, WaypointKind, HazardType, CongestionInfo, CongestionLevel } from '@/lib/schema'
 import { towns } from '@/data/towns'
 import { forksFullyInStage } from '@/lib/planner/forks'
+import { planBOptions } from '@/lib/planner/planB'
 import { ForkPicker } from '@/components/ForkPicker'
+import { PlanBPanel } from '@/components/PlanBPanel'
 
 const TRANSPORT_LABEL: Record<string, string> = {
   BUS: '버스',
@@ -253,6 +255,8 @@ export function StageCard({
           )}
         </details>
       )}
+
+      <PlanBPanel options={planBOptions(stage.fromTownId, stage.toTownId)} />
     </article>
   )
 }

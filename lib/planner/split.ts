@@ -64,7 +64,7 @@ const PROFILE_INDEX: Map<string, SegmentProfile> = new Map(
   ALL_PROFILES.map((p) => [`${p.fromTownId}->${p.toTownId}`, p]),
 )
 
-function townIdx(id: string): number {
+export function townIdx(id: string): number {
   const i = TOWN_INDEX.get(id)
   if (i === undefined) throw new Error(`알 수 없는 마을 id: ${id}`)
   return i
