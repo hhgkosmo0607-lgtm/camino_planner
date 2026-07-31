@@ -150,7 +150,7 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
           </div>
           <div className="space-y-2.5">
             {plan.stages.map((s) => (
-              <StageCard key={s.dayNo} stage={s} />
+              <StageCard key={s.dayNo} stage={s} currentParams={params} />
             ))}
           </div>
         </section>

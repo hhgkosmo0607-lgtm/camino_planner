@@ -101,7 +101,7 @@ export default function DevPage() {
           </h2>
           <div className="space-y-2.5">
             {plan.stages.map((s) => (
-              <StageCard key={s.dayNo} stage={s} />
+              <StageCard key={s.dayNo} stage={s} currentParams={new URLSearchParams()} />
             ))}
           </div>
         </section>

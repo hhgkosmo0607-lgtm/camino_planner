@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { encodePlan, decodePlan } from './url'
+import { encodePlan, decodePlan, withVariantChoice } from './url'
 import type { PlanInput, MobilityProfile } from './schema'
 
 const foot: MobilityProfile = {
@@ -84,5 +84,60 @@ describe('url 인코딩/디코딩', () => {
     expect(r.startTownId).toBe('saint-jean-pied-de-port')
     expect(r.targetKmPerDay).toBe(24)
     expect(r.fitness).toBe('normal')
+  })
+
+  it('갈림길 선택(v) 라운드트립 — 여러 fork 동시에', () => {
+    const withVariants: PlanInput = {
+      ...base,
+      variantChoices: { 'fork-saint-jean': 'valcarlos', 'fork-triacastela': 'samos' },
+    }
+    const round = decode(encodePlan(withVariants))
+    expect(round.variantChoices).toEqual({
+      'fork-saint-jean': 'valcarlos',
+      'fork-triacastela': 'samos',
+    })
+  })
+
+  it('v가 없으면 variantChoices는 undefined', () => {
+    expect(decode('').variantChoices).toBeUndefined()
+  })
+
+  it('형식이 깨진 v 항목(짝 안 맞음)은 그 항목만 버린다', () => {
+    const r = decode('v=fork-saint-jean~valcarlos,깨진항목,fork-triacastela~samos')
+    expect(r.variantChoices).toEqual({
+      'fork-saint-jean': 'valcarlos',
+      'fork-triacastela': 'samos',
+    })
+  })
+})
+
+describe('withVariantChoice — ForkPicker 링크 생성', () => {
+  it('선택하지 않은 fork에 variant를 고르면 v에 추가된다', () => {
+    const qs = withVariantChoice(new URLSearchParams('start=sarria'), 'fork-saint-jean', 'valcarlos', false)
+    const p = new URLSearchParams(qs)
+    expect(p.get('start')).toBe('sarria') // 기존 파라미터는 보존
+    expect(p.get('v')).toBe('fork-saint-jean~valcarlos')
+  })
+
+  it('기본(isDefault=true)을 다시 고르면 v에서 그 fork가 빠진다', () => {
+    const qs = withVariantChoice(
+      new URLSearchParams('v=fork-saint-jean~valcarlos'),
+      'fork-saint-jean',
+      'napoleon',
+      true,
+    )
+    const p = new URLSearchParams(qs)
+    expect(p.has('v')).toBe(false)
+  })
+
+  it('다른 fork의 선택은 그대로 두고 이 fork만 바꾼다', () => {
+    const qs = withVariantChoice(
+      new URLSearchParams('v=fork-saint-jean~valcarlos,fork-triacastela~samos'),
+      'fork-saint-jean',
+      'napoleon',
+      true,
+    )
+    const p = new URLSearchParams(qs)
+    expect(p.get('v')).toBe('fork-triacastela~samos')
   })
 })

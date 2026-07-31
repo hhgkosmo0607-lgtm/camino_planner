@@ -92,6 +92,49 @@ function parseSkips(raw: string | null): PlannedTransport[] {
   return out
 }
 
+/** "fork-a~x,fork-b~y" → {forkId: variantId}. 형식이 아니면(짝 안 맞음 등) 그 항목만 버린다 —
+ * 실제 fork/variant 존재 여부 검증은 호출부(lib/planner/forks.ts)가 기본값 폴백으로 처리한다. */
+function parseVariantChoices(raw: string | null): Record<string, string> | undefined {
+  if (!raw) return undefined
+  const out: Record<string, string> = {}
+  for (const pair of raw.split(',')) {
+    const [forkId, variantId] = pair.split('~')
+    if (!forkId || !variantId) continue
+    out[forkId] = variantId
+  }
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
+function encodeVariantChoices(choices: Record<string, string> | undefined): string {
+  if (!choices) return ''
+  return Object.entries(choices)
+    .map(([f, v]) => `${f}~${v}`)
+    .join(',')
+}
+
+/**
+ * 현재 쿼리 params에서 forkId의 선택만 variantId로 바꾼 새 쿼리스트링을 만든다.
+ * isDefault(공식 표지 경로를 다시 고른 경우)면 그 fork를 v에서 아예 빼서 URL을 짧게 유지한다.
+ * ForkPicker(components/ForkPicker.tsx)가 링크의 href를 만들 때 쓴다 — JS 없이도 동작해야
+ * 하므로(규칙 7) 클릭 시점 계산이 아니라 서버 렌더 시점에 미리 href 문자열을 만든다.
+ */
+export function withVariantChoice(
+  params: URLSearchParams,
+  forkId: string,
+  variantId: string,
+  isDefault: boolean,
+): string {
+  const choices = parseVariantChoices(params.get('v')) ?? {}
+  const next = { ...choices }
+  if (isDefault) delete next[forkId]
+  else next[forkId] = variantId
+  const out = new URLSearchParams(params)
+  const encoded = encodeVariantChoices(Object.keys(next).length > 0 ? next : undefined)
+  if (encoded) out.set('v', encoded)
+  else out.delete('v')
+  return out.toString()
+}
+
 /** URLSearchParams → PlanInput. 모든 필드는 잘못된 값이면 기본값으로 폴백. */
 export function decodePlan(params: URLSearchParams): PlanInput {
   const startRaw = params.get('start')
@@ -113,6 +156,9 @@ export function decodePlan(params: URLSearchParams): PlanInput {
     useBagTransfer: 'none',
     plannedTransport,
   }
+
+  const variantChoices = parseVariantChoices(params.get('v'))
+  if (variantChoices) base.variantChoices = variantChoices
 
   const sd = params.get('sd')
   if (sd && isIsoDate(sd)) base.startDate = sd
@@ -140,6 +186,10 @@ export function encodePlan(input: PlanInput): string {
   if (input.fitness !== 'normal') p.set('f', input.fitness)
   if (input.restDays > 0) p.set('rest', String(input.restDays))
   if (input.startDate) p.set('sd', input.startDate)
+  if (input.variantChoices) {
+    const v = encodeVariantChoices(input.variantChoices)
+    if (v) p.set('v', v)
+  }
   if (input.plannedTransport.length > 0) {
     p.set('skip', input.plannedTransport.map((t) => `${t.fromTownId}~${t.toTownId}`).join(','))
   }

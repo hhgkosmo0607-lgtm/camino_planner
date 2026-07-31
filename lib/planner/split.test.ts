@@ -392,6 +392,46 @@ describe('F-02 혼잡 추정 — Stage.congestion/date 배치', () => {
   })
 })
 
+describe('F-19 갈림길 선택 반영 (variantChoices)', () => {
+  // targetKmPerDay 28이면 1일차가 생장→론세스바예스 전체(fork-saint-jean이 통째로 들어감)가 된다.
+  const forkInput = (over: Partial<PlanInput> = {}) => input({ targetKmPerDay: 28, ...over })
+
+  it('기본(선택 안 함)은 variantId가 null이고 본선(나폴레옹) 거리를 쓴다', () => {
+    const p = buildPlan(forkInput())
+    const day1 = p.stages[0]
+    expect(day1.fromTownId).toBe('saint-jean-pied-de-port')
+    expect(day1.toTownId).toBe('roncesvalles')
+    expect(day1.variantId).toBeNull()
+  })
+
+  it('발카를로스를 선택하면 1일차 거리가 줄고 variantId가 채워진다', () => {
+    const base = buildPlan(forkInput())
+    const chosen = buildPlan(forkInput({ variantChoices: { 'fork-saint-jean': 'valcarlos' } }))
+    expect(chosen.stages[0].variantId).toBe('valcarlos')
+    expect(chosen.stages[0].distanceKm).not.toBe(base.stages[0].distanceKm)
+    expect(chosen.stages[0].distanceKm).toBeLessThan(base.stages[0].distanceKm)
+    // 발카를로스는 ascent/descent 실측이 없어(null) 본선 값을 그대로 보존한다 — 지어내지 않는다(규칙 1)
+    expect(chosen.stages[0].ascent).toBe(base.stages[0].ascent)
+    expect(chosen.stages[0].descent).toBe(base.stages[0].descent)
+  })
+
+  it('존재하지 않는 variantId를 넣어도 기본값으로 안전하게 폴백한다', () => {
+    const p = buildPlan(forkInput({ variantChoices: { 'fork-saint-jean': 'no-such-id' } }))
+    expect(p.stages[0].variantId).toBeNull()
+  })
+
+  it('fork가 하루 구간 경계에 걸치면(기본 24km/day) 선택이 반영되지 않는다', () => {
+    // 기본 targetKmPerDay(24)에서는 1일차가 생장→오리송에서 끊긴다 — fork-saint-jean이
+    // 통째로 안 들어가므로 valcarlos를 골라도 아무 효과가 없어야 한다(정확히 재계산 못 하는
+    // 경우엔 손대지 않는다는 원칙, lib/planner/forks.ts 주석 참고).
+    const base = buildPlan(input())
+    const chosen = buildPlan(input({ variantChoices: { 'fork-saint-jean': 'valcarlos' } }))
+    expect(base.stages[0].toTownId).toBe('orisson')
+    expect(chosen.stages[0].distanceKm).toBe(base.stages[0].distanceKm)
+    expect(chosen.stages[0].variantId).toBeNull()
+  })
+})
+
 describe('규칙 3 경계 — 고도는 profiles 만 경유', () => {
   it('split.ts / risk.ts 어디에도 towns.elevation 을 직접 빼는 코드가 없다', () => {
     const stripComments = (s: string) =>

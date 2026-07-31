@@ -4,6 +4,53 @@
 
 ---
 
+## 2026-07-30 (33) — F-19 갈림길 화면(ForkPicker) 구현, variantChoices 배선
+
+**배경**: `lib/schema.ts`의 `PlanInput.variantChoices`(forkId→variantId)는 이미 있었지만
+`lib/planner/split.ts` 어디에서도 읽지 않았다 — `Stage.variantId`도 늘 `null`로
+고정. `data/forks.ts`(갈림길 11곳 구조·거리)는 있는데 화면이 없어 "데이터+화면
+세트" 원칙(CLAUDE.md 작업 방식)에 어긋난 상태였다.
+
+- **`lib/planner/forks.ts`(신설, 순수 함수)**: `forksFullyInStage(fromKm, toKm)` —
+  fork가 하루 구간(Stage)에 완전히 들어갈 때만 반환한다. 하루 목표거리가 짧아
+  fork 중간에서 날짜가 끊기면(경계 걸침) 본선 구간별 프로파일과 변형 전체
+  거리를 정확히 대응시킬 수 없어 아예 손대지 않는다(규칙 1 — 틀린 숫자를
+  보여주느니 선택지를 숨긴다). `defaultVariant`/`selectedVariant`(존재하지 않는
+  variantId는 기본값 폴백)와, 나폴레옹 루트 겨울 폐쇄(11-01~03-31, 연말 경계
+  넘김)를 판정하는 `isVariantClosedOn`도 여기 있다.
+- **`lib/planner/split.ts`의 `applyVariantOverrides`**: fork가 통째로 들어가는
+  Stage에 한해 선택한 variant의 `distanceKm`(있으면)으로 거리를 덮어쓰고
+  `estimatedMinutes`를 재계산한다. `ascent`/`descent`는 변형 쪽 실측이 없으면
+  (`null`) 본선 값을 그대로 보존한다 — 지어내지 않는다. `Stage.hazards`/
+  `warnings`는 여전히 본선 기준으로 남아있다(변형 경로의 구간별 위험 데이터가
+  없어서 정직하게 그대로 뒀다).
+- **`lib/url.ts`**: `v=forkId~variantId,forkId~variantId` 쿼리 파라미터 추가
+  (`skip`과 같은 인코딩 패턴). `withVariantChoice()`로 ForkPicker의 링크
+  href를 서버 렌더 시점에 미리 계산한다(JS 없이도 클릭이 동작해야 하므로,
+  규칙 7·8).
+- **`components/ForkPicker.tsx`(신설)**: `/plan`의 각 날짜 카드(`StageCard`)
+  안, 위험구간 배지 아래에 렌더. variant마다 이름·거리(있으면)·특징·주의
+  문구를 보여주고, 계절 폐쇄 기간이면 경고를 덧붙인다. "어느 쪽도 권하지
+  않는다"(F-26과 같은 태도) — 순수 정보 제공. 링크(`<a>`)만으로 동작.
+- `StageCard.tsx`의 `HAZARD_ICON`에 `ROAD_WALKING`/`WINTER_RISK`/`EXPOSED`
+  한글 라벨을 추가했다(이미 `buildHazards()`가 만들고 있었는데 화면 라벨
+  매핑만 빠져 있었다 — 별개 세션이 채운 EXPOSED 포함 3종이 지금까지 영문
+  타입명 그대로 노출되고 있던 걸 이번에 발견해 같이 고침).
+- **실제 브라우저로 검증**: `npm run dev` + Playwright(Chrome 채널)로
+  `/plan?start=saint-jean-pied-de-port&d=28&sd=2026-12-15` 접속 → 1일차
+  카드에 ForkPicker 렌더, 발카를로스 클릭 → URL이
+  `v=fork-saint-jean~valcarlos`로 바뀌고 거리 25.7km→23.6km, 콤포스텔라
+  안내의 총 도보거리(773→771km)까지 연쇄적으로 정확히 갱신됨을 확인.
+  겨울 폐쇄 경고("겨울철(11-01~03-31) 폐쇄 기간입니다")도 `sd`가 폐쇄
+  기간일 때 정상 노출. 콘솔 에러 없음.
+- 테스트 27개 추가(`forks.test.ts` 14개, `split.test.ts` 4개, `url.test.ts` 9개).
+  `tsc --noEmit`·`vitest`(102/102)·`eslint`·`next build`(184 정적 페이지)
+  전부 통과.
+- **남은 것**: 23개 variant 중 7개(에우나테·몬테후라·gamonal·부르고스강변길·
+  비아트라야나·발투이예 등)는 `distanceKm`이 여전히 `null`이라 ForkPicker에
+  거리 없이 정보만 뜬다 — `data/forks.ts` 자체의 한계(2026-07-28 조사 기록
+  참고)이지 이번 화면 작업의 버그가 아니다.
+
 ## 2026-07-29 (32) — F-20 위험구간 8종 중 마지막 EXPOSED(그늘 없음) 구현
 
 **배경**: `lib/schema.ts`의 `HazardType`에는 이미 `EXPOSED`가 정의돼 있었지만

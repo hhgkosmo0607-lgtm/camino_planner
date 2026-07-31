@@ -12,6 +12,8 @@
 
 import type { Stage, StageWarning, WaypointKind, HazardType, CongestionInfo, CongestionLevel } from '@/lib/schema'
 import { towns } from '@/data/towns'
+import { forksFullyInStage } from '@/lib/planner/forks'
+import { ForkPicker } from '@/components/ForkPicker'
 
 const TRANSPORT_LABEL: Record<string, string> = {
   BUS: '버스',
@@ -32,6 +34,9 @@ const WAYPOINT_ICON: Partial<Record<WaypointKind, string>> = {
 const HAZARD_ICON: Partial<Record<HazardType, string>> = {
   STEEP_DESCENT: '급내리막',
   NO_WATER: '물 없음',
+  ROAD_WALKING: '차도 병행',
+  WINTER_RISK: '겨울 결빙',
+  EXPOSED: '그늘 없음',
 }
 
 const CONGESTION_LABEL: Record<CongestionLevel, string> = {
@@ -101,7 +106,13 @@ function Metric({ label, value, unit }: { label: string; value: string; unit?: s
   )
 }
 
-export function StageCard({ stage }: { stage: Stage }) {
+export function StageCard({
+  stage,
+  currentParams,
+}: {
+  stage: Stage
+  currentParams: URLSearchParams
+}) {
   const to = townName(stage.toTownId)
   const from = townName(stage.fromTownId)
 
@@ -150,6 +161,7 @@ export function StageCard({ stage }: { stage: Stage }) {
   // ── 일반 도보 구간 ──
   const estH = Math.floor(stage.estimatedMinutes / 60)
   const estM = stage.estimatedMinutes % 60
+  const stageForks = from && to ? forksFullyInStage(from.km, to.km) : []
   return (
     <article className="rounded-lg border border-stone bg-white px-4 py-4">
       <div className="flex items-start justify-between gap-3">
@@ -190,6 +202,16 @@ export function StageCard({ stage }: { stage: Stage }) {
           ))}
         </div>
       )}
+
+      {stageForks.map((fork) => (
+        <ForkPicker
+          key={fork.id}
+          fork={fork}
+          selectedVariantId={stage.variantId}
+          dateStr={stage.date}
+          currentParams={currentParams}
+        />
+      ))}
 
       {(stage.waypoints.length > 0 || stage.hazards.length > 0) && (
         <details className="mt-3 border-t border-stone pt-3">

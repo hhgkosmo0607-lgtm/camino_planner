@@ -29,6 +29,7 @@ import { totalBedsForTown } from '../geo'
 import { towns as ALL_TOWNS } from '../../data/towns'
 import { profiles as ALL_PROFILES } from '../../data/profiles'
 import { exposedStretches, type ExposedStretch } from '../../data/exposed_stretches'
+import { forksFullyInStage, defaultVariant, selectedVariant } from './forks'
 
 // ── 튜닝 파라미터 ─────────────────────────────────────────────
 const DEFAULT_DAILY_KM = 24
@@ -41,7 +42,6 @@ const CLIMB_THRESHOLD = 600 // STEEP_CLIMB / 회복 트리거
 const DESCENT_THRESHOLD = 500 // STEEP_DESCENT / 회복 트리거
 const ROAD_SHARE_THRESHOLD = 0.5 // ROAD_WALKING — profiles.ts roadShareRatio 절반 이상이면 차도 병행 구간으로 표시
 const WINTER_RISK_ELEVATION_M = 1300 // WINTER_RISK — 실제 프로파일 상 고개 7곳(피레네·폰세바돈·오 세브레이로 등)이 이 위, 그다음 구간은 1164m 이하로 뚝 떨어짐(2026-07-28 profiles.ts 실측 분포 확인)
-const WINTER_RISK_MONTHS = new Set([11, 12, 1, 2, 3]) // 11~3월
 const LONG_DISTANCE = 28
 const FEW_BEDS = 30
 const NO_SERVICE_GAP = 10 // 물·식당 없는 거리 km
@@ -519,6 +519,9 @@ export function buildPlan(input: PlanInput): Plan {
     })
   }
 
+  // (c-2) F-19: 갈림길 선택 반영 — fork가 통째로 들어가는 Stage만 거리·고도·시간을 덮어쓴다
+  applyVariantOverrides(stages, input.variantChoices)
+
   // (d) 휴식일 배치 — beds >= 150 인 큰 도시 도착일 뒤에 삽입
   insertRestDays(stages, input.restDays)
   // dayNo가 최종 확정된 뒤에만 날짜·혼잡도를 계산할 수 있다(F-02)
@@ -570,6 +573,38 @@ function continuousWalkedToSantiago(stages: Stage[]): number {
     sum += s.distanceKm
   }
   return round1(sum)
+}
+
+/**
+ * F-19: variantChoices(forkId→variantId)가 있으면, 그 fork가 통째로 들어가는 Stage에
+ * 한해 거리·고도·예상소요시간을 선택한 variant 기준으로 덮어쓴다. fork가 여러 Stage에
+ * 걸치면(경계 걸침) forksFullyInStage가 아예 반환하지 않으므로 자동으로 손대지 않는다.
+ * hazards/waypoints는 여전히 본선(towns.ts) 기준이다 — 변형 경로의 구간별 위험 데이터가
+ * 없어서 그대로 두고 정직하게 남겨둔다(규칙 1).
+ */
+function applyVariantOverrides(
+  stages: Stage[],
+  variantChoices: PlanInput['variantChoices'],
+): void {
+  if (!variantChoices) return
+  for (const s of stages) {
+    if (s.isRestDay || s.transport) continue
+    const fromKm = ALL_TOWNS[townIdx(s.fromTownId)].km
+    const toKm = ALL_TOWNS[townIdx(s.toTownId)].km
+    for (const fork of forksFullyInStage(fromKm, toKm)) {
+      const def = defaultVariant(fork)
+      const chosen = selectedVariant(fork, variantChoices[fork.id])
+      if (chosen.id === def.id) continue
+      s.variantId = chosen.id
+      if (chosen.distanceKm === null || def.distanceKm === null) continue
+      s.distanceKm = round1(s.distanceKm + (chosen.distanceKm - def.distanceKm))
+      if (chosen.ascent !== null && chosen.descent !== null && def.ascent !== null && def.descent !== null) {
+        s.ascent += chosen.ascent - def.ascent
+        s.descent += chosen.descent - def.descent
+      }
+      s.estimatedMinutes = estimatedMinutes(s.distanceKm, s.ascent, s.descent)
+    }
+  }
 }
 
 /** 큰 도시(beds>=150) 도착일 뒤에 휴식일을 삽입한다. dayNo 재부여. */
