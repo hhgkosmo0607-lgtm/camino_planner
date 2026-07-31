@@ -13,6 +13,7 @@ import { decodePlan } from '@/lib/url'
 import { towns } from '@/data/towns'
 import { brand } from '@/config/brand'
 import { PrintButton } from '@/components/PrintButton'
+import { findAccessRoute } from '@/lib/geo'
 
 export const metadata: Metadata = {
   title: '인쇄용 일정표',
@@ -49,11 +50,14 @@ const PHRASES: [string, string][] = [
 ]
 
 export default async function PrintPage({ searchParams }: { searchParams: SP }) {
-  const input = decodePlan(toParams(await searchParams))
+  const params = toParams(await searchParams)
+  const input = decodePlan(params)
   const plan = buildPlan(input)
   const startTown = town(input.startTownId)
   const startLabel = dateFor(input.startDate, 1)
   const endLabel = dateFor(input.startDate, plan.totalDays)
+  const arParam = params.get('ar')
+  const accessRoute = arParam ? findAccessRoute(arParam) : undefined
 
   return (
     <main className="print-sheet mx-auto max-w-[820px] bg-white px-8 py-8 text-black">
@@ -88,6 +92,23 @@ export default async function PrintPage({ searchParams }: { searchParams: SP }) 
           </tr>
         </thead>
         <tbody>
+          {accessRoute && (
+            <tr className="print-row border-b border-stone align-top">
+              <td className="py-1.5 pr-2 font-mono tabular-nums">0</td>
+              <td className="py-1.5 pr-2 font-mono tabular-nums whitespace-nowrap">
+                {dateFor(input.startDate, 0)}
+              </td>
+              <td className="py-1.5 pr-2">
+                <span>
+                  인천 → <b>{startTown?.nameKo}</b>{' '}
+                  <span className="text-[11px] text-neutral-600">{accessRoute.nameKo}</span>
+                </span>
+              </td>
+              <td className="py-1.5 pr-2 text-right font-mono tabular-nums">약 {accessRoute.totalHours}시간</td>
+              <td className="py-1.5 pr-2 text-right font-mono tabular-nums">—</td>
+              <td className="py-1.5 text-right font-mono tabular-nums">—</td>
+            </tr>
+          )}
           {plan.stages.map((s) => {
             const from = town(s.fromTownId)
             const to = town(s.toTownId)

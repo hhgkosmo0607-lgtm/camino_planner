@@ -4,6 +4,35 @@
 
 ---
 
+## 2026-07-31 (34) — F-24 접근 교통을 Day 0으로 일정에 통합
+
+**배경**: `data/access.ts`(접근 교통 4개 경로)와 `/tools/access` 화면은 F-19 이전에
+이미 있었지만 `/plan` 일정 계산기와 분리된 독립 페이지였다. 이어서작업.md가 남긴
+다음 후보 중 사용자가 "F-24 Day 0 통합"을 선택했다.
+
+- **`lib/geo.ts`**: `accessRoutesTo(toTownId)`/`findAccessRoute(id)` 추가 —
+  `data/access.ts` 조회 헬퍼(기존 `findTransitOptions` 패턴과 동일).
+- **`components/AccessDay0.tsx`(신설)**: `ForkPicker`와 같은 태도 — 링크(`<a>`)만
+  으로 동작(JS 없이도 선택됨), `ar=routeId` 쿼리로 선택 상태를 URL에 담는다
+  (규칙 8). 어느 경로도 권하지 않고 소요시간·비용·구간만 보여주며, 선택하지
+  않아도 `buildPlan()` 계산에는 전혀 영향이 없다 — `PlanInput`/`Stage` 스키마는
+  건드리지 않았다(접근 교통은 도보 구간 계산과 무관한 별개 정보이기 때문).
+- **`app/plan/page.tsx`**: 출발지가 생장피드포르일 때만(`accessRoutesTo`가
+  빈 배열이 아닐 때) 에타파 목록 맨 위에 "Day 0" 카드로 렌더. 레온·사리아
+  출발(접근 경로 데이터가 없는 출발지)에서는 자동으로 숨는다.
+- **`app/plan/print/page.tsx`**: `ar` 쿼리가 있으면 인쇄용 표에도 0일차 행으로
+  같이 찍힌다(60대 이상 순례자에게 닿는 유일한 경로라는 규칙 9 취지에 맞춰
+  인쇄본에서도 누락되지 않게 함).
+- **`app/tools/access/page.tsx`**: 각 경로 카드에 "이 경로로 일정 만들기 →"
+  링크(`/plan?ar=routeId`) 추가 — 두 화면을 서로 오갈 수 있게 배선.
+- 새 스키마 필드·새 테스트 없음(순수 조회 헬퍼 2개 + 렌더 전용 컴포넌트라
+  계산 로직이 아님, 규칙 6 대상 아님). `tsc`·`vitest`(102/102)·`eslint`·
+  `next build`(184p, 신규 라우트 없음) 통과. `npm run dev`로 `/plan?ar=via-paris`
+  (선택 시 전체 구간 펼쳐짐 확인)·`/plan?start=leon`(Day 0 미노출 확인)·
+  `/plan/print?ar=via-paris`(0일차 행 확인) 직접 curl로 SSR 결과 확인.
+
+---
+
 ## 2026-07-30 (33) — F-19 갈림길 화면(ForkPicker) 구현, variantChoices 배선
 
 **배경**: `lib/schema.ts`의 `PlanInput.variantChoices`(forkId→variantId)는 이미 있었지만

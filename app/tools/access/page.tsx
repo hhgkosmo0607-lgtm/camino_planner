@@ -125,6 +125,13 @@ export default function AccessPage() {
                   <LegRow key={leg.order} leg={leg} />
                 ))}
               </ul>
+
+              <Link
+                href={`/plan?ar=${route.id}`}
+                className="mt-3 inline-block text-[15px] underline-offset-2 hover:underline"
+              >
+                이 경로로 일정 만들기 →
+              </Link>
             </article>
           ))}
         </div>

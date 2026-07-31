@@ -15,8 +15,10 @@ import { PlanControls } from '@/components/PlanControls'
 import { ShareButton } from '@/components/ShareButton'
 import { Track } from '@/components/Track'
 import { EmailCapture } from '@/components/EmailCapture'
+import { AccessDay0 } from '@/components/AccessDay0'
 import { buildPlan } from '@/lib/planner/split'
 import { decodePlan } from '@/lib/url'
+import { accessRoutesTo, findAccessRoute } from '@/lib/geo'
 import { towns } from '@/data/towns'
 import { brand } from '@/config/brand'
 
@@ -64,6 +66,12 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
       : ''
   const marks = walking.map((s) => townKm(s.toTownId))
   const startKm = townKm(input.startTownId)
+
+  // F-24 Day 0 — 접근 교통 경로는 현재 생장피드포르행만 조사돼 있다(data/access.ts).
+  // 다른 출발지(레온·사리아)를 고른 경우엔 해당 없어 렌더하지 않는다.
+  const accessRoutes = accessRoutesTo(input.startTownId)
+  const arParam = params.get('ar')
+  const selectedAccessRouteId = arParam && findAccessRoute(arParam) ? arParam : null
 
   return (
     <main className="min-h-screen bg-granite pb-16">
@@ -149,6 +157,13 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
             </div>
           </div>
           <div className="space-y-2.5">
+            {accessRoutes.length > 0 && (
+              <AccessDay0
+                routes={accessRoutes}
+                selectedRouteId={selectedAccessRouteId}
+                currentParams={params}
+              />
+            )}
             {plan.stages.map((s) => (
               <StageCard key={s.dayNo} stage={s} currentParams={params} />
             ))}

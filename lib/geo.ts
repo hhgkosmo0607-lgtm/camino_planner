@@ -9,7 +9,8 @@ import { towns } from '../data/towns'
 import { profiles } from '../data/profiles'
 import { albergues } from '../data/albergues'
 import { transitOptions } from '../data/transit'
-import type { Town, SegmentProfile, Service, Albergue, AlbergueType, TransitOption } from './schema'
+import { accessRoutes } from '../data/access'
+import type { Town, SegmentProfile, Service, Albergue, AlbergueType, TransitOption, AccessRoute } from './schema'
 
 export const SANTIAGO_ID = 'santiago-de-compostela'
 export const TOTAL_KM = 773.1
@@ -61,6 +62,18 @@ export function totalBedsForTown(townId: string): number | null {
  */
 export function findTransitOptions(fromTownId: string, toTownId: string): TransitOption[] {
   return transitOptions.filter((t) => t.fromTownId === fromTownId && t.toTownId === toTownId)
+}
+
+/**
+ * F-24 Day 0. 목적지 마을까지 접근 교통 경로 목록(현재는 전부 생장피드포르행).
+ * id로 특정 경로를 찾을 때는 findAccessRoute를 쓴다.
+ */
+export function accessRoutesTo(toTownId: string): AccessRoute[] {
+  return accessRoutes.filter((r) => r.toTownId === toTownId)
+}
+
+export function findAccessRoute(id: string): AccessRoute | undefined {
+  return accessRoutes.find((r) => r.id === id)
 }
 
 /** km 오름차순에서 이전/다음 마을. */
