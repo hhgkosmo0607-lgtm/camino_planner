@@ -16,6 +16,7 @@ import { forksFullyInStage } from '@/lib/planner/forks'
 import { planBOptions } from '@/lib/planner/planB'
 import { ForkPicker } from '@/components/ForkPicker'
 import { PlanBPanel } from '@/components/PlanBPanel'
+import { DayChecklist } from '@/components/DayChecklist'
 
 const TRANSPORT_LABEL: Record<string, string> = {
   BUS: '버스',
@@ -255,6 +256,8 @@ export function StageCard({
           )}
         </details>
       )}
+
+      <DayChecklist stage={stage} />
 
       <PlanBPanel options={planBOptions(stage.fromTownId, stage.toTownId)} />
     </article>

@@ -16,6 +16,7 @@ import { ShareButton } from '@/components/ShareButton'
 import { Track } from '@/components/Track'
 import { EmailCapture } from '@/components/EmailCapture'
 import { AccessDay0 } from '@/components/AccessDay0'
+import { BudgetSummary } from '@/components/BudgetSummary'
 import { buildPlan } from '@/lib/planner/split'
 import { decodePlan } from '@/lib/url'
 import { accessRoutesTo, findAccessRoute } from '@/lib/geo'
@@ -119,6 +120,8 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
           walkedKm={plan.walkedKm}
           doubleStamp={plan.doubleStampPerDay}
         />
+
+        <BudgetSummary totalDays={plan.totalDays} />
 
         {/* 고도 단면 */}
         <section>

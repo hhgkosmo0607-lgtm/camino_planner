@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { CostControls } from '@/components/CostControls'
 import { ToolNav } from '@/components/ToolNav'
 import { Track } from '@/components/Track'
+import { estimateTripCostManwon, EUR_KRW } from '@/lib/cost'
 
 export const metadata: Metadata = {
   title: '카미노 순례길 비용 계산기 · 항공·숙박·식비 예산',
@@ -24,40 +25,6 @@ const num = (v: string | string[] | undefined, d: number, lo: number, hi: number
   return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d
 }
 
-// 환율은 대략치다(변동). 결과를 범위로 내므로 정밀 환율을 주장하지 않는다.
-const EUR_KRW = 1450
-const toManwon = (eur: number) => (eur * EUR_KRW) / 10000
-
-function computeCost(days: number, pubPct: number, eatPct: number, gear: boolean) {
-  const pub = pubPct / 100
-  const eat = eatPct / 100
-
-  // 만원 단위
-  const flight: [number, number] = [120, 180]
-  // 숙박 (EUR/일): 공립 8~10, 사립 12~25
-  const lodgeLow = toManwon(days * (pub * 8 + (1 - pub) * 12))
-  const lodgeHigh = toManwon(days * (pub * 10 + (1 - pub) * 25))
-  // 식비 (EUR/일): 직접요리 15~25, 외식 25~40 (외식 비율로 보간)
-  const foodLow = toManwon(days * (15 + eat * 10))
-  const foodHigh = toManwon(days * (25 + eat * 15))
-  const gearRange: [number, number] = gear ? [30, 120] : [0, 20]
-  const etc: [number, number] = [10, 20] // 보험·유심·환전 등
-
-  const low = flight[0] + lodgeLow + foodLow + gearRange[0] + etc[0]
-  const high = flight[1] + lodgeHigh + foodHigh + gearRange[1] + etc[1]
-  const round10 = (n: number) => Math.round(n / 10) * 10
-  return {
-    total: [round10(low), round10(high)] as [number, number],
-    rows: [
-      { ko: '항공', low: flight[0], high: flight[1] },
-      { ko: '숙박', low: Math.round(lodgeLow), high: Math.round(lodgeHigh) },
-      { ko: '식비', low: Math.round(foodLow), high: Math.round(foodHigh) },
-      { ko: '장비', low: gearRange[0], high: gearRange[1] },
-      { ko: '보험·기타', low: etc[0], high: etc[1] },
-    ],
-  }
-}
-
 const man = (n: number) => `${n.toLocaleString('ko-KR')}만`
 
 export default async function CostPage({ searchParams }: { searchParams: SP }) {
@@ -66,7 +33,7 @@ export default async function CostPage({ searchParams }: { searchParams: SP }) {
   const pub = num(sp.pub, 50, 0, 100)
   const eat = num(sp.eat, 50, 0, 100)
   const gear = sp.gear === '1'
-  const { total, rows } = computeCost(days, pub, eat, gear)
+  const { total, rows } = estimateTripCostManwon(days, pub, eat, gear)
 
   return (
     <main className="min-h-screen bg-granite pb-16">

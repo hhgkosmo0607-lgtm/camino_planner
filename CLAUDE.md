@@ -118,7 +118,8 @@
 ### 8. 무료이고 가입이 없다
 
 - 핵심 기능에 결제벽·가입벽을 세우지 않는다
-- 계획 상태는 **URL 쿼리스트링**(주소창 끝에 `?days=10`처럼 붙는 부분 — 이 안에 값을 담아두면 서버에 따로 저장하지 않아도 그 링크만으로 같은 화면이 재현된다)에 담는다. localStorage(브라우저에 데이터를 저장해두는 기능) 금지 (URL이 유일한 진짜 데이터 저장소다)
+- **계획 상태**(출발지·날짜·경로 선택처럼 공유해야 하는 것)는 **URL 쿼리스트링**(주소창 끝에 `?days=10`처럼 붙는 부분 — 이 안에 값을 담아두면 서버에 따로 저장하지 않아도 그 링크만으로 같은 화면이 재현된다)에 담는다.
+- **⚠️ 개인 기록(2026-07-31 정정)**: 지출·통증 메모·체크리스트 완료 여부처럼 **여러 날에 걸쳐 쌓이고, 공유할 필요가 없거나 오히려 안 해야 하는 개인정보**는 **기기 안 localStorage에만** 남긴다. 이전엔 localStorage를 전면 금지했으나, 이건 "계획 상태는 URL"과 별개 문제였다 — 지출·통증 기록을 URL에 욱여넣으면 오히려 브라우저 기록·화면 캡처로 새기 쉬워 사생활 보호에 더 나쁘고, 규칙 10(오프라인 전제)과도 맞는다. **서버로는 절대 보내지 않는다.** 다른 기기·브라우저로 바꾸거나 브라우저 데이터를 지우면 기록이 사라진다는 걸 화면에 반드시 명시한다(백업 수단이 없다는 걸 숨기지 않는다). `lib/localLog.ts` 참고
 - 이메일은 선택 사항. 결과를 보려면 이메일을 내라는 구조 금지
 - 체중·나이 같은 민감 정보를 필수 입력으로 만들지 않는다
 
@@ -221,10 +222,9 @@ apps/web/                   (Phase 1은 이게 저장소 루트나 다름없다)
       page.tsx                일정 계산 결과
       /print/page.tsx         인쇄용 (A4 1장)
     /tools
-      /cost/page.tsx          비용 계산기
+      /cost/page.tsx          비용 계산기 (계획 예산. F-23 실제 기록은 /plan 안에 통합, 아래 참고)
       /pack/page.tsx          배낭 무게 계산기
       /timeline/page.tsx      준비 타임라인
-      /budget/page.tsx        예산 관리
       /access/page.tsx        접근 교통
       /phrases/page.tsx       예약 문장 생성기 (F-04)
       /luggage/page.tsx       짐배송 비용 비교 (F-05)
@@ -235,8 +235,10 @@ apps/web/                   (Phase 1은 이게 저장소 루트나 다름없다)
   /components
     Mojon.tsx                 이정표 헤더 (시그니처)
     Elevation.tsx             고도 단면 SVG
-    StageCard.tsx             ★ Plan B 접힘을 포함한다. 별도 페이지 아님
+    StageCard.tsx             ★ Plan B(PlanBPanel)·체크리스트(DayChecklist) 접힘을 포함한다. 별도 페이지 아님
     ForkPicker.tsx
+    DayChecklist.tsx           F-22 체크리스트 + F-23 지출 입력 ('use client', localStorage)
+    BudgetSummary.tsx          F-23 지출 합산 요약 (/plan 상단, 'use client', localStorage)
     RiskGauge.tsx
     Shell.tsx                 조가비 표식
   /lib
@@ -245,8 +247,11 @@ apps/web/                   (Phase 1은 이게 저장소 루트나 다름없다)
       split.ts                구간 분할 (순수 함수)
       risk.ts                 부상 위험 점수
       congestion.ts            F-02 혼잡 추정 (순수 함수)
+      planB.ts                 F-21 Plan B 축소판 대안 미리보기 (순수 함수)
       split.test.ts
     phrasebook.ts              F-04 예약 문장 생성 (순수 함수)
+    cost.ts                    F-06 비용 추정 + F-23 지출 합산 (순수 함수)
+    localLog.ts                ★ F-22·F-23 개인 기록 저장(localStorage). lib/planner 밖에 둔다 — window를 쓰기 때문
     url.ts                    계획 ↔ 쿼리스트링
   /config
     brand.ts                  ★ 브랜드명은 여기서만 (이름 미확정)
@@ -432,8 +437,8 @@ pnpm-workspace.yaml
 | F-19 | **갈림길 추천** | 2 | 11곳. **✅ 2026-07-30 완료** — `components/ForkPicker.tsx`(`/plan` 각 날짜 카드 안, URL `v=forkId~variantId`로 선택 저장) + `lib/planner/forks.ts`(fork가 하루 구간에 완전히 들어갈 때만 거리·고도·시간 반영, 경계 걸치면 손대지 않음, 계절 폐쇄 경고). 23개 variant 중 16개는 실측/가이드북 거리 있음(distanceKm), 나머지 7개는 정보만 표시(수치 미반영) |
 | F-20 | **일자별 상세** | 2 | Day 1~N. 하루 안의 모든 거점 + 위험. **✅ 2026-07 완료** — `lib/planner/split.ts`가 거점(식수·약국·ATM·짐배송)·위험구간(급내리막·차도 병행·겨울 결빙·그늘 없음·물 없음)을 실제 데이터로 산출, `StageCard`에 `<details>` 펼침으로 표시(JS 없이도 동작) |
 | F-21 | **Plan B** | 3 | **✅ 2026-07-31 축소판 완료** — `lib/planner/planB.ts`(순수 함수) + `components/PlanBPanel.tsx`. StageCard에 "이 날이 어긋나면" 접힘으로 통합(별도 화면 아님). 더 간다·되돌아간다(다음/이전 마을 거리·침대)·이동수단(실측 노선 있을 때만, F-26)·사립예약(있을 때만) 4종 미리보기. **03문서 원안의 "적용하고 이후 일정 재계산"은 아직 없음** — 화면에도 미리보기임을 명시 |
-| F-22 | 체크리스트 | 2 | **오늘 일정에서 자동으로 채워진다** |
-| F-23 | 예산 관리 | 2 | **오프라인 필수** |
+| F-22 | 체크리스트 | 2 | **✅ 2026-07-31 부분 완료(축소판)** — `components/DayChecklist.tsx`, StageCard 안 "오늘 체크리스트" 접힘. 아침 4항목(고정)+물·위험구간(Stage 데이터로 자동 생성), 저녁 4항목(고정)+통증 메모. 체크 상태·메모는 규칙 8 개정에 따라 localStorage. **배낭 최종 점검(이미 `/tools/pack`)·완주 후 마무리(Phase 3 완주 화면 필요)는 범위 밖** |
+| F-23 | 예산 관리 | 2 | **✅ 2026-07-31 부분 완료(축소판)** — `lib/cost.ts`(계획 예산 계산 `/tools/cost`와 공유)+`components/BudgetSummary.tsx`(`/plan` 상단, 지출 실기록 합산). 지출 입력은 `DayChecklist` 안에서. **오프라인 요건은 규칙 8 개정(localStorage)으로 충족.** 절약 팁 제안·CSV 내보내기는 범위 밖 |
 | F-24 | **접근·귀환 교통** | 2 | 인천 → 생장. `data/access.ts` 4개 경로 확보 + `/tools/access` 화면, `/plan` Day 0 통합(`components/AccessDay0.tsx`)까지 완료(2026-07) |
 | F-25 | 이동 방식·접근성 | 4~5 | 6종. 하루 거리 하한 없음. 위험 부위가 다르다 |
 | F-26 | **계획된 이동수단** | 2 | **✅ 2026-07 완료(부르고스~레온 구간)** — `data/transit.ts`(ALSA 버스·Renfe 기차·사아군~레온 부분구간, 실제 시간·요금 조사) + `/plan` 3지 선택(전부 걷기/사아군~레온만/부르고스~레온 전체). **메세타 건너뛰기는 Plan A일 수 있다.** 다른 임의 구간은 아직 조사 안 됨 — 없으면 일반 문구로 정직하게 폴백 |
