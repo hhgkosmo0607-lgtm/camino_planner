@@ -16,6 +16,11 @@ const PAGES = [
   '/tools/cost',
   '/tools/pack',
   '/tools/timeline',
+  '/tools/access',
+  '/tools/phrases',
+  '/tools/luggage',
+  '/fog',
+  '/cards',
   '/privacy',
 ]
 
