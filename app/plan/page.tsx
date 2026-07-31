@@ -123,6 +123,12 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
 
         <BudgetSummary totalDays={plan.totalDays} />
 
+        <div className="text-[15px] text-muted">
+          <a href="/fog" className="underline-offset-2 hover:underline">
+            안개 지도 — 상징적 장소 19곳 열어보기 →
+          </a>
+        </div>
+
         {/* 고도 단면 */}
         <section>
           <h2 className="mb-2 font-display text-lg text-text">전체 고도 단면</h2>

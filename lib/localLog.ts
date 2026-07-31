@@ -1,5 +1,5 @@
 /**
- * lib/localLog.ts — F-22·F-23 개인 기록(체크리스트·통증 메모·지출) 저장.
+ * lib/localLog.ts — F-22·F-23·F-15 개인 기록(체크리스트·통증 메모·지출·안개 지도) 저장.
  *
  * ★ 규칙 8(2026-07-31 정정): 계획 상태는 URL, 개인 기록은 기기 안 localStorage에만.
  *   서버로 절대 보내지 않는다. 다른 기기·브라우저로 바꾸거나 브라우저 데이터를
@@ -13,6 +13,7 @@
 import type { ExpenseEntry } from './cost'
 
 const STORAGE_KEY = 'camino-log-v1'
+const FOG_KEY = 'camino-fog-v1'
 
 export interface DayLog {
   amChecked: string[] // 체크된 아침 항목 id
@@ -69,4 +70,33 @@ export function loadAllExpenses(): ExpenseEntry[] {
 export function clearAllLogs(): void {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(STORAGE_KEY)
+}
+
+/** F-15 안개 지도. Landmark.id → 개방 시각(ISO). 개방 안 한 곳은 키 자체가 없다. */
+export type FogState = Record<string, string>
+
+export function loadFogState(): FogState {
+  if (typeof window === 'undefined') return {}
+  try {
+    const raw = window.localStorage.getItem(FOG_KEY)
+    if (!raw) return {}
+    const parsed = JSON.parse(raw)
+    return typeof parsed === 'object' && parsed !== null ? parsed : {}
+  } catch {
+    return {}
+  }
+}
+
+export function revealLandmark(landmarkId: string): FogState {
+  const state = loadFogState()
+  if (state[landmarkId]) return state // 이미 열려 있으면 시각을 덮어쓰지 않는다
+  const next = { ...state, [landmarkId]: new Date().toISOString() }
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(FOG_KEY, JSON.stringify(next))
+    } catch {
+      // 저장 공간 초과 등 — 조용히 무시
+    }
+  }
+  return next
 }

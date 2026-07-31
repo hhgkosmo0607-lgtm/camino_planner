@@ -93,17 +93,23 @@ export interface RouteFork {
   variants: RouteVariant[]
 }
 
-/** 걸어야 열리는 안개 지도의 상징적 장소 19곳. */
+/**
+ * 걸어야 열리는 안개 지도의 상징적 장소 19곳.
+ * ★ 좌표(lat/lng)를 두지 않는다 — profiles.ts와 같은 이유(규칙 3, ODbL 파생
+ *   데이터베이스 회피)이자, 지금은 실시간 GPS 위치판정이 아니라 towns.ts와 같은
+ *   km 위치 + 사용자가 직접 "도착했어요"로 여는 방식(웹 트랙, 규칙 8 개인기록
+ *   localStorage)이라 좌표 자체가 필요 없다. 실시간 GPS 지오펜싱은 Phase 3
+ *   앱에서 다시 설계한다.
+ */
 export interface Landmark {
   id: string
-  townId: string | null
+  townId: string | null         // 정확히 마을과 겹치면 그 마을 id, 구간 중간이면 null
+  km: number                    // 경로상 위치. towns.ts와 같은 km 기준
   nameKo: string
   nameEs: string
-  lat: number
-  lng: number
-  radiusM: number               // 개방 판정 반경. 기본 300
-  storyKo: string                 // 실측 도보에서 직접 쓴다
-  photoUri: string | null       // 실측 사진만. 스톡 금지
+  storyKo: string                // 역사·유래 요약. source가 'FIELD'가 아니면 1인칭 체험담이 아니라 이 정도까지만이다(규칙 1)
+  source: 'FIELD' | 'GUIDEBOOK' | 'ESTIMATED'  // 지금은 전부 GUIDEBOOK. 실측(FIELD) 1인칭 이야기는 누군가 실제로 걸어야 나온다
+  checkedAt: string              // YYYY-MM
   order: number                 // 1~19
 }
 
