@@ -92,25 +92,31 @@ function parseSkips(raw: string | null): PlannedTransport[] {
   return out
 }
 
-/** "fork-a~x,fork-b~y" → {forkId: variantId}. 형식이 아니면(짝 안 맞음 등) 그 항목만 버린다 —
- * 실제 fork/variant 존재 여부 검증은 호출부(lib/planner/forks.ts)가 기본값 폴백으로 처리한다. */
-function parseVariantChoices(raw: string | null): Record<string, string> | undefined {
+/** "a~x,b~y" → {a: x, b: y}. 형식이 아니면(짝 안 맞음 등) 그 항목만 버린다 —
+ * v(갈림길 선택)·pb(Plan B 재계산)가 같은 형식을 쓴다. 실제 id 존재 여부 검증은
+ * 각 호출부(lib/planner/forks.ts, lib/planner/split.ts)가 기본값 폴백으로 처리한다. */
+function parsePairMap(raw: string | null): Record<string, string> | undefined {
   if (!raw) return undefined
   const out: Record<string, string> = {}
   for (const pair of raw.split(',')) {
-    const [forkId, variantId] = pair.split('~')
-    if (!forkId || !variantId) continue
-    out[forkId] = variantId
+    const [a, b] = pair.split('~')
+    if (!a || !b) continue
+    out[a] = b
   }
   return Object.keys(out).length > 0 ? out : undefined
 }
 
-function encodeVariantChoices(choices: Record<string, string> | undefined): string {
-  if (!choices) return ''
-  return Object.entries(choices)
-    .map(([f, v]) => `${f}~${v}`)
+function encodePairMap(map: Record<string, string> | undefined): string {
+  if (!map) return ''
+  return Object.entries(map)
+    .map(([a, b]) => `${a}~${b}`)
     .join(',')
 }
+
+const parseVariantChoices = parsePairMap
+const encodeVariantChoices = encodePairMap
+const parseDayOverrides = parsePairMap
+const encodeDayOverrides = encodePairMap
 
 /**
  * 현재 쿼리 params에서 forkId의 선택만 variantId로 바꾼 새 쿼리스트링을 만든다.
@@ -132,6 +138,46 @@ export function withVariantChoice(
   const encoded = encodeVariantChoices(Object.keys(next).length > 0 ? next : undefined)
   if (encoded) out.set('v', encoded)
   else out.delete('v')
+  return out.toString()
+}
+
+/**
+ * F-21 Plan B 재계산. fromTownId 하루의 도착지를 toTownId로 강제하는 pb= 쿼리를
+ * 만든다. toTownId가 null이면 그 fromTownId의 오버라이드를 지워 자동 계산으로
+ * 되돌린다. ForkPicker의 withVariantChoice와 같은 서버 렌더 시점 href 생성 패턴.
+ */
+export function withDayOverride(
+  params: URLSearchParams,
+  fromTownId: string,
+  toTownId: string | null,
+): string {
+  const overrides = parseDayOverrides(params.get('pb')) ?? {}
+  const next = { ...overrides }
+  if (toTownId) next[fromTownId] = toTownId
+  else delete next[fromTownId]
+  const out = new URLSearchParams(params)
+  const encoded = encodeDayOverrides(Object.keys(next).length > 0 ? next : undefined)
+  if (encoded) out.set('pb', encoded)
+  else out.delete('pb')
+  return out.toString()
+}
+
+/**
+ * F-21 Plan B "이동수단" 대안 적용. skip= 목록에 fromTownId~toTownId 쌍을
+ * 추가한다(이미 조사된 노선이 있는 구간만 planB.ts가 이 옵션을 내놓는다).
+ * skip=은 이미 여러 쌍을 쉼표로 담을 수 있는 형식이라(parseSkips) 기존 형식을 그대로 쓴다.
+ */
+export function withTransportSkip(params: URLSearchParams, fromTownId: string, toTownId: string): string {
+  const pairs = (params.get('skip') ?? '')
+    .split(',')
+    .map((p) => p.split('~'))
+    .filter((p): p is [string, string] => p.length === 2 && !!p[0] && !!p[1])
+  const already = pairs.some(([f, t]) => f === fromTownId && t === toTownId)
+  const next = already ? pairs : [...pairs, [fromTownId, toTownId] as [string, string]]
+  const out = new URLSearchParams(params)
+  const encoded = next.map(([f, t]) => `${f}~${t}`).join(',')
+  if (encoded) out.set('skip', encoded)
+  else out.delete('skip')
   return out.toString()
 }
 
@@ -159,6 +205,9 @@ export function decodePlan(params: URLSearchParams): PlanInput {
 
   const variantChoices = parseVariantChoices(params.get('v'))
   if (variantChoices) base.variantChoices = variantChoices
+
+  const dayOverrides = parseDayOverrides(params.get('pb'))
+  if (dayOverrides) base.dayOverrides = dayOverrides
 
   const sd = params.get('sd')
   if (sd && isIsoDate(sd)) base.startDate = sd
@@ -189,6 +238,10 @@ export function encodePlan(input: PlanInput): string {
   if (input.variantChoices) {
     const v = encodeVariantChoices(input.variantChoices)
     if (v) p.set('v', v)
+  }
+  if (input.dayOverrides) {
+    const pb = encodeDayOverrides(input.dayOverrides)
+    if (pb) p.set('pb', pb)
   }
   if (input.plannedTransport.length > 0) {
     p.set('skip', input.plannedTransport.map((t) => `${t.fromTownId}~${t.toTownId}`).join(','))

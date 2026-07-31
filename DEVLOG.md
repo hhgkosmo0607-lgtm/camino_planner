@@ -4,6 +4,53 @@
 
 ---
 
+## 2026-07-31 (37) — F-21 Plan B "재계산" — 적용하면 이후 일정이 실제로 다시 나뉜다
+
+**배경**: 사용자가 "페이즈3"를 요청했다. Phase 3는 F-12(보여주기 카드)·F-15(안개
+지도)처럼 실측 콘텐츠(GPX·1인칭 스토리)가 있어야 하는 항목이 대부분이라 지금
+만들면 지어내는 것과 같다고 판단해 먼저 알렸고, 유일하게 데이터 없이 바로
+가능한 F-21 "재계산"부터 진행하기로 확인받았다.
+
+- **`lib/schema.ts`**: `PlanInput.dayOverrides?: Record<string, string>`
+  신설 — fromTownId → 강제 도착지 townId.
+- **`lib/planner/split.ts`**: `buildRawStages()`의 하루 도착지 계산 직후, 그날
+  출발 마을(`ALL_TOWNS[cur].id`)에 대한 오버라이드가 있으면 자동 계산 대신 그
+  값을 쓰도록 3줄 추가. 계획된 이동수단 정차점(F-26)을 넘어가면 여전히 정차점
+  에서 먼저 끊긴다(우선순위 유지). `townIdx`는 이미 F-21 축소판에서 export
+  해둔 상태라 추가 변경 없음. **핵심은 이 몇 줄뿐** — 이후 날짜는 `cur`가
+  새 도착지에서 이어지므로 기존 반복문이 자동으로 재계산한다(새 알고리즘 불필요).
+- **`lib/url.ts`**: `pb=fromTownId~toTownId,...` 쿼리 추가. `parseVariantChoices`/
+  `encodeVariantChoices`(F-19)와 형식이 완전히 같아서 `parsePairMap`/
+  `encodePairMap` 공용 함수로 리팩터링해 재사용(중복 제거). `withDayOverride()`
+  (ForkPicker의 `withVariantChoice`와 같은 패턴 — toTownId를 `null`로 주면
+  그 fromTownId의 오버라이드를 지워 "자동 계산으로 되돌리기"가 된다),
+  `withTransportSkip()`(이동수단 대안 적용 — 기존 `skip=` 목록에 쌍을 추가,
+  중복 방지) 신설.
+- **`components/PlanBPanel.tsx`**: `options: PlanBOption[]` 대신 `stage`+
+  `currentParams`를 받아 내부에서 `planBOptions()`를 직접 호출하도록 변경
+  (ForkPicker와 같은 패턴). 더 간다·되돌아간다·이동수단 옵션은 이제 전체가
+  `<a>` 링크 — 누르면 pb=/skip= 쿼리가 바뀌어 페이지가 다시 렌더되고 이후
+  일정이 실제로 재계산된다. 사립예약은 여전히 순수 정보(적용 링크 없음).
+  현재 `pb=`에 이 날의 오버라이드가 있으면 "이 날은 재계산된 상태입니다 ·
+  자동 계산으로 되돌리기" 배너를 보여준다.
+- **테스트**: `split.test.ts`에 dayOverrides 6개(정상 적용·이후 구간 연쇄·
+  거리 보존·역행 무시·존재하지 않는 마을 무시·이동수단 정차점 우선), `url.test.ts`에
+  `withDayOverride`/`withTransportSkip` 6개. 총 126/126.
+- **알려진 한계(지어내지 않고 그대로 둠)**: "이동수단" 대안은 실측 노선(F-26,
+  현재 부르고스~레온·사아군~레온뿐)이 있는 구간에서만 뜨는데, 실제 하루 도보
+  구간(최대 40km)이 이 두 장거리 구간과 정확히 겹치는 경우가 거의 없어서
+  **실사용 화면에는 사실상 안 나타난다.** 함수·테스트는 정확하지만 지금
+  데이터 범위가 좁아서 생기는 한계라 정직하게 남겨뒀다(새 임의 노선을 지어내지
+  않았다).
+- **검증**: `tsc`·`vitest`(126/126)·`eslint`·`next build`(184p) 통과. `next
+  start` 프로덕션 서버로 curl SSR 확인 — `/plan?start=burgos`에서 "더 간다"
+  링크 클릭 시 1일차가 실제로 부르고스→온타나스(31.4km)로 바뀌고 경고 배지
+  (LONG_DISTANCE·NO_SERVICES·EARLY_OVERLOAD)까지 정확히 갱신됨을 확인, "자동
+  계산으로 되돌리기" 클릭 시 원래 페이지와 **바이트 단위로 동일하게** 복원됨을
+  `md5sum`으로 확인.
+
+---
+
 ## 2026-07-31 (36) — 규칙 8 개정(개인 기록은 localStorage 허용) + F-22·F-23 축소판
 
 **배경**: F-22(체크리스트)·F-23(예산 관리)은 Phase 2 표에 있는데 완전히 손 안 댄

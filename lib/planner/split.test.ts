@@ -247,6 +247,69 @@ describe('계획된 이동수단 (메세타 버스)', () => {
   })
 })
 
+describe('F-21 Plan B 재계산 (dayOverrides)', () => {
+  // 기준: startTownId='burgos'의 자연 1일차 도착지는 hornillos-del-camino다(확인됨).
+  // "더 간다"에 해당하는 hontanas(한 마을 더)를 오버라이드로 써서 실제로 달라지는지 검증한다.
+  it('출발지 기준으로 지정한 도착지가 실제 1일차 도착지가 된다(자연 계산과 다른 값으로 검증)', () => {
+    const p = buildPlan(input({ startTownId: 'burgos', dayOverrides: { burgos: 'hontanas' } }))
+    expect(p.stages[0].fromTownId).toBe('burgos')
+    expect(p.stages[0].toTownId).toBe('hontanas')
+  })
+
+  it('오버라이드한 날 다음 구간은 그 도착지에서 이어진다(이후 일정이 재계산됨)', () => {
+    const overridden = buildPlan(input({ startTownId: 'burgos', dayOverrides: { burgos: 'hontanas' } }))
+    const plain = buildPlan(input({ startTownId: 'burgos' }))
+    expect(overridden.stages[1].fromTownId).toBe('hontanas')
+    expect(overridden.stages[0].toTownId).not.toBe(plain.stages[0].toTownId)
+  })
+
+  it('전체 걸은 거리는 오버라이드 전후로 거의 같다(같은 경로를 다르게 나눴을 뿐)', () => {
+    const overridden = buildPlan(input({ startTownId: 'burgos', dayOverrides: { burgos: 'hontanas' } }))
+    const plain = buildPlan(input({ startTownId: 'burgos' }))
+    expect(Math.abs(overridden.walkedKm - plain.walkedKm)).toBeLessThanOrEqual(0.2)
+  })
+
+  it('역행하는(뒤로 가는) 오버라이드는 무시되고 정상적으로 전진한다', () => {
+    const p = buildPlan(
+      input({ startTownId: 'burgos', dayOverrides: { burgos: 'saint-jean-pied-de-port' } }),
+    )
+    expect(p.stages[0].toTownId).not.toBe('saint-jean-pied-de-port')
+    expect(p.stages[0].distanceKm).toBeGreaterThan(0)
+  })
+
+  it('존재하지 않는 마을 id로의 오버라이드는 무시된다', () => {
+    const p = buildPlan(input({ startTownId: 'burgos', dayOverrides: { burgos: 'no-such-town' } }))
+    const plain = buildPlan(input({ startTownId: 'burgos' }))
+    expect(p.stages[0].toTownId).toBe(plain.stages[0].toTownId)
+  })
+
+  it('오버라이드 도착지가 계획된 이동수단 정차점보다 멀면 정차점에서 먼저 끊긴다', () => {
+    // 순서: burgos → tardajos(정차점) → hornillos-del-camino → hontanas(오버라이드 목표)
+    const p = buildPlan(
+      input({
+        startTownId: 'burgos',
+        dayOverrides: { burgos: 'hontanas' },
+        plannedTransport: [
+          {
+            fromTownId: 'tardajos',
+            toTownId: 'hornillos-del-camino',
+            mode: 'BUS',
+            reasonKo: '테스트',
+            skippedKm: 5,
+            costEur: 5,
+          },
+        ],
+      }),
+    )
+    // 정차점(tardajos)이 오버라이드 목표(hontanas)보다 앞이므로 1일차는 tardajos에서 끊기고,
+    // 2일차가 버스 구간(tardajos→hornillos-del-camino)이 된다.
+    expect(p.stages[0].toTownId).toBe('tardajos')
+    expect(p.stages[1].transport).not.toBeNull()
+    expect(p.stages[1].fromTownId).toBe('tardajos')
+    expect(p.stages[1].toTownId).toBe('hornillos-del-camino')
+  })
+})
+
 describe('일자별 상세 — 거점(waypoints)', () => {
   it('걷는 날은 START(km 0)로 시작해 ARRIVE(km=distanceKm)로 끝난다', () => {
     const p = buildPlan(input())

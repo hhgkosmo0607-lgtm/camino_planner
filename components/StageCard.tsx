@@ -6,14 +6,11 @@
  *  - 경고 배지는 겁주기가 아니라 준비용. 노란색(flecha)은 쓰지 않는다(길 안내 전용)
  *  - 휴식일 / 계획된 이동수단은 다르게 표시
  *  - 수치 18px 이상, mono tabular-nums
- *
- * ※ Plan B 접힘(F-21)은 Phase 3. 여기선 카드 표시까지만.
  */
 
 import type { Stage, StageWarning, WaypointKind, HazardType, CongestionInfo, CongestionLevel } from '@/lib/schema'
 import { towns } from '@/data/towns'
 import { forksFullyInStage } from '@/lib/planner/forks'
-import { planBOptions } from '@/lib/planner/planB'
 import { ForkPicker } from '@/components/ForkPicker'
 import { PlanBPanel } from '@/components/PlanBPanel'
 import { DayChecklist } from '@/components/DayChecklist'
@@ -259,7 +256,7 @@ export function StageCard({
 
       <DayChecklist stage={stage} />
 
-      <PlanBPanel options={planBOptions(stage.fromTownId, stage.toTownId)} />
+      <PlanBPanel stage={stage} currentParams={currentParams} />
     </article>
   )
 }

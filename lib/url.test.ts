@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { encodePlan, decodePlan, withVariantChoice } from './url'
+import { encodePlan, decodePlan, withVariantChoice, withDayOverride, withTransportSkip } from './url'
 import type { PlanInput, MobilityProfile } from './schema'
 
 const foot: MobilityProfile = {
@@ -139,5 +139,44 @@ describe('withVariantChoice — ForkPicker 링크 생성', () => {
     )
     const p = new URLSearchParams(qs)
     expect(p.get('v')).toBe('fork-triacastela~samos')
+  })
+})
+
+describe('withDayOverride — F-21 Plan B 재계산 링크 생성', () => {
+  it('도착지를 고르면 pb에 추가된다', () => {
+    const qs = withDayOverride(new URLSearchParams('start=burgos'), 'burgos', 'hontanas')
+    const p = new URLSearchParams(qs)
+    expect(p.get('start')).toBe('burgos') // 기존 파라미터는 보존
+    expect(p.get('pb')).toBe('burgos~hontanas')
+  })
+
+  it('toTownId를 null로 주면 그 fromTownId의 오버라이드가 지워진다(자동 계산으로 되돌리기)', () => {
+    const qs = withDayOverride(new URLSearchParams('pb=burgos~hontanas'), 'burgos', null)
+    const p = new URLSearchParams(qs)
+    expect(p.has('pb')).toBe(false)
+  })
+
+  it('다른 날의 오버라이드는 그대로 두고 이 날만 바꾼다', () => {
+    const qs = withDayOverride(new URLSearchParams('pb=burgos~hontanas,leon~astorga'), 'burgos', 'castrojeriz')
+    const p = new URLSearchParams(qs)
+    expect(p.get('pb')).toBe('burgos~castrojeriz,leon~astorga')
+  })
+})
+
+describe('withTransportSkip — F-21 Plan B "이동수단" 적용', () => {
+  it('skip이 없을 때 쌍을 추가한다', () => {
+    const qs = withTransportSkip(new URLSearchParams(''), 'burgos', 'leon')
+    expect(new URLSearchParams(qs).get('skip')).toBe('burgos~leon')
+  })
+
+  it('기존 skip 쌍은 보존하고 새 쌍을 덧붙인다', () => {
+    const qs = withTransportSkip(new URLSearchParams('skip=sahagun~leon'), 'burgos', 'leon')
+    const p = new URLSearchParams(qs)
+    expect(p.get('skip')).toBe('sahagun~leon,burgos~leon')
+  })
+
+  it('이미 있는 쌍을 다시 적용해도 중복 추가되지 않는다', () => {
+    const qs = withTransportSkip(new URLSearchParams('skip=burgos~leon'), 'burgos', 'leon')
+    expect(new URLSearchParams(qs).get('skip')).toBe('burgos~leon')
   })
 })

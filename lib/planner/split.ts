@@ -391,7 +391,18 @@ function buildRawStages(input: PlanInput): RawStage[] {
     const destIdx = nearestLodgingIdx(cur, ALL_TOWNS[cur].km + base * factor, endIdx)
     let finalIdx = destIdx > cur ? destIdx : Math.min(cur + 1, endIdx) // 항상 전진 보장
 
-    // 정차점(이동수단 출발지)을 넘어가면 그 앞에서 세운다
+    // F-21 Plan B 재계산: 이 날(출발지 기준)의 도착지를 사용자가 직접 골랐으면
+    // 자동 계산 대신 그걸 쓴다. 이후 날짜는 여기서부터 다시 자동 분할된다.
+    const override = input.dayOverrides?.[ALL_TOWNS[cur].id]
+    if (override) {
+      const overrideIdx = TOWN_INDEX.get(override)
+      if (overrideIdx !== undefined && overrideIdx > cur && overrideIdx <= endIdx) {
+        finalIdx = overrideIdx
+      }
+    }
+
+    // 정차점(이동수단 출발지)을 넘어가면 그 앞에서 세운다 — 재계산으로 고른
+    // 도착지가 정차점 너머면 정차점을 우선한다(F-26 정차 보장이 더 중요)
     const stop = transportOrigins.find((i) => i > cur && i < finalIdx)
     if (stop !== undefined) finalIdx = stop
 

@@ -253,6 +253,7 @@ export interface PlanInput {
   restDays: number                // 기본 1(전 구간) / 0(100km)
   startDate?: string              // 갈림길 계절 폐쇄 판정에 쓴다
   variantChoices?: Record<string, string>   // forkId → variantId
+  dayOverrides?: Record<string, string>     // F-21 Plan B 재계산. fromTownId → 강제 도착지 townId
   useBagTransfer: BagTransferOption
   plannedTransport: PlannedTransport[]       // 계획 단계에서 넣는 이동수단. 기본 []
 }
