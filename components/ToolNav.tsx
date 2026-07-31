@@ -13,6 +13,8 @@ const ITEMS = [
   { href: '/tools/access', ko: '접근 교통' },
   { href: '/tools/phrases', ko: '예약 문장' },
   { href: '/tools/luggage', ko: '짐배송 비용' },
+  { href: '/fog', ko: '안개 지도' },
+  { href: '/cards', ko: '카드' },
 ]
 
 export function ToolNav({ current }: { current?: string }) {

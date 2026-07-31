@@ -1,4 +1,6 @@
 import { brand } from "@/config/brand";
+import { CalculatorCTA } from "@/components/CalculatorCTA";
+import { ToolNav } from "@/components/ToolNav";
 
 export default function HomePage() {
   return (
@@ -28,13 +30,11 @@ export default function HomePage() {
           순례자를 위한 카미노 데 산티아고 동반 서비스입니다.
         </p>
 
-        <div className="mt-8 rounded-lg border border-stone bg-white/60 px-5 py-4 text-[17px] text-muted">
-          <p>
-            <strong className="text-text">지금은 Phase 1 준비 단계입니다.</strong>{" "}
-            일정 자동 계획(구간 분할·부상 위험 판단)을 만들려면 검증된
-            경로·고도·마을 데이터가 먼저 필요합니다 — 없는 데이터를 추정으로
-            채우지 않는다는 원칙 때문입니다.
-          </p>
+        <CalculatorCTA />
+
+        <div className="mt-10">
+          <h2 className="mb-3 font-display text-lg text-text">무료 도구·기록</h2>
+          <ToolNav />
         </div>
       </section>
     </main>
