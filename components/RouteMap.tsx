@@ -12,7 +12,10 @@
  *   fetch — scripts/pipeline/build_geometry.py의 Douglas-Peucker 단순화 결과다.
  *   정밀 거리·고도 계산에는 절대 안 쓴다(그건 data/profiles.ts). 지도 표시 전용.
  * ★ 마을 마커는 data/towns.ts의 실측 lat/lng을 그대로 쓴다(추가 API 호출 없음).
- * ★ 노란 선(flecha, #F0B429)은 "길 안내 전용" 규칙과 정확히 맞는 용도 — 여기서만 쓴다.
+ * ★ 노란 선(flecha, #D99A2B — 2026-08-03 파스텔화)은 "길 안내 전용" 규칙과
+ *   정확히 맞는 용도 — 여기서만 쓴다. MapLibre paint 속성은 CSS 변수를 못 읽어서
+ *   app/globals.css의 --flecha와 별개로 여기 직접 hex를 적어둔다 — 팔레트를
+ *   또 바꾸면 이 파일도 같이 고쳐야 한다.
  * ★ 서버 렌더 불가(캔버스/WebGL) — 호출부(app/plan/page.tsx)에서 next/dynamic으로
  *   { ssr: false } 임포트한다. 이 파일 자체는 평범한 클라이언트 컴포넌트다.
  */
@@ -78,7 +81,7 @@ export function RouteMap({ highlightTownIds, height = 420 }: RouteMapProps) {
               type: 'line',
               source: 'route',
               layout: { 'line-join': 'round', 'line-cap': 'round' },
-              paint: { 'line-color': '#F0B429', 'line-width': 3.5 },
+              paint: { 'line-color': '#D99A2B', 'line-width': 3.5 },
             })
           }
           const coords: [number, number][] = geojson.features[0].geometry.coordinates
@@ -107,7 +110,7 @@ export function RouteMap({ highlightTownIds, height = 420 }: RouteMapProps) {
         source: 'towns',
         paint: {
           'circle-radius': ['case', ['get', 'highlighted'], 6, 3.5],
-          'circle-color': ['case', ['get', 'highlighted'], '#F0B429', '#12253F'],
+          'circle-color': ['case', ['get', 'highlighted'], '#D99A2B', '#24384F'],
           'circle-stroke-width': 1.5,
           'circle-stroke-color': '#ffffff',
         },
@@ -121,7 +124,7 @@ export function RouteMap({ highlightTownIds, height = 420 }: RouteMapProps) {
         const p = f.properties as { nameKo: string; nameEs: string; km: number }
         popup
           .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
-          .setHTML(`<b>${p.nameKo}</b><br><span style="color:#6F6450">${p.nameEs} · ${p.km.toFixed(1)}km</span>`)
+          .setHTML(`<b>${p.nameKo}</b><br><span style="color:#6E6353">${p.nameEs} · ${p.km.toFixed(1)}km</span>`)
           .addTo(map)
       })
       map.on('mouseleave', 'towns-point', () => {
