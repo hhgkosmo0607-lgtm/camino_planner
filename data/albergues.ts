@@ -16,9 +16,10 @@
 // ⚠️ beds(침대 수, F-02 혼잡 추정의 전제 데이터)는 2026-07 2차 조사(아래)에서
 //   Gronze.com 개별 알베르게 상세 페이지(구간 요약 페이지가 아니라 알베르게 하나당
 //   페이지, "Precios y plazas" 절)를 하나씩 찾아 도미토리별 침대 수를 합산해 채웠다.
-//   283곳 중 280곳 확보, 3곳은 상세 페이지가 없거나(카스트로헤리스 Espacio Interior)
-//   방(habitación) 단위로만 표기돼 도미토리 합계를 못 낸 경우(카카벨로스 Saint James
-//   Way, 트라바델로 Camino y Leyenda)라 null로 남겼다 — 지어내지 않았다.
+//   283곳 중 281곳 확보(카스트로헤리스 Espacio Interior는 2026-08-03 재조사로
+//   6개 확보, 아래 참고). 나머지 2곳은 방(habitación) 단위로만 표기돼 도미토리
+//   합계를 못 낸 경우(카카벨로스 Saint James Way, 트라바델로 Camino y Leyenda)라
+//   null로 남겼다 — 지어내지 않았다.
 //   ⚠️ 조사 중 "도미토리 개수"와 "총 침대 수"를 혼동해 틀린 값을 넣을 뻔한 사례가
 //   여러 건 있었다(예: 수비리 Río Arga Ibaia — 도미토리 3개를 침대 3개로 오독할 뻔함,
 //   실제는 20개). 이상치로 보이는 값은 "Precios y plazas" 원문을 다시 확인해 고쳤다.
@@ -32,21 +33,37 @@
 //   PARISH·MONASTERY·PRIVATE 239곳은 "대부분 불가"로 일괄 적용하지 않고 Gronze
 //   개별 알베르게 상세 페이지("Admite reserva" 필드 + 연락처 절)를 하나씩 조사했다.
 //   239곳 중 235곳 확인 완료(PHONE 81 · WHATSAPP 5 · ONLINE 132 · NONE 17),
-//   4곳은 Gronze에 상세 페이지가 없거나("Admite reserva" 필드·연락 수단이 전혀
-//   없어 판정 불가) 확인 못해 UNKNOWN으로 남겼다 — 지어내지 않았다:
-//   벨로라도 Albergue parroquial de Belorado, 토산토스 Albergue parroquial San
-//   Francisco de Asís, 카스트로헤리스 Espacio Interior(beds 조사 때도 상세
-//   페이지 없었던 곳), 엘 부르고 라네로 Albergue de peregrinos Domenico Laffi.
+//   4곳은 당시 Gronze에 상세 페이지가 없거나("Admite reserva" 필드·연락 수단이
+//   전혀 없어 판정 불가) 확인 못해 UNKNOWN으로 남겼었다.
 //   판정 기준: Booking.com 등 온라인 예약 시스템 안내 → ONLINE. "por WhatsApp"
 //   명시 → WHATSAPP. 전화·이메일·자체 홈페이지만 있고 온라인 예약 시스템이
 //   확인 안 되면 → PHONE(보수적으로 판정, 실제로는 이메일도 가능할 수 있음).
 //   "Admite reserva: No" 명시 → NONE. contact·openFrom/openTo·hasKitchen 등
 //   나머지 세부 필드는 여전히 이번 조사 범위 밖 — UNKNOWN/null.
 //
+// ⚠️ 2026-08-03 재조사로 위 4곳 전부 NONE 확정(Gronze 외 alberguescaminosantiago.com·
+//   caminodesantiago.consumer.es·caminomaps.org 등 복수 출처 교차 확인, 전부
+//   "예약 불가/선착순" 일치):
+//   - 벨로라도 Albergue parroquial de Belorado: "no admite reserva de plaza" 명시.
+//   - 토산토스 Albergue parroquial San Francisco de Asís: 선착순 안내.
+//   - 카스트로헤리스 Espacio Interior: 2024년 개업 신규 숙소라 Gronze에 상세
+//     페이지가 없었던 것 — alberguescaminosantiago.com에서 예약 불가·정원
+//     6명·1인 20유로 확인, beds·priceEur도 같이 갱신(기존 beds null→6,
+//     priceEur 15→20).
+//   - 엘 부르고 라네로 Albergue de peregrinos Domenico Laffi: 예약 불가 확인과
+//     별개로 **type이 잘못돼 있었다** — 기존 PRIVATE였으나 caminomaps.org·
+//     caminosantiago.org·caminodesantiagofrances.com 등 복수 출처가 전부
+//     "Albergue Municipal"로 표기, León 카미노 친구회 소속 자원봉사 오스피탈레로가
+//     운영. MUNICIPAL로 정정(CLAUDE.md "숙소 자주 틀림" 표가 경고하는 유형
+//     오분류를 실제로 잡은 사례).
+//
 // 출처(이름·유형·요금, 1차): https://www.gronze.com/camino-frances (구간별 33개 페이지, 2026-07)
 // 출처(beds, 2차): https://www.gronze.com 개별 알베르게 상세 페이지 280개 (2026-07)
 // 출처(reservation, 3차): PARISH·MONASTERY·PRIVATE 235/239곳 확인 완료, https://www.gronze.com
 //   개별 알베르게 상세 페이지 "Admite reserva"/연락처 절 (2026-07-29)
+// 출처(reservation 나머지 4곳 + Castrojeriz beds/price + Burgo Ranero type 정정, 4차):
+//   https://www.alberguescaminosantiago.com/ , https://caminodesantiago.consumer.es/ ,
+//   https://caminomaps.org/ (2026-08-03)
 import type { Albergue, AlbergueType, ReservationMethod } from '../lib/schema'
 
 const CHECKED_AT = '2026-07'
@@ -219,13 +236,13 @@ export const albergues: Albergue[] = [
   a('redecilla-del-camino', 'Albergue Essentia', 'PRIVATE', 14, 10, 'PHONE'),
 
   // ── 벨로라도 ──
-  a('belorado', 'Albergue parroquial de Belorado', 'PARISH', 10, 20),
+  a('belorado', 'Albergue parroquial de Belorado', 'PARISH', 10, 20, 'NONE'),
   a('belorado', 'Albergue Cuatro Cantones', 'PRIVATE', 15, 65, 'ONLINE'),
   a('belorado', 'Albergue-Pensión Caminante', 'PRIVATE', 6, 22, 'ONLINE'),
   a('belorado', 'Albergue A Santiago', 'PRIVATE', 14, 98, 'ONLINE'),
 
   // ── 토산토스 ──
-  a('tosantos', 'Albergue parroquial San Francisco de Asís', 'PARISH', 0, 30),
+  a('tosantos', 'Albergue parroquial San Francisco de Asís', 'PARISH', 0, 30, 'NONE'),
 
   // ── 비야프랑카 몬테스 데 오카 ──
   a('villafranca-montes-de-oca', 'Albergue San Antón Abad', 'PRIVATE', 15, 49, 'PHONE'),
@@ -270,7 +287,7 @@ export const albergues: Albergue[] = [
   a('castrojeriz', 'Albergue-Hotel A Cien Leguas', 'PRIVATE', 17, 24, 'ONLINE'),
   a('castrojeriz', 'Albergue La Rinconada', 'PRIVATE', 14, 18, 'ONLINE'),
   a('castrojeriz', 'Albergue Casa Nostra', 'PRIVATE', 14, 26, 'ONLINE'),
-  a('castrojeriz', 'Albergue Espacio Interior', 'PRIVATE', 15),
+  a('castrojeriz', 'Albergue Espacio Interior', 'PRIVATE', 20, 6, 'NONE'),
 
   // ── 보아디야 델 카미노 ──
   a('boadilla-del-camino', 'Albergue En el Camino', 'PRIVATE', 15, 70, 'PHONE'),
@@ -314,7 +331,7 @@ export const albergues: Albergue[] = [
   a('bercianos-del-real-camino', 'Albergue Santa Clara', 'PRIVATE', 15, 10, 'PHONE'),
 
   // ── 엘 부르고 라네로 ──
-  a('el-burgo-ranero', 'Albergue de peregrinos Domenico Laffi', 'PRIVATE', null, 30),
+  a('el-burgo-ranero', 'Albergue de peregrinos Domenico Laffi', 'MUNICIPAL', null, 30, 'NONE'),
   a('el-burgo-ranero', 'Albergue La Laguna', 'PRIVATE', 18, 20, 'PHONE'),
 
   // ── 렐리에고스 ──

@@ -1,11 +1,19 @@
-// data/cards.ts — F-12 보여주기 카드 23장 (구조만, 2026-07-31)
+// data/cards.ts — F-12 보여주기 카드 23장 (2026-07-31 구조만 → 2026-08-03 A축 초안)
 //
 // ⚠️ 총 23장 고정(03문서 5.3절 "더 늘리지 않는다"). B(숙소 9)·C(이동·기타 6)
 //   15장은 표준 관광 회화 수준의 고정 문장이라(F-04 phrasebook.ts와 같은 근거
-//   수준) 지금 채웠다. A(부상 8)는 규칙 11(의료 정보, 정형외과·스포츠의학
-//   자문 검수 전 금지)에 걸려 steps를 비워뒀다 — 03문서 5.2절도 "모든 의료
-//   카드는 자문 검수를 거친 뒤에만 배포한다"고 블록으로 못박아 개별 카드
-//   내용과 무관하게 전부 보류한다.
+//   수준) 처음부터 채웠다.
+// ⚠️ A(부상 8) — 2026-08-03 갱신: 규칙 11(의료 정보, 정형외과·스포츠의학 자문
+//   검수 전 금지)은 여전히 유효하다. 다만 A1~A6·A8(7장)은 "처치·약품을
+//   지정"하지 않고 F-04 phrasebook.ts와 완전히 같은 원칙(전문가에게 도움·
+//   추천을 요청하는 데서 멈춘다)으로 초안을 작성했다 — 사용자 승인 하에
+//   "먼저 작성하고, 실제 자문은 나중에" 순서로 진행한 것이다. **자문 검수를
+//   거친 게 아니다** — steps는 채웠지만 blockedReasonKo에 "검수 대기 중"
+//   문구를 남겨 UI(CardBrowser.tsx)가 경고 배너로 계속 보여준다. 실제 자문을
+//   받으면 그 카드의 blockedReasonKo만 null로 바꾸면 된다(내용은 이미 금칙어
+//   테스트 통과, cards.test.ts 참고). A7(내 의료 정보)만 성격이 달라 그대로
+//   완전히 보류한다 — 처치 조언이 아니라 순례자 본인의 건강정보를 입력해두는
+//   카드라 필요한 건 의학 자문이 아니라 별도 입력 UI 설계다.
 // ⚠️ B1(침대 있나요)·B7(빈대) 흐름형 분기(03문서 5.4절, GOTO_CARD)는 아직
 //   안 만들었다 — 지금은 전부 단일 스텝(END)이다. B3·C2·C4는 원안이 지도
 //   짚기·시간 짚기 같은 인터랙션을 요구하는데, 그 UI가 없어서 방향·범위를
@@ -170,15 +178,148 @@ export const cards: Card[] = [
     ],
   },
 
-  // ── A축 · 부상 (8) — 규칙 11: 의료 자문 검수 전까지 전부 보류 ──
-  { id: 'A1', category: 'INJURY', titleKo: '약국 — 물집', steps: [], blockedReasonKo: '의료 자문 검수 전까지 비워둡니다(규칙 11)' },
-  { id: 'A2', category: 'INJURY', titleKo: '약국 — 근육통·부기', steps: [], blockedReasonKo: '의료 자문 검수 전까지 비워둡니다(규칙 11)' },
-  { id: 'A3', category: 'INJURY', titleKo: '약국 — 발목·무릎', steps: [], blockedReasonKo: '의료 자문 검수 전까지 비워둡니다(규칙 11)' },
-  { id: 'A4', category: 'INJURY', titleKo: '의사를 만나야 합니다', steps: [], blockedReasonKo: '의료 자문 검수 전까지 비워둡니다(규칙 11)' },
-  { id: 'A5', category: 'INJURY', titleKo: '응급입니다', steps: [], blockedReasonKo: '의료 자문 검수 전까지 비워둡니다(규칙 11)' },
-  { id: 'A6', category: 'INJURY', titleKo: '물리치료사를 찾습니다', steps: [], blockedReasonKo: '의료 자문 검수 전까지 비워둡니다(규칙 11)' },
-  { id: 'A7', category: 'INJURY', titleKo: '내 의료 정보', steps: [], blockedReasonKo: '개인 건강정보(혈액형·알레르기) 입력·표시라 별도 검토 전까지 비워둡니다' },
-  { id: 'A8', category: 'INJURY', titleKo: '보험 청구용 서류가 필요합니다', steps: [], blockedReasonKo: '의료 자문 검수 전까지 비워둡니다(규칙 11)' },
+  // ── A축 · 부상 (8) ──
+  // ⚠️ 2026-08-03: "정형외과·스포츠의학 자문 검수 전까지 넣지 않는다"(규칙 11)는
+  //   원칙은 그대로 유효하다. 다만 아래 7장(A1~A6, A8)은 "무엇을 처치하라"가
+  //   아니라 F-04 phrasebook.ts의 약국·응급 시나리오와 똑같이 "전문가에게 도움·
+  //   추천을 요청하는 데서 멈추는" 스크립트라, 그 원칙 자체는 어기지 않는다고
+  //   판단해 우선 초안을 작성했다 — **자문 검수 전 임시 배포 승인을 대신하지
+  //   않는다.** blockedReasonKo를 검수 대기 문구로 남겨 화면에서 "검수 전"임을
+  //   계속 밝히고, 실제 자문을 받으면 문구만 지운다(내용은 이미 금칙어 통과).
+  //   `cards.test.ts`가 phrasebook.test.ts와 같은 금칙어(약품명·처치법) 목록으로
+  //   전부 감시한다. A7만 성격이 달라 그대로 보류한다(아래 주석).
+  {
+    id: 'A1',
+    category: 'INJURY',
+    titleKo: '약국 — 물집',
+    blockedReasonKo: '초안 작성됨 — 정형외과·스포츠의학 자문 검수 대기 중(규칙 11)',
+    steps: [
+      {
+        promptEs: 'Hola, tengo molestias por una ampolla en el pie al caminar. ¿Podría recomendarme algo, por favor?',
+        promptKo: '발에 물집이 생겨 불편하다고 말하고, 약사에게 추천을 요청합니다',
+        options: [
+          end('Sí, tengo algo que le puede ayudar', '네, 도움이 될 만한 게 있어요'),
+          end('¿Puede enseñármela?', '상처를 보여주실 수 있나요?'),
+          end('Le recomiendo ver a un médico', '병원에 가보시길 권해요'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'A2',
+    category: 'INJURY',
+    titleKo: '약국 — 근육통·부기',
+    blockedReasonKo: '초안 작성됨 — 정형외과·스포츠의학 자문 검수 대기 중(규칙 11)',
+    steps: [
+      {
+        promptEs: 'Hola, tengo dolor muscular y algo de hinchazón por caminar mucho. ¿Podría recomendarme algo, por favor?',
+        promptKo: '근육통과 부기가 있다고 말하고, 약사에게 추천을 요청합니다',
+        options: [
+          end('Sí, tengo algo que le puede ayudar', '네, 도움이 될 만한 게 있어요'),
+          end('¿Desde cuándo le duele?', '언제부터 아프셨나요?'),
+          end('Le recomiendo ver a un médico', '병원에 가보시길 권해요'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'A3',
+    category: 'INJURY',
+    titleKo: '약국 — 발목·무릎',
+    blockedReasonKo: '초안 작성됨 — 정형외과·스포츠의학 자문 검수 대기 중(규칙 11)',
+    steps: [
+      {
+        promptEs: 'Hola, me duele el tobillo (o la rodilla) al caminar. ¿Podría recomendarme algo, por favor?',
+        promptKo: '발목이나 무릎이 아프다고 말하고, 약사에게 추천을 요청합니다',
+        options: [
+          end('Sí, tengo algo que le puede ayudar', '네, 도움이 될 만한 게 있어요'),
+          end('Le recomiendo ver a un médico', '병원에 가보시길 권해요'),
+          end('¿Puede caminar con normalidad?', '평소처럼 걸을 수 있으세요?'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'A4',
+    category: 'INJURY',
+    titleKo: '의사를 만나야 합니다',
+    blockedReasonKo: '초안 작성됨 — 정형외과·스포츠의학 자문 검수 대기 중(규칙 11)',
+    steps: [
+      {
+        promptEs: 'Hola, necesito ver a un médico, por favor. ¿Dónde está el centro de salud más cercano?',
+        promptKo: '의사를 만나야 한다고 말하고, 가장 가까운 보건소 위치를 물어봅니다',
+        options: [
+          end('Está aquí mismo, en el pueblo', '이 마을 안에 있어요'),
+          end('No hay aquí, tiene que ir a otro pueblo', '여기는 없고 다른 마을로 가야 해요'),
+          end('Puedo acompañarle', '제가 같이 가드릴게요'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'A5',
+    category: 'INJURY',
+    titleKo: '응급입니다',
+    blockedReasonKo: '초안 작성됨 — 정형외과·스포츠의학 자문 검수 대기 중(규칙 11)',
+    steps: [
+      {
+        promptEs: '¡Necesito ayuda urgente! ¿Puede llamar al 112, por favor?',
+        promptKo: '위급 상황이라고 말하고, 스페인 응급번호(112) 신고를 요청합니다',
+        options: [
+          end('Sí, llamo ahora mismo', '지금 바로 불러드릴게요'),
+          end('¿Dónde está exactamente?', '정확히 어디 계세요?'),
+          end('Voy a quedarme con usted', '제가 옆에 있어드릴게요'),
+        ],
+      },
+    ],
+  },
+  {
+    id: 'A6',
+    category: 'INJURY',
+    titleKo: '물리치료사를 찾습니다',
+    blockedReasonKo: '초안 작성됨 — 정형외과·스포츠의학 자문 검수 대기 중(규칙 11)',
+    steps: [
+      {
+        promptEs: 'Hola, ¿sabe si hay un fisioterapeuta cerca? Me gustaría pedir una consulta, por favor.',
+        promptKo: '근처에 물리치료사가 있는지 묻고, 진료 예약을 요청합니다',
+        options: [
+          end('Sí, hay uno en el pueblo', '네, 마을에 한 분 계세요'),
+          end('No aquí, tiene que ir a otro pueblo', '여기는 없고 다른 마을로 가야 해요'),
+          end('Le doy el teléfono', '전화번호를 드릴게요'),
+        ],
+      },
+    ],
+  },
+  // A7만 규칙 11이 아니라 다른 이유로 여전히 보류한다 — 처치·추천이 아니라
+  // 순례자 본인의 개인 건강정보(혈액형·알레르기·복용약·비상연락처)를 입력해
+  // 응급 시 보여주는 카드라, 필요한 건 자문 검수가 아니라 로컬 저장 설계
+  // 검토다(규칙 8 개정으로 개인기록 localStorage 자체는 허용됐지만, 입력폼·
+  // 인쇄 대비 등 이 카드만의 UI가 아직 없다). 다른 7장과 성격이 달라 같이
+  // 처리하지 않는다.
+  {
+    id: 'A7',
+    category: 'INJURY',
+    titleKo: '내 의료 정보',
+    steps: [],
+    blockedReasonKo: '개인 건강정보(혈액형·알레르기) 입력·표시 UI가 아직 없어 비워둡니다(규칙 11과 무관, 별도 설계 필요)',
+  },
+  {
+    id: 'A8',
+    category: 'INJURY',
+    titleKo: '보험 청구용 서류가 필요합니다',
+    blockedReasonKo: '초안 작성됨 — 정형외과·스포츠의학 자문 검수 대기 중(규칙 11)',
+    steps: [
+      {
+        promptEs: 'Hola, ¿podría darme un justificante o informe por escrito, para mi seguro de viaje?',
+        promptKo: '여행자보험 청구용으로 서면 확인서를 요청합니다',
+        options: [
+          end('Sí, se lo preparo', '네, 준비해 드릴게요'),
+          end('Puede pedirlo en recepción', '접수처에서 요청하세요'),
+          end('Tiene que volver mañana', '내일 다시 오셔야 해요'),
+        ],
+      },
+    ],
+  },
 
   // ── C축 · 이동·기타 (6) ──
   {
