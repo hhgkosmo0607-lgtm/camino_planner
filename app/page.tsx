@@ -1,6 +1,6 @@
 import { brand } from "@/config/brand";
 import { CalculatorCTA } from "@/components/CalculatorCTA";
-import { ToolNav } from "@/components/ToolNav";
+import { ToolGrid } from "@/components/ToolGrid";
 
 export default function HomePage() {
   return (
@@ -32,9 +32,10 @@ export default function HomePage() {
 
         <CalculatorCTA />
 
-        <div className="mt-10">
-          <h2 className="mb-3 font-display text-lg text-text">무료 도구·기록</h2>
-          <ToolNav />
+        <div className="mt-12">
+          <h2 className="mb-1 font-display text-lg text-text">무료 도구·기록</h2>
+          <p className="mb-4 text-[14px] text-muted">전부 가입 없이 바로 씁니다.</p>
+          <ToolGrid />
         </div>
       </section>
     </main>

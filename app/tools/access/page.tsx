@@ -9,6 +9,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ToolNav } from '@/components/ToolNav'
 import { Track } from '@/components/Track'
+import { RelatedLinks } from '@/components/RelatedLinks'
 import { accessRoutes } from '@/data/access'
 import type { AccessLeg, AccessTransportKind } from '@/lib/schema'
 
@@ -141,14 +142,12 @@ export default function AccessPage() {
           유럽 내 기차·버스 요금(€ 표시)은 예매 사이트 기준입니다.
         </p>
 
-        <div className="text-[15px] text-muted">
-          <Link href="/tools/timeline" className="mr-4 underline-offset-2 hover:underline">
-            준비 타임라인 →
-          </Link>
-          <Link href="/plan" className="underline-offset-2 hover:underline">
-            일정 만들기 →
-          </Link>
-        </div>
+        <RelatedLinks
+          items={[
+            { href: '/tools/timeline', labelKo: '준비 타임라인' },
+            { href: '/plan', labelKo: '일정 만들기' },
+          ]}
+        />
       </div>
     </main>
   )

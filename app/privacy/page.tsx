@@ -4,6 +4,7 @@
  */
 
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { brand } from '@/config/brand'
 
 export const metadata: Metadata = {
@@ -60,6 +61,22 @@ export default function PrivacyPage() {
         </section>
 
         <section>
+          <h2 className="mb-2 font-display text-lg text-text">커뮤니티는 로그인이 필요합니다</h2>
+          <p>
+            <code>/community</code>(체크인·게시판)를 쓰려면 이메일 매직링크로 로그인해야 합니다 —
+            비밀번호는 없습니다. 이건 계산기 등 다른 기능과 분리된 별도 계정이며, 로그인하지 않아도
+            나머지 기능은 그대로 이용할 수 있습니다. 로그인에 쓴 이메일은 다른 사용자에게 공개되지
+            않고, 화면에는 직접 정한 닉네임만 보입니다(실명·전화번호는 요구하지 않습니다).
+          </p>
+          <p className="mt-2">
+            체크인·게시글·댓글은 Supabase(외부 데이터베이스 서비스)에 저장됩니다 — 계획 URL이나
+            개인 기록(localStorage)과 달리, 이 데이터는 다른 사용자도 볼 수 있다는 전제로 직접
+            작성하는 내용입니다. 신고·차단 기능이 있으며, 계정을 지우고 싶으면 아래 문의로
+            연락해 주세요.
+          </p>
+        </section>
+
+        <section>
           <h2 className="mb-2 font-display text-lg text-text">문의</h2>
           <p>
             아직 별도 문의 창구를 마련하지 못했습니다. 서비스명과 함께 확정되는 대로 이
@@ -68,6 +85,10 @@ export default function PrivacyPage() {
         </section>
 
         <p className="text-[13px] text-muted">최초 게시: 2026-07-26</p>
+
+        <Link href="/" className="inline-block text-[15px] text-ink underline-offset-2 hover:underline">
+          ← 홈으로
+        </Link>
       </div>
     </main>
   )

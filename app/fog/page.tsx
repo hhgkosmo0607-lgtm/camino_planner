@@ -9,8 +9,9 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { FogMap } from '@/components/FogMap'
+import { ToolNav } from '@/components/ToolNav'
+import { RelatedLinks } from '@/components/RelatedLinks'
 import { landmarks } from '@/data/landmarks'
 
 export const metadata: Metadata = {
@@ -33,6 +34,8 @@ export default function FogPage() {
       </div>
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+        <ToolNav current="/fog" />
+
         <section className="rounded-lg border border-stone bg-white/60 px-4 py-3 text-[15px] text-muted">
           경로·화살표·알베르게 표시는 이 페이지와 상관없이 일정 화면에서 항상 그대로 보입니다. 여기 열고 닫는
           건 &ldquo;이야기&rdquo;뿐입니다. 개방 기록은 이 기기에만 저장되고 서버로 보내지 않습니다.
@@ -40,11 +43,7 @@ export default function FogPage() {
 
         <FogMap landmarks={landmarks} />
 
-        <div className="text-[15px] text-muted">
-          <Link href="/plan" className="underline-offset-2 hover:underline">
-            일정으로 돌아가기 →
-          </Link>
-        </div>
+        <RelatedLinks items={[{ href: '/plan', labelKo: '일정으로 돌아가기' }]} />
       </div>
     </main>
   )

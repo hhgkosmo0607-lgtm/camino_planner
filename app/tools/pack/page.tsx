@@ -6,10 +6,10 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { PackControls } from '@/components/PackControls'
 import { ToolNav } from '@/components/ToolNav'
 import { Track } from '@/components/Track'
+import { RelatedLinks } from '@/components/RelatedLinks'
 
 export const metadata: Metadata = {
   title: '카미노 배낭 무게 계산기 · 체중 10% 기준 짐 목록',
@@ -138,14 +138,12 @@ export default async function PackPage({ searchParams }: { searchParams: SP }) {
           </section>
         )}
 
-        <div className="text-[15px] text-muted">
-          <Link href="/tools/timeline" className="mr-4 underline-offset-2 hover:underline">
-            준비 타임라인 →
-          </Link>
-          <Link href="/plan" className="underline-offset-2 hover:underline">
-            일정 만들기 →
-          </Link>
-        </div>
+        <RelatedLinks
+          items={[
+            { href: '/tools/timeline', labelKo: '준비 타임라인' },
+            { href: '/plan', labelKo: '일정 만들기' },
+          ]}
+        />
       </div>
     </main>
   )

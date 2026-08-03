@@ -12,6 +12,7 @@ import { notFound } from 'next/navigation'
 import { towns } from '@/data/towns'
 import { getTown, townNeighbors, remainingKm, SERVICE_LABEL, getAlbergues, ALBERGUE_TYPE_LABEL } from '@/lib/geo'
 import { CalculatorCTA } from '@/components/CalculatorCTA'
+import { RelatedLinks } from '@/components/RelatedLinks'
 import { Track } from '@/components/Track'
 
 export function generateStaticParams() {
@@ -154,18 +155,12 @@ export default async function TownPage({ params }: { params: Params }) {
         </a>
 
         {/* 인접 구간 링크 */}
-        <section className="text-[14px] text-muted">
-          {prev && (
-            <a href={`/stage/${prev.id}-to-${t.id}`} className="mr-4 underline-offset-2 hover:underline">
-              {prev.nameKo} → {t.nameKo} 구간
-            </a>
-          )}
-          {next && (
-            <a href={`/stage/${t.id}-to-${next.id}`} className="underline-offset-2 hover:underline">
-              {t.nameKo} → {next.nameKo} 구간
-            </a>
-          )}
-        </section>
+        <RelatedLinks
+          items={[
+            ...(prev ? [{ href: `/stage/${prev.id}-to-${t.id}`, labelKo: `${prev.nameKo} → ${t.nameKo} 구간` }] : []),
+            ...(next ? [{ href: `/stage/${t.id}-to-${next.id}`, labelKo: `${t.nameKo} → ${next.nameKo} 구간` }] : []),
+          ]}
+        />
 
         <CalculatorCTA href={planHref} />
       </div>

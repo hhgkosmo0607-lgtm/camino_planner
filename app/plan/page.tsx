@@ -18,6 +18,7 @@ import { EmailCapture } from '@/components/EmailCapture'
 import { AccessDay0 } from '@/components/AccessDay0'
 import { BudgetSummary } from '@/components/BudgetSummary'
 import { RouteMapLoader } from '@/components/RouteMapLoader'
+import { RelatedLinks } from '@/components/RelatedLinks'
 import { buildPlan } from '@/lib/planner/split'
 import { decodePlan } from '@/lib/url'
 import { accessRoutesTo, findAccessRoute } from '@/lib/geo'
@@ -86,6 +87,9 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
           ...(plan.riskDataQuality !== 'ESTIMATED' ? { riskScore: Math.round(plan.injuryRiskScore) } : {}),
         }}
       />
+      <h1 className="sr-only">
+        {brand.nameKo} 일정 계산 — {townKo(input.startTownId)}에서 산티아고까지 {plan.totalDays}일
+      </h1>
       <Mojon
         title={brand.nameKo}
         remainingKm={plan.walkedKm}
@@ -106,58 +110,64 @@ export default async function PlanPage({ searchParams }: { searchParams: SP }) {
           startDate={input.startDate}
         />
 
-        {/* 요약 */}
-        <section className="grid grid-cols-3 gap-3">
-          <Stat value={String(plan.totalDays)} label="총 일수" />
-          <Stat value={plan.walkedKm.toFixed(0)} unit="km" label="걸은 거리" />
-          <Stat value={avgKm.toFixed(1)} unit="km" label="하루 평균" />
-        </section>
+        {/* 요약 — 계획의 핵심 숫자들을 한 덩어리로 묶어 훑기 쉽게 한다 */}
+        <div>
+          <h2 className="mb-2 text-[13px] font-medium uppercase tracking-wide text-muted">이 계획 요약</h2>
+          <div className="space-y-3">
+            <section className="grid grid-cols-3 gap-3">
+              <Stat value={String(plan.totalDays)} label="총 일수" />
+              <Stat value={plan.walkedKm.toFixed(0)} unit="km" label="걸은 거리" />
+              <Stat value={avgKm.toFixed(1)} unit="km" label="하루 평균" />
+            </section>
 
-        <RiskGauge score={plan.injuryRiskScore} quality={plan.riskDataQuality} advice={plan.advice} />
+            <RiskGauge score={plan.injuryRiskScore} quality={plan.riskDataQuality} advice={plan.advice} />
 
-        {/* 콤포스텔라 요건 */}
-        <CompostelaNotice
-          eligible={plan.compostelaEligible}
-          walkedKm={plan.walkedKm}
-          doubleStamp={plan.doubleStampPerDay}
-        />
+            <CompostelaNotice
+              eligible={plan.compostelaEligible}
+              walkedKm={plan.walkedKm}
+              doubleStamp={plan.doubleStampPerDay}
+            />
 
-        <BudgetSummary totalDays={plan.totalDays} />
-
-        <div className="text-[15px] text-muted">
-          <a href="/fog" className="mr-4 underline-offset-2 hover:underline">
-            안개 지도 — 상징적 장소 19곳 열어보기 →
-          </a>
-          <a href="/cards" className="underline-offset-2 hover:underline">
-            카드 — 화면으로 대화하기 →
-          </a>
+            <BudgetSummary totalDays={plan.totalDays} />
+          </div>
         </div>
 
-        {/* 지도 */}
-        <section>
-          <h2 className="mb-2 font-display text-lg text-text">지도</h2>
-          <RouteMapLoader highlightTownIds={[input.startTownId, ...walking.map((s) => s.toTownId)]} />
-          <p className="mt-1 text-[12px] text-muted">
-            경로 © OpenStreetMap contributors (ODbL) · 타일 © OpenFreeMap
-          </p>
-        </section>
+        {/* 경로 보기 */}
+        <div>
+          <h2 className="mb-2 text-[13px] font-medium uppercase tracking-wide text-muted">경로 보기</h2>
+          <div className="space-y-3">
+            <section>
+              <h3 className="sr-only">지도</h3>
+              <RouteMapLoader highlightTownIds={[input.startTownId, ...walking.map((s) => s.toTownId)]} />
+              <p className="mt-1 text-[12px] text-muted">
+                경로 © OpenStreetMap contributors (ODbL) · 타일 © OpenFreeMap
+              </p>
+            </section>
 
-        {/* 고도 단면 */}
-        <section>
-          <h2 className="mb-2 font-display text-lg text-text">전체 고도 단면</h2>
-          <div className="rounded-lg border border-stone bg-white p-3">
-            <Elevation
-              fromTownId={input.startTownId}
-              toTownId="santiago-de-compostela"
-              marks={marks}
-              height={150}
-            />
-            <div className="mt-2 flex justify-between font-mono text-[12px] tabular-nums text-muted">
-              <span>{townKo(input.startTownId)} ({startKm.toFixed(0)}km)</span>
-              <span>산티아고 (773km)</span>
-            </div>
+            <section>
+              <h3 className="sr-only">전체 고도 단면</h3>
+              <div className="rounded-lg border border-stone bg-white p-3">
+                <Elevation
+                  fromTownId={input.startTownId}
+                  toTownId="santiago-de-compostela"
+                  marks={marks}
+                  height={150}
+                />
+                <div className="mt-2 flex justify-between font-mono text-[12px] tabular-nums text-muted">
+                  <span>{townKo(input.startTownId)} ({startKm.toFixed(0)}km)</span>
+                  <span>산티아고 (773km)</span>
+                </div>
+              </div>
+            </section>
           </div>
-        </section>
+        </div>
+
+        <RelatedLinks
+          items={[
+            { href: '/fog', labelKo: '안개 지도 — 상징적 장소 19곳' },
+            { href: '/cards', labelKo: '카드 — 화면으로 대화하기' },
+          ]}
+        />
 
         {/* 구간 목록 */}
         <section>

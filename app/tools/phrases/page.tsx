@@ -7,10 +7,10 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { ToolNav } from '@/components/ToolNav'
 import { Track } from '@/components/Track'
 import { CopyButton } from '@/components/CopyButton'
+import { RelatedLinks } from '@/components/RelatedLinks'
 import { PhraseControls } from '@/components/PhraseControls'
 import { buildPhrase, PHRASE_SITUATIONS, type PhraseSituationId } from '@/lib/phrasebook'
 
@@ -86,14 +86,12 @@ export default async function PhrasesPage({ searchParams }: { searchParams: SP }
           </section>
         )}
 
-        <div className="text-[15px] text-muted">
-          <Link href="/tools/access" className="mr-4 underline-offset-2 hover:underline">
-            접근 교통 →
-          </Link>
-          <Link href="/plan" className="underline-offset-2 hover:underline">
-            일정 만들기 →
-          </Link>
-        </div>
+        <RelatedLinks
+          items={[
+            { href: '/tools/access', labelKo: '접근 교통' },
+            { href: '/plan', labelKo: '일정 만들기' },
+          ]}
+        />
       </div>
     </main>
   )

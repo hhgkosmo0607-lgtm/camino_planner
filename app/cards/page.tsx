@@ -8,8 +8,9 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { CardBrowser } from '@/components/CardBrowser'
+import { ToolNav } from '@/components/ToolNav'
+import { RelatedLinks } from '@/components/RelatedLinks'
 import { cards } from '@/data/cards'
 import type { CardCategory } from '@/lib/schema'
 
@@ -43,6 +44,8 @@ export default function CardsPage() {
       </div>
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+        <ToolNav current="/cards" />
+
         <section className="rounded-lg border border-stone bg-white/60 px-4 py-3 text-[15px] text-muted">
           전체 23장 중 {readyCount}장을 지금 쓸 수 있습니다. 부상(A) 카드는 정형외과·스포츠의학 자문 검수 전까지
           내용을 비워뒀습니다 — 구조만 먼저 만들었습니다.
@@ -55,14 +58,12 @@ export default function CardsPage() {
           </section>
         ))}
 
-        <div className="text-[15px] text-muted">
-          <Link href="/tools/phrases" className="mr-4 underline-offset-2 hover:underline">
-            예약 문장 생성기 →
-          </Link>
-          <Link href="/plan" className="underline-offset-2 hover:underline">
-            일정으로 돌아가기 →
-          </Link>
-        </div>
+        <RelatedLinks
+          items={[
+            { href: '/tools/phrases', labelKo: '예약 문장 생성기' },
+            { href: '/plan', labelKo: '일정으로 돌아가기' },
+          ]}
+        />
       </div>
     </main>
   )

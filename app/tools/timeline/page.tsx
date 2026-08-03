@@ -11,6 +11,7 @@ import { TimelineControls } from '@/components/TimelineControls'
 import { ToolNav } from '@/components/ToolNav'
 import { PrintButton } from '@/components/PrintButton'
 import { Track } from '@/components/Track'
+import { RelatedLinks } from '@/components/RelatedLinks'
 
 export const metadata: Metadata = {
   title: '카미노 준비 타임라인 · 출발일 D-90 역산 체크리스트',
@@ -112,13 +113,13 @@ export default async function TimelinePage({ searchParams }: { searchParams: SP 
           구체적 품목은 의료 전문가와 상담하세요 — 본 서비스는 의료 정보를 제공하지 않습니다.
         </p>
 
-        <div className="no-print text-[15px] text-muted">
-          <Link href="/tools/cost" className="mr-4 underline-offset-2 hover:underline">
-            비용 계산기 →
-          </Link>
-          <Link href="/plan" className="underline-offset-2 hover:underline">
-            일정 만들기 →
-          </Link>
+        <div className="no-print">
+          <RelatedLinks
+            items={[
+              { href: '/tools/cost', labelKo: '비용 계산기' },
+              { href: '/plan', labelKo: '일정 만들기' },
+            ]}
+          />
         </div>
       </div>
     </main>

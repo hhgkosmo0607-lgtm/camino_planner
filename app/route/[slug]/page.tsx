@@ -91,19 +91,7 @@ export default async function RoutePage({ params }: { params: Params }) {
       </div>
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
-        {/* 고도 단면 */}
-        <section>
-          <h2 className="mb-2 font-display text-lg text-text">전체 고도 단면</h2>
-          <div className="rounded-lg border border-stone bg-white p-3">
-            <Elevation fromTownId={r.startTownId} toTownId={SANTIAGO_ID} height={150} />
-            <div className="mt-2 flex justify-between font-mono text-[12px] tabular-nums text-muted">
-              <span>{start.nameKo}</span>
-              <span>산티아고 ({TOTAL_KM.toFixed(0)}km)</span>
-            </div>
-          </div>
-        </section>
-
-        {/* 추천 일정 3개 */}
+        {/* 추천 일정 3개 — 가장 먼저, 바로 시도해볼 수 있는 카드 */}
         <section>
           <h2 className="mb-3 font-display text-lg text-text">기간별 추천 일정</h2>
           <div className="grid gap-3 sm:grid-cols-3">
@@ -111,7 +99,7 @@ export default async function RoutePage({ params }: { params: Params }) {
               <a
                 key={x.d}
                 href={x.href}
-                className="rounded-lg border border-stone bg-white px-4 py-4 text-center"
+                className="rounded-lg border border-stone bg-white px-4 py-4 text-center hover:border-ink"
               >
                 <div className="text-[15px] font-semibold text-text">{x.ko}</div>
                 <div className="mt-1 font-mono text-2xl font-semibold tabular-nums text-text">
@@ -121,6 +109,18 @@ export default async function RoutePage({ params }: { params: Params }) {
                 <div className="font-mono text-[13px] tabular-nums text-muted">하루 {x.d}km</div>
               </a>
             ))}
+          </div>
+        </section>
+
+        {/* 고도 단면 */}
+        <section>
+          <h2 className="mb-2 font-display text-lg text-text">전체 고도 단면</h2>
+          <div className="rounded-lg border border-stone bg-white p-3">
+            <Elevation fromTownId={r.startTownId} toTownId={SANTIAGO_ID} height={150} />
+            <div className="mt-2 flex justify-between font-mono text-[12px] tabular-nums text-muted">
+              <span>{start.nameKo}</span>
+              <span>산티아고 ({TOTAL_KM.toFixed(0)}km)</span>
+            </div>
           </div>
         </section>
 

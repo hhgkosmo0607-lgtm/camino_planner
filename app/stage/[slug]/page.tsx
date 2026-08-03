@@ -69,6 +69,13 @@ export default async function StagePage({ params }: { params: Params }) {
       </div>
 
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
+        {/* 요약 — 숫자를 먼저, 그다음 상세 시각화(/plan과 같은 순서) */}
+        <section className="grid grid-cols-3 gap-3">
+          <Stat value={String(profile.distanceKm)} unit="km" label="거리" />
+          <Stat value={h > 0 ? `${h}시간 ${m}분` : `${m}분`} label="예상 소요" />
+          <Stat value={difficultyKo(profile, profile.distanceKm)} label="난이도" />
+        </section>
+
         {/* 고도 단면 */}
         <section>
           <h2 className="mb-2 font-display text-lg text-text">고도 단면</h2>
@@ -80,13 +87,6 @@ export default async function StagePage({ params }: { params: Params }) {
               <span>{to.nameKo} {to.elevation}m</span>
             </div>
           </div>
-        </section>
-
-        {/* 요약 */}
-        <section className="grid grid-cols-3 gap-3">
-          <Stat value={String(profile.distanceKm)} unit="km" label="거리" />
-          <Stat value={h > 0 ? `${h}시간 ${m}분` : `${m}분`} label="예상 소요" />
-          <Stat value={difficultyKo(profile, profile.distanceKm)} label="난이도" />
         </section>
 
         {/* 통과 마을 */}

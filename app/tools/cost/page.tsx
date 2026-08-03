@@ -6,9 +6,9 @@
  */
 
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { CostControls } from '@/components/CostControls'
 import { ToolNav } from '@/components/ToolNav'
+import { RelatedLinks } from '@/components/RelatedLinks'
 import { Track } from '@/components/Track'
 import { estimateTripCostManwon, EUR_KRW } from '@/lib/cost'
 
@@ -79,14 +79,12 @@ export default async function CostPage({ searchParams }: { searchParams: SP }) {
           </p>
         </section>
 
-        <div className="text-[15px] text-muted">
-          <Link href="/tools/pack" className="mr-4 underline-offset-2 hover:underline">
-            배낭 무게 계산기 →
-          </Link>
-          <Link href="/plan" className="underline-offset-2 hover:underline">
-            일정 만들기 →
-          </Link>
-        </div>
+        <RelatedLinks
+          items={[
+            { href: '/tools/pack', labelKo: '배낭 무게 계산기' },
+            { href: '/plan', labelKo: '일정 만들기' },
+          ]}
+        />
       </div>
     </main>
   )

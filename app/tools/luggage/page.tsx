@@ -18,6 +18,7 @@ import Link from 'next/link'
 import { LuggageControls } from '@/components/LuggageControls'
 import { ToolNav } from '@/components/ToolNav'
 import { Track } from '@/components/Track'
+import { RelatedLinks } from '@/components/RelatedLinks'
 
 export const metadata: Metadata = {
   title: '카미노 짐배송 비용 비교 · 배송비 vs 숙박비 차액',
@@ -156,14 +157,12 @@ export default async function LuggagePage({ searchParams }: { searchParams: SP }
           근거로 검증하지 않아 숫자로 보여드리지 않습니다(CLAUDE.md 규칙 11).
         </section>
 
-        <div className="text-[15px] text-muted">
-          <Link href="/tools/pack" className="mr-4 underline-offset-2 hover:underline">
-            배낭 무게 계산기 →
-          </Link>
-          <Link href="/plan" className="underline-offset-2 hover:underline">
-            일정 만들기 →
-          </Link>
-        </div>
+        <RelatedLinks
+          items={[
+            { href: '/tools/pack', labelKo: '배낭 무게 계산기' },
+            { href: '/plan', labelKo: '일정 만들기' },
+          ]}
+        />
       </div>
     </main>
   )
