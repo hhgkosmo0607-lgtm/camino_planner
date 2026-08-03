@@ -15,6 +15,7 @@ const ITEMS = [
   { href: '/tools/luggage', ko: '짐배송 비용' },
   { href: '/fog', ko: '안개 지도' },
   { href: '/cards', ko: '카드' },
+  { href: '/community', ko: '커뮤니티' },
 ]
 
 export function ToolNav({ current }: { current?: string }) {

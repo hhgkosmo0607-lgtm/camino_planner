@@ -21,6 +21,7 @@ const PAGES = [
   '/tools/luggage',
   '/fog',
   '/cards',
+  '/community', // Supabase 키 없는 테스트 환경에서는 "설정 안 됨" 안내만 렌더된다
   '/privacy',
 ]
 

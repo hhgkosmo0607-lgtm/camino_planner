@@ -423,6 +423,69 @@ export interface Card {
 }
 
 // ────────────────────────────────────────────────────────────
+// 8. 동행 매칭(F-28)의 첫걸음 — 커뮤니티
+// ────────────────────────────────────────────────────────────
+/**
+ * 03문서 2198~2283행의 F-27(가족 안심 세트)·F-28(동행 매칭) 스케치를 코드로
+ * 옮긴 것. 이번엔 실제 1:1 매칭 로직은 없고(사용자가 "추후"로 미룸), 그 전
+ * 단계인 프로필·체크인·게시판·신고·차단만 있다.
+ * ⚠️ 이 섹션의 타입은 전부 Supabase(Postgres)에 저장된다 — lib/schema.ts의
+ *   다른 타입(Town·Stage 등)과 달리 정적 TS 파일이 원본이 아니다. 실제 컬럼
+ *   정의는 supabase/migrations/0001_community.sql이 정본이고, 이 타입은 그걸
+ *   앱에서 다루기 쉽게 옮긴 거울이다 — 필드를 고치면 마이그레이션도 같이 고친다.
+ * ⚠️ 실명·이메일·전화번호는 어떤 타입에도 없다(F-28 스펙, 03문서 2244행
+ *   "실명·전화번호 직접 노출 금지"). 순례자는 nickname으로만 서로에게 보인다.
+ */
+export interface CommunityProfile {
+  id: string // = auth.users.id (Supabase Auth가 발급)
+  nickname: string
+  travelMode: TravelMode | null
+  startDate: string | null // YYYY-MM-DD
+  createdAt: string
+}
+
+export interface CheckIn {
+  id: string
+  profileId: string
+  townId: string // data/towns.ts의 Town.id — DB 외래키 아님(마을은 정적 데이터)
+  checkedInAt: string
+}
+
+export interface CommunityPost {
+  id: string
+  profileId: string
+  title: string
+  body: string
+  createdAt: string
+}
+
+export interface CommunityReply {
+  id: string
+  postId: string
+  profileId: string
+  body: string
+  createdAt: string
+}
+
+export type ReportTargetType = 'PROFILE' | 'POST' | 'REPLY'
+
+export interface CommunityReport {
+  id: string
+  reporterProfileId: string
+  targetType: ReportTargetType
+  targetId: string
+  reason: string
+  createdAt: string
+}
+
+export interface CommunityBlock {
+  id: string
+  blockerProfileId: string
+  blockedProfileId: string
+  createdAt: string
+}
+
+// ────────────────────────────────────────────────────────────
 // CHANGELOG — 통합 과정에서 해결한 충돌
 // ────────────────────────────────────────────────────────────
 /**

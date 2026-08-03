@@ -27,7 +27,9 @@
       "Bash(powershell -Command \"Get-Date; [System.TimeZoneInfo]::Local\")",
       "Bash(python scripts/pipeline/build_geometry.py full)",
       "Bash(PYTHONIOENCODING=utf-8 python scripts/pipeline/build_geometry.py full)",
-      "Bash(PYTHONIOENCODING=utf-8 python scripts/pipeline/build_geometry.py geojson)"
+      "Bash(PYTHONIOENCODING=utf-8 python scripts/pipeline/build_geometry.py geojson)",
+      "Bash(docker --version)",
+      "Bash(npx supabase *)"
     ],
     "additionalDirectories": [
       "C:\\02Workspaces\\camino_planner\\.claude\\worktrees\\agent-ae825db9acc960538\\data"
