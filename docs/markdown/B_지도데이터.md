@@ -1,6 +1,6 @@
 # B. 지도 데이터 — 어디서 가져왔고, 무엇을 했나
 
-> **이 문서는 무엇인가**: `data/towns.ts`(마을 82곳)와 `data/profiles.ts`(구간 81개 고도), 그리고 `data/forks.ts`(갈림길 11곳)를 만들 때 실제로 어떤 지도·고도 데이터를, 어떤 API로 가져와서, 어떻게 계산했는지를 순서대로, 쉽게 설명한다.
+> **이 문서는 무엇인가**: `data/towns.ts`(마을 82곳)와 `data/profiles.ts`(구간 81개 고도), `data/forks.ts`(갈림길 11곳), `data/restaurants.ts`(식당·바·카페 1,247곳, 8절)를 만들 때 실제로 어떤 지도·고도 데이터를, 어떤 API로 가져와서, 어떻게 계산했는지를 순서대로, 쉽게 설명한다.
 > 더 깊은 기술적 배경(왜 이 방식을 골랐는지의 근거·비교 실험)은 `DEVLOG.md`(2026-07-24~25 항목들)에, 원래 계획 문서는 `03_제품과기능.md` 부록에 있다. 이 문서는 그 둘을 종합해 **"결국 무엇을 썼고 무슨 일이 있었나"만 한 곳에서 보기 쉽게** 정리한 것이다.
 
 ---
@@ -23,6 +23,17 @@
 ```
 
 **핵심은 "고도가 포함된 GPX 파일을 어디서 구하지 않았다"는 것이다.** 그런 파일은 대부분 출처가 불분명하거나 상업적 이용이 금지돼 있다. 대신 **① 길의 모양**과 **② 땅의 높이**를 서로 다른 무료·공개 출처에서 각각 가져와, **우리가 직접 계산**했다. 이렇게 하면 출처가 항상 명확하고, 계산 방식(스무딩 등)을 우리가 통제할 수 있다.
+
+### 1.1 이건 "제대로 된 API"인가 — 그렇다
+
+`data/albergues.ts`(숙소, `C_숙소카드교통데이터.md` 2절)나 `data/landmarks.ts`(안개 지도)는 Gronze.com·순례 가이드 사이트를 **사람이 읽고 옮겨적는 방식**(스크래핑 성격)으로 채웠지만, 지도·고도 데이터는 다르다 — **문서화된 공식 API를 코드가 직접 호출**했다.
+
+| API | 문서 | 인증 | 비용 |
+|---|---|---|---|
+| **Overpass API** | https://wiki.openstreetmap.org/wiki/Overpass_API | 불필요 | 무료 |
+| **Open Topo Data** | https://www.opentopodata.org/ | 불필요 | 무료 (공개 인스턴스, 예의상 초당 1회 제한 준수) |
+
+두 API 모두 OSM 진영이 유지보수하는 공개 표준 API라 "제대로 된 API가 없어서 어쩔 수 없이 사람이 긁었다"는 숙소 쪽 사정과는 성격이 다르다. 실제 호출 코드는 `scripts/pipeline/build_geometry.py`의 `overpass()`(6개 relation 조회, `curl` 서브프로세스 호출 — `urllib`은 이 환경에서 막혀 우회)와 `fetch_elevations()`(좌표 배열을 Open Topo Data에 배치 조회) 함수를 참고.
 
 ---
 
@@ -163,14 +174,28 @@ CLAUDE.md에는 원래 **스페인 국립지리원(IGN)의 MDT05(5m 격자, 항�
 
 ---
 
-## 8. 관련 파일 위치
+## 8. 식당·바·카페 1,247곳 (2026-08-04) — 같은 방식을 숙소가 아닌 곳에 적용
+
+`C_숙소카드교통데이터.md`의 숙소·안개지도 데이터는 사람이 Gronze.com 등을 읽고 옮긴 것(`GUIDEBOOK`)이지만, 이건 **Overpass API를 다시 호출**해서 만들었다는 점에서 이 문서(1~7절, 길·고도) 쪽 방법론과 같다.
+
+- **조회 방식**: `amenity~"restaurant|bar|cafe"` 태그를, `data/towns.ts`에 이미 있는 마을 lat/lng(4절에서 확보한 그 좌표) 기준 반경 700m로 조회. 82개 마을 전부 조회 완료, 61곳에서 데이터 확보(21곳은 0건)
+- **뺀 필드**: `opening_hours`. 표본 조사(팜플로나 광장 208곳 중 24곳=11.5%, 오르니요스 3곳 중 1곳=33%만 보유) 결과 신뢰할 수 없어 뺐다 — `exposed_stretches.ts`가 "바 개점 시각"을 같은 이유로 뺀 전례와 동일 판단(규칙 1). 이름·종류·좌표만 담는다
+- **21곳이 0건인 이유가 불확실함을 숨기지 않는다**: 실제로 식당이 없을 수도 있지만, 마을 좌표가 4절의 "경로 위 km 비율 보간"으로 구했다는 점을 감안하면 좌표가 실제 마을 중심에서 살짝 벗어나 반경 밖으로 놓쳤을 가능성도 있다 — 둘 다 검증 못 함
+- **재시도 전략**: `scripts/pipeline/build_restaurants.py`가 `overpass()`와 똑같은 패턴(curl subprocess, 미러 2개 순환, 재시도)을 재사용. 체크포인트 파일(`data/geometry/restaurants_checkpoint.json`)로 중단 후 재개 가능
+- 상세 출처 표는 `D_원천출처목록.md` 1.1절
+
+---
+
+## 9. 관련 파일 위치
 
 | 파일 | 내용 |
 |---|---|
 | `data/towns.ts` | 마을 82곳 (거리·고도는 원본 보존, 좌표만 새로 계산) |
 | `data/profiles.ts` | 구간 81개 실측 고도 프로파일 (오르막·내리막·최고점) |
 | `data/forks.ts` | 갈림길 11곳 (구조만, 수치는 실측 전까지 null) |
+| `data/restaurants.ts` | 식당·바·카페 1,247곳 (OSM POI, opening_hours 제외) |
 | `data/geometry/` | 좌표 원본 (gitignore 대상 — ODbL 재배포 회피) |
 | `scripts/pipeline/build_geometry.py` | 경로 이어붙이기 + 고도 조회 + 스무딩 (일회성 배치) |
+| `scripts/pipeline/build_restaurants.py` | 마을별 식당·바·카페 POI 조회 (일회성 배치) |
 | `scripts/pipeline/compare_dem.py` | IGN 5m vs EU-DEM 25m 비교 검증 도구 |
 | `scripts/pipeline/verify_route.py` | 경로 정확도 검증 도구 (독립 지오코딩 대조) |

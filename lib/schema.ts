@@ -150,6 +150,30 @@ export interface Albergue {
 }
 
 // ────────────────────────────────────────────────────────────
+// 2b. Eatery (식당·바·카페)
+// ────────────────────────────────────────────────────────────
+
+export type EateryType = 'RESTAURANT' | 'BAR' | 'CAFE'
+
+/**
+ * ⚠️ openingHours 필드를 두지 않는다 — 2026-08-04 조사 결과 OSM opening_hours
+ * 태그 보유율이 표본 도시(팜플로나 광장) 11.5%, 표본 소도시(오르니요스) 33%뿐이라
+ * "정확한 API 데이터"로 볼 수 없었다. exposed_stretches.ts가 같은 이유로
+ * Waypoint.opensAt을 비워둔 전례와 같은 판단이다(규칙 1 — 부정확한 값을 정적으로
+ * 박아두면 오히려 잘못된 정보가 된다). 이름·종류·좌표만 신뢰할 수 있어 그것만 담는다.
+ */
+export interface Eatery {
+  id: string
+  townId: string
+  name: string                    // 원어명
+  type: EateryType
+  lat: number
+  lng: number
+  source: 'OSM'
+  checkedAt: string               // YYYY-MM
+}
+
+// ────────────────────────────────────────────────────────────
 // 3. 이동 방식 · 접근성 · 이동수단
 // ────────────────────────────────────────────────────────────
 
@@ -286,7 +310,7 @@ export interface Hazard {
 
 export type WaypointKind =
   | 'START' | 'ARRIVE' | 'BREAKFAST' | 'LUNCH' | 'REST'
-  | 'WATER' | 'PHARMACY' | 'ATM' | 'BAG_DROP'
+  | 'WATER' | 'PHARMACY' | 'ATM' | 'BAG_DROP' | 'FOOD'
   | 'STAMP' | 'LANDMARK' | 'TRANSPORT'
 
 export interface Waypoint {

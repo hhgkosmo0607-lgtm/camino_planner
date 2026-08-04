@@ -12,6 +12,9 @@
  *   fetch — scripts/pipeline/build_geometry.py의 Douglas-Peucker 단순화 결과다.
  *   정밀 거리·고도 계산에는 절대 안 쓴다(그건 data/profiles.ts). 지도 표시 전용.
  * ★ 마을 마커는 data/towns.ts의 실측 lat/lng을 그대로 쓴다(추가 API 호출 없음).
+ * ★ 식당·바·카페(data/restaurants.ts, 2026-08-04) 마커는 highlightTownIds가 있을 때만
+ *   그린다 — 1,247곳을 항상 다 그리면 지도가 지저분해지고 느려진다. 영업시간은
+ *   데이터 자체에 없다(신뢰도 낮아 뺌, lib/schema.ts Eatery 주석 참고).
  * ★ 노란 선(flecha, #D99A2B — 2026-08-03 파스텔화)은 "길 안내 전용" 규칙과
  *   정확히 맞는 용도 — 여기서만 쓴다. MapLibre paint 속성은 CSS 변수를 못 읽어서
  *   app/globals.css의 --flecha와 별개로 여기 직접 hex를 적어둔다 — 팔레트를
@@ -32,6 +35,7 @@ import {
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { towns } from '@/data/towns'
+import { eateries } from '@/data/restaurants'
 
 // ★ Next.js(Turbopack)가 maplibre-gl의 `new Worker(new URL(...))` 패턴을 제대로
 //   번들링하지 못해 타일 워커가 조용히 생성되지 않는 문제가 있었다(2026-07-31
@@ -131,6 +135,56 @@ export function RouteMap({ highlightTownIds, height = 420 }: RouteMapProps) {
         map.getCanvas().style.cursor = ''
         popup.remove()
       })
+
+      // 식당·바·카페(data/restaurants.ts, OSM POI) — 1,247곳을 전부 항상 뿌리면
+      // 지도가 지저분해지고 느려져서, 현재 계획에 포함된 마을(highlightTownIds)에만
+      // 한정해 표시한다. 계획이 없으면(하이라이트 없음) 아예 그리지 않는다.
+      if (highlighted.size > 0) {
+        const eateryFeatures = eateries
+          .filter((e) => highlighted.has(e.townId))
+          .map((e) => ({
+            type: 'Feature' as const,
+            properties: { name: e.name, type: e.type },
+            geometry: { type: 'Point' as const, coordinates: [e.lng, e.lat] },
+          }))
+        if (eateryFeatures.length > 0) {
+          map.addSource('eateries', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: eateryFeatures },
+          })
+          map.addLayer({
+            id: 'eateries-point',
+            type: 'circle',
+            source: 'eateries',
+            paint: {
+              'circle-radius': 3.5,
+              'circle-color': '#6E6353', // --muted. flecha(노란색)는 길 안내 전용이라 쓰지 않는다
+              'circle-stroke-width': 1,
+              'circle-stroke-color': '#ffffff',
+              'circle-opacity': 0.85,
+            },
+          })
+
+          const eateryTypeLabel: Record<string, string> = { RESTAURANT: '식당', BAR: '바', CAFE: '카페' }
+          const eateryPopup = new Popup({ closeButton: false, offset: 8 })
+          map.on('mouseenter', 'eateries-point', (e: MapLayerMouseEvent) => {
+            map.getCanvas().style.cursor = 'pointer'
+            const f = e.features?.[0]
+            if (!f) return
+            const p = f.properties as { name: string; type: string }
+            eateryPopup
+              .setLngLat((f.geometry as GeoJSON.Point).coordinates as [number, number])
+              .setHTML(
+                `<b>${p.name}</b><br><span style="color:#6E6353">${eateryTypeLabel[p.type] ?? p.type} · OSM, 영업시간 미확인</span>`,
+              )
+              .addTo(map)
+          })
+          map.on('mouseleave', 'eateries-point', () => {
+            map.getCanvas().style.cursor = ''
+            eateryPopup.remove()
+          })
+        }
+      }
     })
 
     return () => {

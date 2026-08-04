@@ -29,6 +29,7 @@ import { totalBedsForTown } from '../geo'
 import { towns as ALL_TOWNS } from '../../data/towns'
 import { profiles as ALL_PROFILES } from '../../data/profiles'
 import { exposedStretches, type ExposedStretch } from '../../data/exposed_stretches'
+import { eateries } from '../../data/restaurants'
 import { forksFullyInStage, defaultVariant, selectedVariant } from './forks'
 
 // ── 튜닝 파라미터 ─────────────────────────────────────────────
@@ -83,6 +84,13 @@ const EXPOSED_RANGES: ExposedRange[] = exposedStretches.map((s) => ({
   toKm: ALL_TOWNS[townIdx(s.toTownId)].km,
   stretch: s,
 }))
+
+// 마을별 식당·바·카페 개수(F-20 거점 표시용). data/restaurants.ts는 OSM 조사(2026-08),
+// opening_hours는 신뢰도 낮아 뺐다(스키마 주석 참고) — 여기서도 시간 안내는 하지 않는다.
+const EATERY_COUNT_BY_TOWN: Map<string, number> = new Map()
+for (const e of eateries) {
+  EATERY_COUNT_BY_TOWN.set(e.townId, (EATERY_COUNT_BY_TOWN.get(e.townId) ?? 0) + 1)
+}
 
 /**
  * 마을 구간 [fromIdx, toIdx] 의 누적 고도. profiles(연속 마을쌍)를 이어 합산한다.
@@ -161,7 +169,11 @@ function buildWaypoints(fromIdx: number, toIdx: number, totalMinutes: number): W
     { kind: 'START', townId: from.id, km: 0, etaMinutes: 0, labelKo: `${from.nameKo} 출발`, noteKo: null, opensAt: null },
   ]
 
-  for (let i = fromIdx + 1; i < toIdx; i++) {
+  // ⚠️ 2026-08-04: i <= toIdx로 도착지(묵는 마을) 자체도 포함한다. 원래 주석은
+  // "시작·도착 + 중간 마을의 서비스"라고 적어놓고도 실제로는 도착지를 빼먹은
+  // 상태였다 — 정작 그날 밤 묵는 마을의 식수·약국·ATM·식당 정보가 하나도
+  // 안 뜨는 구조였다(사용자 지적으로 발견).
+  for (let i = fromIdx + 1; i <= toIdx; i++) {
     const t = ALL_TOWNS[i]
     const relKm = round1(t.km - from.km)
     for (const service of t.services) {
@@ -174,6 +186,18 @@ function buildWaypoints(fromIdx: number, toIdx: number, totalMinutes: number): W
         etaMinutes: etaAt(relKm),
         labelKo: `${t.nameKo} · ${WAYPOINT_LABEL[kind]}`,
         noteKo: null,
+        opensAt: null,
+      })
+    }
+    const eateryCount = EATERY_COUNT_BY_TOWN.get(t.id)
+    if (eateryCount) {
+      waypoints.push({
+        kind: 'FOOD',
+        townId: t.id,
+        km: relKm,
+        etaMinutes: etaAt(relKm),
+        labelKo: `${t.nameKo} · 식당·바·카페 ${eateryCount}곳`,
+        noteKo: 'OSM 조사(2026-08) — 영업시간은 확인되지 않아 현지에서 재확인이 필요합니다.',
         opensAt: null,
       })
     }

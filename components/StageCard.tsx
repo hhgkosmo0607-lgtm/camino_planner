@@ -8,8 +8,18 @@
  *  - 수치 18px 이상, mono tabular-nums
  */
 
-import type { Stage, StageWarning, WaypointKind, HazardType, CongestionInfo, CongestionLevel } from '@/lib/schema'
+import Link from 'next/link'
+import type {
+  Stage,
+  StageWarning,
+  WaypointKind,
+  HazardType,
+  CongestionInfo,
+  CongestionLevel,
+  AlbergueType,
+} from '@/lib/schema'
 import { towns } from '@/data/towns'
+import { getAlbergues, ALBERGUE_TYPE_LABEL } from '@/lib/geo'
 import { forksFullyInStage } from '@/lib/planner/forks'
 import { ForkPicker } from '@/components/ForkPicker'
 import { PlanBPanel } from '@/components/PlanBPanel'
@@ -29,6 +39,7 @@ const WAYPOINT_ICON: Partial<Record<WaypointKind, string>> = {
   PHARMACY: '약국',
   ATM: 'ATM',
   BAG_DROP: '짐배송',
+  FOOD: '식당·바',
 }
 
 const HAZARD_ICON: Partial<Record<HazardType, string>> = {
@@ -90,6 +101,33 @@ function CongestionNote({ c }: { c: CongestionInfo }) {
     <div className={`mt-3 rounded-md border px-3 py-2 text-[15px] leading-relaxed ${style}`}>
       <b>{CONGESTION_LABEL[c.level]}</b>
       <div className="mt-1 text-[13px] opacity-90">{c.reasonsKo.join(' · ')}</div>
+    </div>
+  )
+}
+
+/**
+ * 도착지(묵는 마을) 숙소 요약 — data/albergues.ts 실제 데이터. 이전엔 이 카드에
+ * 혼잡도(총 침대 수 기반 3단계 신호)만 있고 실제 숙소 이름·유형·요금은 안 보여서
+ * 사용자가 직접 /town/[slug]로 따로 찾아가야 했다(2026-08-04 사용자 지적으로 발견).
+ * 여기서는 유형별 개수 + 링크만 — 이름·요금 전체 목록은 여전히 /town 페이지가 정본.
+ */
+function LodgingSummary({ townId }: { townId: string }) {
+  const list = getAlbergues(townId)
+  if (list.length === 0) return null
+  const byType = new Map<AlbergueType, number>()
+  for (const a of list) byType.set(a.type, (byType.get(a.type) ?? 0) + 1)
+  const typeSummary = Array.from(byType.entries())
+    .map(([type, count]) => `${ALBERGUE_TYPE_LABEL[type]} ${count}`)
+    .join(' · ')
+  return (
+    <div className="mt-3 text-[15px] leading-relaxed text-text">
+      <span className="text-muted">숙소 {list.length}곳</span> — {typeSummary}{' '}
+      <Link
+        href={`/town/${townId}`}
+        className="text-ink underline-offset-2 hover:underline"
+      >
+        이름·요금·예약방법 보기 →
+      </Link>
     </div>
   )
 }
@@ -193,6 +231,8 @@ export function StageCard({
         {to && to.beds > 0 && <Metric label="침대" value={`약 ${fmt(to.beds)}`} />}
       </div>
 
+      <LodgingSummary townId={stage.toTownId} />
+
       {stage.congestion && <CongestionNote c={stage.congestion} />}
 
       {stage.warnings.length > 0 && (
@@ -239,14 +279,17 @@ export function StageCard({
           {stage.waypoints.length > 0 && (
             <ol className="mt-3 space-y-1.5">
               {stage.waypoints.map((w, i) => (
-                <li key={i} className="flex items-baseline justify-between gap-3 text-[15px] text-text">
-                  <span>
-                    <span className="mr-1.5 text-[13px] text-muted">[{WAYPOINT_ICON[w.kind] ?? w.kind}]</span>
-                    {w.labelKo}
-                  </span>
-                  <span className="flex-none font-mono text-[13px] tabular-nums text-muted">
-                    {w.km.toFixed(1)}km
-                  </span>
+                <li key={i} className="text-[15px] text-text">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span>
+                      <span className="mr-1.5 text-[13px] text-muted">[{WAYPOINT_ICON[w.kind] ?? w.kind}]</span>
+                      {w.labelKo}
+                    </span>
+                    <span className="flex-none font-mono text-[13px] tabular-nums text-muted">
+                      {w.km.toFixed(1)}km
+                    </span>
+                  </div>
+                  {w.noteKo && <p className="ml-6 text-[13px] text-muted">{w.noteKo}</p>}
                 </li>
               ))}
             </ol>
